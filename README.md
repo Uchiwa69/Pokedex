@@ -5,7 +5,7 @@ données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 
 **Démo en ligne : https://pokedex-pi-coral-47.vercel.app**
 
-> Statut : en cours de développement (phases 0 à 7 terminées sur 11).
+> Statut : en cours de développement (phases 0 à 8 terminées sur 11).
 
 ## Fonctionnalités
 
@@ -13,7 +13,8 @@ données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 - **Recherche** avec debounce, **filtre par type** et **pagination** entièrement pilotés par l'adresse
   (`?q=&type=&page=`), validés côté serveur.
 - **Fiche détaillée** : illustration officielle, types, taille, poids, six statistiques et chaîne d'évolution cliquable.
-- **Favoris** et **sacoche** (équipe de 6 Pokémon avec surnoms), conservés dans le navigateur.
+- **Favoris** et **sacoche** conservés dans le navigateur ; la sacoche est une « arène d'équipe » : 6 socles animés,
+  détail du membre sélectionné, surnoms, ordre modifiable par glisser-déposer ou au clavier.
 - **Thème clair / sombre** qui suit le système, avec choix mémorisé.
 - **Accessibilité** : navigation au clavier, focus visible, libellés ARIA, contrastes vérifiés dans les deux thèmes.
 
@@ -23,7 +24,7 @@ données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 - **Animations** : apparition en cascade, inclinaison 3D des cartes, transition partagée de l'illustration entre la
   grille et la fiche (View Transitions), sprite animé, cri au clic — le tout coupé avec « animations réduites ».
 
-À venir : vue « équipe », attaques, mode combat, quiz.
+À venir : attaques, mode combat, quiz.
 
 ## Stack
 

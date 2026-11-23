@@ -28,6 +28,10 @@
   --color-sur-accent: #ffffff; /* texte posé sur l'accent */
   --color-danger: #b91c1c;
 
+  /* Disque des socles de l'équipe : nacré en clair (dégradé haut → bas) */
+  --color-socle-haut: #ffffff;
+  --color-socle-bas: #dde4f6;
+
   /* Décor de fond : grille fine et deux lueurs */
   --color-grille: rgb(67 56 202 / 0.08);
   --color-lueur-1: rgb(99 102 241 / 0.3); /* violet */
@@ -44,6 +48,52 @@
   --animate-fondu: fondu 300ms ease-out both;
   --animate-levitation: levitation 4s ease-in-out infinite;
   --animate-remplissage: remplissage 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  /* Socles de l'équipe */
+  --animate-ombre-sol: ombre-sol 4s ease-in-out infinite; /* même durée que la lévitation */
+  --animate-respiration: respiration 3.2s ease-in-out infinite;
+  --animate-particule: particule 2.6s ease-out infinite;
+  --animate-rotation-lente: rotation-lente 9s linear infinite;
+
+  /* L'ombre rétrécit quand le Pokémon est en haut de sa lévitation */
+  @keyframes ombre-sol {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(0.72);
+    }
+  }
+  /* Le halo grossit un peu puis revient */
+  @keyframes respiration {
+    0%,
+    100% {
+      transform: scale(0.9);
+    }
+    50% {
+      transform: scale(1.15);
+    }
+  }
+  /* Une particule monte en apparaissant puis en s'effaçant */
+  @keyframes particule {
+    0% {
+      opacity: 0;
+      transform: translateY(0) scale(0.6);
+    }
+    25% {
+      opacity: 0.9;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-4.5rem) scale(1);
+    }
+  }
+  @keyframes rotation-lente {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 
   /* Cartes de la grille : montent légèrement en apparaissant */
   @keyframes apparition {
@@ -124,6 +174,9 @@
   --color-accent-bis: #67e8f9;
   --color-sur-accent: #12143a;
   --color-danger: #fca5a5;
+
+  --color-socle-haut: #232b5c;
+  --color-socle-bas: #0a0e26;
 
   --color-grille: rgb(170 182 255 / 0.07);
   --color-lueur-1: rgb(129 140 248 / 0.36);

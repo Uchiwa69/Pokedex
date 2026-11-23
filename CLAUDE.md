@@ -82,6 +82,10 @@ Règles :
 - Espacements 2/4/6/8, deux ou trois tailles de texte, mêmes arrondis et mêmes ombres partout.
 - Badges de type contrastés (texte foncé sur les types clairs, blanc sur poison, spectre et dragon).
 
+## Retouches demandées, à faire plus tard
+- Le décor de FOND du site (lueurs + grille « verre ») ne plaît pas à l'utilisateur ; les CARTES en verre, si.
+  À retravailler quand il le demandera (app/globals.css, bloc body::before et jetons --color-lueur-*, --color-grille).
+
 ## Animations
 - Animer uniquement transform et opacity.
 - Interface : moins de 400 ms, ressorts doux. Effets d'attaque : 0,8 à 1,5 s, uniquement dans l'arène.
