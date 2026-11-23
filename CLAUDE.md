@@ -103,6 +103,23 @@ Règles :
 (puis déploiement Vercel) · 6 Direction artistique · 7 Animations · 8 Vue Équipe · 9 Attaques · 10 Combat · 11 Finitions.
 Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites ; la suite = retouches à la demande.
 
+## Ajouts après les phases (retouches)
+- Fiche : `VitrineFiche` remplace l'illustration par `Carte3D` (three.js, importé dans un useEffect, démarré une fois
+  la page chargée et le navigateur inoccupé). L'illustration reste l'affichage d'attente et le repli sans WebGL.
+  `lib/carte3d.ts` dessine les deux faces dans des canvas 2D. `PanneauCarte3D` (carte au clic) est conservé, inutilisé.
+- Accueil : `FiltreTypes` (client) = tuiles avec symbole (`lib/glyphes.ts`), type actif optimiste (`useOptimistic` +
+  `useTransition`), `<Link prefetch>` seulement au survol/focus, clics en rafale regroupés. `EffetType` joue la
+  recette du type (mouvement, fond, anneaux) en CSS seul ; classes `effet-*` dans globals.css, toujours via une table
+  de correspondance (jamais `effet-${x}`).
+- Recherche : français ou anglais, sans accents (`normaliser` / `filtrerNoms` dans lib/recherche.ts). Les noms
+  français viennent du CSV du dépôt PokeAPI/pokeapi (`recupererNomsFrancais`), repli sur l'anglais s'il est indisponible.
+- lib/pokeapi.ts : `lire` retente 3 fois les échecs passagers (pas de file d'attente partagée). `"use cache: remote"`
+  sur recupererPokemon, recupererTousLesNoms, recupererNomsDuType, recupererNomsFrancais ; recupererListe reste en
+  `"use cache"` pour être préchargeable.
+- Combat : effets d'attaque sur canvas (`lib/labo/moteur2d.ts`, recettes dans `lib/labo/effets2d.ts`, testées).
+- Grille : cascade d'apparition plafonnée aux 6 premières cartes. Images : `minimumCacheTTL` de 31 jours.
+- Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
+
 ## Vérifier le rendu sans navigateur interactif
 - Captures : Chrome sans fenêtre sur le site Vercel
   (`chrome.exe --headless=new --window-size=1280,800 --screenshot=... URL` ; thème clair : `--blink-settings=preferredColorScheme=1`).
