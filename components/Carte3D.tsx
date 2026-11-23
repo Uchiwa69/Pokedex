@@ -43,7 +43,7 @@ const PIXELS = `
     float angle = dot(normalize(vNormale), normalize(vRegard)); // 1 = vue de face, 0 = vue rasante
     // Une seule bande de lumière, en diagonale, qui glisse sur la carte quand on l'incline.
     float position = vUv.x * 0.7 + vUv.y * 0.5 + (1.0 - angle) * 2.2;
-    float bande = smoothstep(0.8, 1.0, sin(position * 3.7));
+    float bande = smoothstep(0.86, 1.0, sin(position * 3.7)); // plus le seuil est élevé, plus la bande est fine
     // Lumière presque blanche, à peine teintée : c'est ce qui la rend naturelle.
     vec3 irise = 0.5 + 0.5 * cos(6.2831 * (position * 0.35 + vec3(0.0, 0.33, 0.67)));
     vec3 couleur = mix(vec3(1.0), irise, 0.3);
