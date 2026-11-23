@@ -37,6 +37,54 @@
   --shadow-carte: 0 18px 40px -18px rgb(67 56 202 / 0.35), 0 2px 6px -2px rgb(30 41 100 / 0.1);
   --shadow-lueur: 0 10px 24px -10px rgb(67 56 202 / 0.7);
 
+  /* ---- Animations : uniquement transform et opacity ----
+     Chaque --animate-xxx crée la classe animate-xxx. "both" : l'élément garde l'état de départ
+     avant l'animation (pendant son délai) et l'état d'arrivée après. */
+  --animate-apparition: apparition 350ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fondu: fondu 300ms ease-out both;
+  --animate-levitation: levitation 4s ease-in-out infinite;
+  --animate-remplissage: remplissage 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  /* Cartes de la grille : montent légèrement en apparaissant */
+  @keyframes apparition {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  /* Version « animations réduites » : un simple fondu, sans mouvement */
+  @keyframes fondu {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  /* Artwork de la fiche : monte et redescend doucement */
+  @keyframes levitation {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  /* Barres de stats : s'étirent de 0 jusqu'à leur proportion (variable --proportion posée sur la barre) */
+  @keyframes remplissage {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(var(--proportion));
+    }
+  }
+
   /* Texte foncé posé sur les badges de type clairs (identique dans les deux thèmes). */
   --color-encre: #0b1020;
 
@@ -122,6 +170,18 @@ body::before {
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 300ms;
+}
+
+/* Transition partagée de l'artwork entre la carte et la fiche (<ViewTransition share="morph">) :
+   le navigateur déplace et agrandit l'image d'une page à l'autre. */
+::view-transition-group(.morph) {
+  animation-duration: 350ms;
+}
+/* Animations réduites : pas de déplacement, l'image change simplement en fondu. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(.morph) {
+    animation: none;
+  }
 }
 
 /* ---- Utilitaires maison (@utility = une classe utilisable comme celles de Tailwind) ----

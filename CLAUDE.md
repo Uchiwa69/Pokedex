@@ -9,6 +9,7 @@ Code simple, lisible, commenté en français quand une notion du cours est appli
 - Travail phase par phase (0 à 11). À la fin de chaque phase : `npm run lint` et `npm run build` sans erreur,
   explication en 5 à 8 lignes en français (ce qui a été fait + QUELLE NOTION du cours), liste de ce qu'il faut
   tester dans le navigateur, commit Git clair, puis ARRÊT jusqu'à « Phase suivante ».
+- Après le commit de fin de phase : `git push` (demandé par l'utilisateur ; Vercel redéploie depuis main).
 - Décision de design ouverte : proposer 2 options courtes et attendre le choix.
 - Code et noms en français, comme dans le cours (CartePokemon, recupererPokemon, useSacoche…).
 - Le dossier s'appelle « Pokédex » (accent + majuscule) : le nom npm du paquet est `pokedex`.
