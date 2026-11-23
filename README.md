@@ -5,7 +5,7 @@ données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 
 **Démo en ligne : https://pokedex-pi-coral-47.vercel.app**
 
-> Statut : en cours de développement (phases 0 à 9 terminées sur 11).
+> Statut : en cours de développement (phases 0 à 10 terminées sur 11).
 
 ## Fonctionnalités
 
@@ -27,7 +27,10 @@ données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 - **Attaques** : onglet de la fiche listant les attaques apprises par niveau (nom français, type, catégorie,
   puissance, précision, PP, description) ; chaque membre de la sacoche reçoit ses 4 meilleures attaques.
 
-À venir : mode combat, quiz.
+- **Mode combat** : ta sacoche contre une équipe tirée au hasard, au niveau 50 — efficacité des 18 types, dégâts,
+  précision, ordre selon la vitesse, IA adverse, effets d'attaque animés par type, journal de combat accessible.
+
+À venir : quiz « Qui est ce Pokémon ? », audit et finitions.
 
 ## Stack
 
@@ -38,6 +41,8 @@ données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 | Styles | Tailwind CSS 4 (configuration dans `app/globals.css` avec `@theme`) |
 | État client | Zustand (`persist` + réhydratation après l'hydratation React) |
 | Thème | next-themes |
+| Animations | motion (`motion/react`) et CSS, `prefers-reduced-motion` respecté |
+| Tests | vitest (fonctions pures de `lib/combat.ts`) |
 | Données | PokéAPI v2 (lecture seule, sans clé) |
 
 ## Architecture
@@ -73,6 +78,7 @@ Autres commandes :
 ```bash
 npm run lint        # ESLint
 npm run typecheck   # vérification des types TypeScript
+npm test            # tests unitaires (vitest)
 npm run build       # build de production (nécessite un accès à la PokéAPI)
 npm start           # sert le build de production
 npm run clean       # supprime le dossier .next
@@ -82,7 +88,7 @@ Les mêmes commandes sont disponibles en raccourcis avec [`make`](Makefile) ou [
 
 ```bash
 make help    # ou : just
-make check   # lint + typecheck + build, à lancer avant un commit
+make check   # lint + typecheck + test + build, à lancer avant un commit
 ```
 
 ## Déploiement

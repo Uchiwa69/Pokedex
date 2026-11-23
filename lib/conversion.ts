@@ -2,6 +2,7 @@
 // Le reste de l'application ne connaît que nos types (Pokemon, Espece) : si l'API change,
 // il n'y a que ce fichier à corriger. Ce sont des fonctions pures (pas de fetch ici).
 
+import type { TableEfficacite } from "@/lib/combat";
 import { estUnType, type NomType } from "@/lib/types";
 
 // ---------- Nos types ----------
@@ -109,6 +110,15 @@ export type MaillonBrut = {
 
 export type ChaineBrute = {
   chain: MaillonBrut;
+};
+
+// Réponse de /type/{nom} : contre quels types ce type est fort, faible ou sans effet (en attaque).
+export type TypeBrut = {
+  damage_relations: {
+    double_damage_to: { name: string }[];
+    half_damage_to: { name: string }[];
+    no_damage_to: { name: string }[];
+  };
 };
 
 // ---------- Fonctions de conversion ----------
@@ -246,4 +256,15 @@ export function extraireApprentissages(brut: PokemonBrut): Apprentissage[] {
     resultat.push({ nom: ligne.nom, niveau: ligne.niveau });
   }
   return resultat;
+}
+
+// Une ligne de la table d'efficacité : pour UN type d'attaque, le multiplicateur contre chaque type
+// de défenseur (2, 0.5 ou 0). Les types absents valent 1.
+export function convertirRelations(brut: TypeBrut): TableEfficacite[NomType] {
+  const ligne: TableEfficacite[NomType] = {};
+  const relations = brut.damage_relations;
+  for (const { name } of relations.double_damage_to) if (estUnType(name)) ligne[name] = 2;
+  for (const { name } of relations.half_damage_to) if (estUnType(name)) ligne[name] = 0.5;
+  for (const { name } of relations.no_damage_to) if (estUnType(name)) ligne[name] = 0;
+  return ligne;
 }

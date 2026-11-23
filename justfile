@@ -25,6 +25,10 @@ lint:
 typecheck:
     npm run typecheck
 
+# Lance les tests unitaires (vitest)
+test:
+    npm test
+
 # Construit la version de production
 build:
     npm run build
@@ -33,8 +37,8 @@ build:
 start:
     npm start
 
-# Vérification complète avant un commit : lint + typecheck + build
-check: lint typecheck build
+# Vérification complète avant un commit : lint + typecheck + test + build
+check: lint typecheck test build
 
 # Supprime les fichiers générés (.next)
 clean:

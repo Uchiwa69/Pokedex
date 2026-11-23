@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
-import EtatVide from "@/components/EtatVide";
+import ArenaCombat from "@/components/ArenaCombat";
+import { recupererTypes } from "@/lib/pokeapi";
 
 export const metadata: Metadata = {
   title: "Combat",
 };
 
-export default function PageCombat() {
+// Page serveur : elle charge la table d'efficacité des 18 types (donnée en cache)
+// et la transmet en prop au composant client qui gère le combat.
+export default async function PageCombat() {
+  const table = await recupererTypes();
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <p className="etiquette">Arène</p>
         <h1 className="font-titre text-3xl font-bold">Combat</h1>
       </header>
-      <EtatVide
-        titre="L'arène n'est pas encore ouverte"
-        message="Bientôt : ta sacoche contre une équipe tirée au hasard."
-        lien={{ href: "/sacoche", libelle: "Préparer ma sacoche" }}
-      />
+      <ArenaCombat table={table} />
     </div>
   );
 }

@@ -4,12 +4,13 @@
 // ce qui convient très bien ici car les Pokémon ne changent pas.
 
 import { cacheLife } from "next/cache";
-import { choisirMeilleuresAttaques } from "@/lib/combat";
+import { choisirMeilleuresAttaques, type TableEfficacite } from "@/lib/combat";
 import {
   aplatir,
   convertirAttaque,
   convertirEspece,
   convertirPokemon,
+  convertirRelations,
   extraireApprentissages,
   extraireId,
   type Apprentissage,
@@ -20,9 +21,10 @@ import {
   type EspeceBrute,
   type Pokemon,
   type PokemonBrut,
+  type TypeBrut,
 } from "@/lib/conversion";
 import { filtrerNoms } from "@/lib/recherche";
-import type { NomType } from "@/lib/types";
+import { NOMS_TYPES, type NomType } from "@/lib/types";
 
 const API = "https://pokeapi.co/api/v2";
 
@@ -78,7 +80,8 @@ export async function recupererTousLesNoms(): Promise<string[]> {
   return brute.results.map((r) => r.name);
 }
 
-type TypeBrut = {
+// La même adresse /type/{nom} donne aussi la liste des Pokémon de ce type.
+type PokemonsDuTypeBruts = {
   pokemon: { pokemon: { name: string; url: string } }[];
 };
 
@@ -87,7 +90,7 @@ export async function recupererNomsDuType(type: NomType): Promise<string[]> {
   "use cache";
   cacheLife("days");
 
-  const brut = await lire<TypeBrut>(`${API}/type/${type}`);
+  const brut = await lire<PokemonsDuTypeBruts>(`${API}/type/${type}`);
   if (!brut) return [];
 
   return brut.pokemon
@@ -203,4 +206,20 @@ export async function recupererMeilleuresAttaques(nom: string): Promise<Attaque[
     apprises.map((a) => a.attaque),
     pokemon.types,
   );
+}
+
+// La table d'efficacité complète des 18 types (18 requêtes en parallèle, mises en cache).
+export async function recupererTypes(): Promise<TableEfficacite> {
+  "use cache";
+  cacheLife("days");
+
+  const lignes = await Promise.all(
+    NOMS_TYPES.map(async (type) => {
+      const brut = await lire<TypeBrut>(`${API}/type/${type}`);
+      if (!brut) throw new Error(`Type introuvable : ${type}`);
+      return [type, convertirRelations(brut)] as const;
+    }),
+  );
+  // Object.fromEntries transforme la liste de paires [type, ligne] en un objet { type: ligne }.
+  return Object.fromEntries(lignes) as TableEfficacite;
 }

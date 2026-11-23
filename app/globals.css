@@ -29,6 +29,11 @@
   --color-sur-accent: #ffffff; /* texte posé sur l'accent */
   --color-danger: #b91c1c;
 
+  /* Barre de points de vie : vert → jaune → rouge (mêmes couleurs dans les deux thèmes) */
+  --color-pv-haut: #22c55e;
+  --color-pv-moyen: #eab308;
+  --color-pv-bas: #ef4444;
+
   /* Disque des socles de l'équipe : nacré en clair (dégradé haut → bas) */
   --color-socle-haut: #ffffff;
   --color-socle-bas: #dde4f6;
