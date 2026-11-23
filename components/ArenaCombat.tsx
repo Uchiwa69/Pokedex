@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import BadgeType from "@/components/BadgeType";
-import EffetAttaque, { DUREE_EFFET } from "@/components/EffetAttaque";
+import { DUREE_EFFET } from "@/components/EffetAttaque";
 import EtatVide from "@/components/EtatVide";
 import SocleEquipe from "@/components/SocleEquipe";
 import { useChargementAttaques } from "@/hooks/useChargementAttaques";
@@ -18,6 +18,8 @@ import {
   type TableEfficacite,
 } from "@/lib/combat";
 import type { Attaque, Pokemon } from "@/lib/conversion";
+import { choisirRecette } from "@/lib/labo/effets2d";
+import { jouerAttaque, Moteur2D, type Point } from "@/lib/labo/moteur2d";
 import { TYPES, type NomType } from "@/lib/types";
 import { useSacoche, useSacochePrete } from "@/stores/sacoche";
 
@@ -97,6 +99,54 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
   // Numéro de la prochaine ligne du journal (sert de `key`). Un ref : le changer ne refait pas de rendu.
   const prochainId = useRef(0);
   // Passe à false quand on quitte la page : le tour en cours arrête alors de mettre à jour l'état.
+  // Effets d'attaque : un <canvas> posé sur l'arène, dessiné par le moteur 2D (lib/labo/moteur2d.ts).
+  const refArene = useRef<HTMLDivElement>(null);
+  const refToile = useRef<HTMLCanvasElement>(null);
+  const refMoteur = useRef<Moteur2D | null>(null);
+  const enCombat = partie !== null;
+  useEffect(() => {
+    // Le canvas n'existe que pendant un combat : le moteur est créé à ce moment-là, et arrêté à la fin.
+    const toile = refToile.current;
+    if (!enCombat || !toile) return;
+    const moteur = new Moteur2D(toile);
+    refMoteur.current = moteur;
+    moteur.demarrer();
+    const observateur = new ResizeObserver(() => moteur.redimensionner());
+    observateur.observe(toile);
+    return () => {
+      observateur.disconnect();
+      moteur.arreter();
+      refMoteur.current = null;
+    };
+  }, [enCombat]);
+
+  // Joue l'effet visuel d'une attaque, de l'attaquant vers la cible. L'effet est choisi automatiquement
+  // à partir du type, de la catégorie et de la puissance de l'attaque (lib/labo/effets2d.ts).
+  async function jouerEffet(cote: Cote, attaque: Attaque) {
+    const moteur = refMoteur.current;
+    const arene = refArene.current;
+    const depart = arene?.querySelector<HTMLElement>(`[data-cote="${cote}"]`);
+    const arrivee = arene?.querySelector<HTMLElement>(`[data-cote="${cote === "joueur" ? "adversaire" : "joueur"}"]`);
+    // Animations réduites (ou canvas indisponible) : pas de particules, on attend simplement.
+    if (animationsReduites || !moteur || !arene || !depart || !arrivee) {
+      await attendre(durees.effet);
+      return;
+    }
+    const cadre = arene.getBoundingClientRect();
+    const centre = (element: HTMLElement): Point => {
+      const zone = element.getBoundingClientRect();
+      return { x: zone.left - cadre.left + zone.width / 2, y: zone.top - cadre.top + zone.height * 0.45 };
+    };
+    const recette = choisirRecette(attaque.type, attaque.categorie, attaque.puissance);
+    // L'élan, le clignotement et le tremblement sont déjà gérés par ce composant (étapes « elan » et
+    // « impact ») : le moteur ne s'occupe donc que des particules.
+    await jouerAttaque(moteur, recette, centre(depart), centre(arrivee), {
+      elan: () => {},
+      charger: () => attendre(450),
+      encaisser: () => Promise.resolve(),
+    });
+  }
+
   const monte = useRef(true);
   useEffect(() => {
     monte.current = true;
@@ -215,7 +265,7 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
 
       // 3. Effet visuel du type de l'attaque
       publier({ scene: { attaquant: cote, etape: "effet", type: attaque.type } });
-      await attendre(durees.effet);
+      await jouerEffet(cote, attaque);
 
       // 4. Impact : tremblement, flash du défenseur, baisse des PV, message d'efficacité
       const pvRestants = Math.max(0, defenseur.pv - resultat.degats);
@@ -320,6 +370,7 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
     <div className="flex flex-col gap-6">
       {/* L'arène. Elle tremble à l'impact (transform uniquement). */}
       <motion.div
+        ref={refArene}
         className="verre relative overflow-hidden p-4 sm:p-6"
         animate={{ x: tremble ? [0, -8, 8, -6, 6, 0] : 0 }}
         transition={{ duration: 0.35 }}
@@ -334,6 +385,9 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
             <CoteArene cote="adversaire" lutteur={adversaire} equipe={partie.adversaires} scene={partie.scene} ko={partie.ko} />
           </div>
         </div>
+        {/* Calque des effets d'attaque : décoratif (aria-hidden), il ne capte pas les clics.
+            Ce qui se passe est déjà écrit dans le journal de combat. */}
+        <canvas ref={refToile} aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full" />
       </motion.div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -474,7 +528,8 @@ function CoteArene({ cote, lutteur, equipe, scene, ko }: PropsCote) {
         </div>
       </div>
 
-      <div className="relative">
+      {/* data-cote : permet au moteur d'effets de retrouver la position de chaque Pokémon. */}
+      <div className="relative" data-cote={cote}>
         {/* key = nom du Pokémon : quand un nouveau Pokémon entre, ce bloc est recréé
             et son animation d'entrée (initial → animate) se joue. */}
         <motion.div
@@ -486,8 +541,6 @@ function CoteArene({ cote, lutteur, equipe, scene, ko }: PropsCote) {
           <SocleEquipe pokemon={lutteur.pokemon} vue={cote === "joueur" ? "dos" : "face"} decalage={cote === "joueur" ? 0 : 3} />
         </motion.div>
 
-        {/* L'effet de l'attaque se joue par-dessus le DÉFENSEUR. */}
-        {estCible && scene.etape === "effet" && <EffetAttaque type={scene.type} sens={cote === "adversaire" ? 1 : -1} />}
       </div>
     </div>
   );
