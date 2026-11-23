@@ -4,14 +4,17 @@ import { recupererMeilleuresAttaques, recupererPokemon, TOTAL_POKEMONS } from "@
 const NOMBRE_MAX = 6;
 
 // GET /api/aleatoire?nombre=3 → une équipe de Pokémon tirés au hasard, chacun avec ses 4 attaques.
-// Sert à fabriquer l'équipe adverse du mode combat.
+// Sert à fabriquer l'équipe adverse du mode combat, et les propositions du quiz
+// (avec &attaques=non : le quiz n'a pas besoin des attaques, la réponse est plus rapide).
 export async function GET(requete: Request) {
   // connection() attend une vraie requête : Next sait alors que cette réponse ne doit JAMAIS être
   // préparée au build ni mise en cache. Sans cela, le « hasard » serait tiré une seule fois pour tout le monde.
   await connection();
 
   // Paramètre validé : un entier entre 1 et 6 (1 par défaut).
-  const demande = Number.parseInt(new URL(requete.url).searchParams.get("nombre") ?? "1", 10);
+  const parametres = new URL(requete.url).searchParams;
+  const avecAttaques = parametres.get("attaques") !== "non";
+  const demande = Number.parseInt(parametres.get("nombre") ?? "1", 10);
   const nombre = Number.isInteger(demande) ? Math.min(Math.max(demande, 1), NOMBRE_MAX) : 1;
 
   // Des numéros de Pokédex tous différents : un Set refuse les doublons.
@@ -25,7 +28,7 @@ export async function GET(requete: Request) {
     [...numeros].map(async (numero) => {
       const pokemon = await recupererPokemon(String(numero));
       if (!pokemon) return null;
-      const attaques = await recupererMeilleuresAttaques(pokemon.nom);
+      const attaques = avecAttaques ? await recupererMeilleuresAttaques(pokemon.nom) : [];
       return { pokemon, attaques };
     }),
   );

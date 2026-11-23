@@ -17,8 +17,8 @@ export default function LiensNavigation({ cheminActif }: { cheminActif: string |
               aria-current={actif ? "page" : undefined}
               className={
                 actif
-                  ? "flex min-h-9 items-center justify-center rounded-full bg-accent px-4 text-sm font-semibold text-sur-accent shadow-lueur"
-                  : "flex min-h-9 items-center justify-center rounded-full px-4 text-sm font-medium text-texte-doux hover:bg-piste hover:text-texte"
+                  ? "flex min-h-9 items-center justify-center rounded-full bg-accent px-2 text-sm font-semibold text-sur-accent shadow-lueur sm:px-4"
+                  : "flex min-h-9 items-center justify-center rounded-full px-2 text-sm font-medium text-texte-doux hover:bg-piste hover:text-texte sm:px-4"
               }
             >
               {lien.libelle}
