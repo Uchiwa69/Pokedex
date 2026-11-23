@@ -1,11 +1,8 @@
 import CartePokemon from "@/components/CartePokemon";
-import { recupererListe } from "@/lib/pokeapi";
+import type { Pokemon } from "@/lib/conversion";
 
-// Composant serveur ASYNCHRONE : il attend les données directement avec await, sans useEffect ni useState.
-// Pendant l'attente, c'est le fallback du <Suspense> placé autour de lui qui s'affiche.
-export default async function GrillePokemons({ page }: { page: number }) {
-  const pokemons = await recupererListe(page);
-
+// Affiche une liste de Pokémon en grille. Composant « bête » : il reçoit ses données en props.
+export default function GrillePokemons({ pokemons }: { pokemons: Pokemon[] }) {
   return (
     <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
       {pokemons.map((pokemon, index) => (

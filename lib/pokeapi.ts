@@ -8,12 +8,15 @@ import {
   aplatir,
   convertirEspece,
   convertirPokemon,
+  extraireId,
   type ChaineBrute,
   type Espece,
   type EspeceBrute,
   type Pokemon,
   type PokemonBrut,
 } from "@/lib/conversion";
+import { filtrerNoms } from "@/lib/recherche";
+import type { NomType } from "@/lib/types";
 
 const API = "https://pokeapi.co/api/v2";
 
@@ -69,20 +72,61 @@ export async function recupererTousLesNoms(): Promise<string[]> {
   return brute.results.map((r) => r.name);
 }
 
-// Les Pokémon d'une page de la grille (page 1 = les 24 premiers).
-export async function recupererListe(page: number): Promise<Pokemon[]> {
+type TypeBrut = {
+  pokemon: { pokemon: { name: string; url: string } }[];
+};
+
+// Les noms des Pokémon d'un type donné (limités au Pokédex national), dans l'ordre des numéros.
+export async function recupererNomsDuType(type: NomType): Promise<string[]> {
   "use cache";
   cacheLife("days");
 
-  const tous = await recupererTousLesNoms();
-  const debut = (page - 1) * PAR_PAGE;
-  const noms = tous.slice(debut, debut + PAR_PAGE);
+  const brut = await lire<TypeBrut>(`${API}/type/${type}`);
+  if (!brut) return [];
 
-  // Promise.all : les 24 requêtes partent EN PARALLÈLE (au lieu de l'une après l'autre).
-  const pokemons = await Promise.all(noms.map((nom) => recupererPokemon(nom)));
+  return brut.pokemon
+    .map((entree) => ({ nom: entree.pokemon.name, id: extraireId(entree.pokemon.url) }))
+    .filter((entree) => entree.id <= TOTAL_POKEMONS)
+    .sort((a, b) => a.id - b.id)
+    .map((entree) => entree.nom);
+}
 
-  // On retire les éventuels null, en l'expliquant à TypeScript avec une garde de type.
-  return pokemons.filter((p): p is Pokemon => p !== null);
+export type ResultatListe = {
+  pokemons: Pokemon[];
+  total: number; // nombre total de résultats (toutes pages confondues)
+  page: number; // page réellement affichée
+  totalPages: number;
+};
+
+// Les Pokémon d'une page de la grille, après recherche et filtre par type.
+// Les arguments ont déjà été validés par validerFiltres (lib/recherche.ts).
+export async function recupererListe(q: string, type: NomType | null, page: number): Promise<ResultatListe> {
+  "use cache";
+  cacheLife("days");
+
+  // 1. Point de départ : tous les noms, ou seulement ceux du type demandé.
+  const noms = type ? await recupererNomsDuType(type) : await recupererTousLesNoms();
+
+  // 2. Recherche sur les noms (on ne charge pas encore les Pokémon).
+  const trouves = filtrerNoms(noms, q);
+
+  // 3. Pagination. Une page trop grande (?page=9999) est ramenée à la dernière page.
+  const total = trouves.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAR_PAGE));
+  const pageReelle = Math.min(page, totalPages);
+  const debut = (pageReelle - 1) * PAR_PAGE;
+  const nomsDeLaPage = trouves.slice(debut, debut + PAR_PAGE);
+
+  // 4. Promise.all : les 24 requêtes partent EN PARALLÈLE (au lieu de l'une après l'autre).
+  const pokemons = await Promise.all(nomsDeLaPage.map((nom) => recupererPokemon(nom)));
+
+  return {
+    // On retire les éventuels null, en l'expliquant à TypeScript avec une garde de type.
+    pokemons: pokemons.filter((p): p is Pokemon => p !== null),
+    total,
+    page: pageReelle,
+    totalPages,
+  };
 }
 
 // Tous les Pokémon de la chaîne d'évolution d'une espèce, dans l'ordre (ex. Salamèche, Reptincel, Dracaufeu).
