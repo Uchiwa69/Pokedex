@@ -63,7 +63,8 @@ Règles :
 
 ## Direction artistique (phase 6 — direction B « Verre holographique » choisie et appliquée)
 - Jetons dans app/globals.css (@theme static + bloc .dark) : fond, surface (verre translucide), bordure, bordure-verre,
-  texte, texte-doux, piste, accent (bleu-violet), accent-bis, sur-accent, danger, grille, lueur-1/2, shadow-carte, shadow-lueur.
+  texte, texte-doux, piste, accent (bleu-violet), accent-bis, sur-accent, danger, shadow-carte, shadow-lueur.
+- Fond du site : UNI (choix de l'utilisateur) — pas de grille ni de lueurs derrière le contenu.
 - Utilitaires maison (@utility) à réutiliser partout : `verre` (panneau : bordure, fond, ombre, arrondi 1.5rem),
   `etiquette` (petites capitales espacées pour les libellés secondaires : N°, TAILLE, VITESSE…),
   `bouton` + `bouton-principal` / `bouton-secondaire` (gélules de 44 px).
@@ -82,10 +83,6 @@ Règles :
   au survol. Numéro en filigrane géant.
 - Espacements 2/4/6/8, deux ou trois tailles de texte, mêmes arrondis et mêmes ombres partout.
 - Badges de type contrastés (texte foncé sur les types clairs, blanc sur poison, spectre et dragon).
-
-## Retouches demandées, à faire plus tard
-- Le décor de FOND du site (lueurs + grille « verre ») ne plaît pas à l'utilisateur ; les CARTES en verre, si.
-  À retravailler quand il le demandera (app/globals.css, bloc body::before et jetons --color-lueur-*, --color-grille).
 
 ## Animations
 - Animer uniquement transform et opacity.

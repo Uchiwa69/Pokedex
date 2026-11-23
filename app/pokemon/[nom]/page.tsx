@@ -9,6 +9,7 @@ import BoutonCri from "@/components/BoutonCri";
 import BoutonFavori from "@/components/BoutonFavori";
 import BoutonSacoche from "@/components/BoutonSacoche";
 import OngletsFiche from "@/components/OngletsFiche";
+import PanneauCarte3D from "@/components/PanneauCarte3D";
 import SpriteAnime from "@/components/SpriteAnime";
 import SqueletteFiche from "@/components/SqueletteFiche";
 import { formaterMesure } from "@/lib/conversion";
@@ -102,6 +103,9 @@ async function Fiche({ params, searchParams }: Pick<Props, "params" | "searchPar
 
           {/* Sprite animé (face / dos) : composant client */}
           <SpriteAnime pokemon={pokemon} />
+
+          {/* Carte holographique en 3D : chargée seulement si on la demande. */}
+          <PanneauCarte3D pokemon={pokemon} />
         </div>
 
         <div className="flex flex-col gap-6">
