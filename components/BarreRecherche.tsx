@@ -73,7 +73,7 @@ export default function BarreRecherche() {
           name="q"
           defaultValue={qAdresse}
           onChange={(evenement) => chercher(evenement.target.value)}
-          placeholder="Nom anglais : pikachu, char…"
+          placeholder="Nom français ou anglais : Dracaufeu, pikachu…"
           autoComplete="off"
           className="min-h-12 w-full rounded-full border border-bordure bg-surface pl-12 pr-12 text-sm text-texte shadow-carte placeholder:text-texte-doux"
         />

@@ -23,7 +23,7 @@ import {
   type PokemonBrut,
   type TypeBrut,
 } from "@/lib/conversion";
-import { filtrerNoms } from "@/lib/recherche";
+import { filtrerNoms, normaliser } from "@/lib/recherche";
 import { NOMS_TYPES, type NomType } from "@/lib/types";
 
 const API = "https://pokeapi.co/api/v2";
@@ -48,15 +48,21 @@ const pause = (ms: number) => new Promise((resoudre) => setTimeout(resoudre, ms)
 // - échec passager (réseau, délai dépassé, erreur 5xx, trop de requêtes) → on retente ;
 // - échec après tous les essais → on lève une erreur (captée par error.tsx).
 async function lire<T>(url: string): Promise<T | null> {
+  const texte = await lireTexte(url);
+  return texte === null ? null : (JSON.parse(texte) as T);
+}
+
+// Même chose, mais renvoie le texte brut (utile pour un fichier qui n'est pas du JSON).
+async function lireTexte(url: string): Promise<string | null> {
   for (let essai = 1; ; essai++) {
     try {
       // AbortSignal.timeout : abandonne l'essai s'il dure trop longtemps, au lieu de bloquer la page.
       const reponse = await fetch(url, { signal: AbortSignal.timeout(DELAI_MAX) });
       if (reponse.status === 404) return null;
-      if (reponse.ok) return (await reponse.json()) as T;
+      if (reponse.ok) return await reponse.text();
       // Une erreur 4xx (autre que 429) ne changera pas en réessayant : on arrête tout de suite.
       if (reponse.status < 500 && reponse.status !== 429) essai = ESSAIS;
-      throw new Error(`La PokéAPI a répondu ${reponse.status} pour ${url}`);
+      throw new Error(`Réponse ${reponse.status} pour ${url}`);
     } catch (erreur) {
       if (essai >= ESSAIS) throw erreur;
       await pause(300 * essai); // petite attente, un peu plus longue à chaque essai
@@ -123,6 +129,36 @@ export async function recupererNomsDuType(type: NomType): Promise<string[]> {
     .map((entree) => entree.nom);
 }
 
+// Adresse du fichier des noms d'espèces dans toutes les langues, publié par le projet PokéAPI.
+// L'API elle-même ne donne le nom français qu'espèce par espèce : il faudrait 1025 appels pour
+// chercher « Dracaufeu ». Ce fichier CSV (un tableau en texte) les contient tous en un seul appel.
+const NOMS_CSV = "https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_species_names.csv";
+const LANGUE_FRANCAIS = "5"; // numéro du français dans les données de la PokéAPI
+
+// Table « identifiant anglais → nom français normalisé » : { charizard: "dracaufeu", "mr-mime": "m-mime", … }.
+// Sert uniquement à la recherche ; l'affichage continue d'utiliser le nom français de chaque Pokémon.
+export async function recupererNomsFrancais(): Promise<Record<string, string>> {
+  "use cache: remote"; // cache partagé : voir recupererPokemon
+  cacheLife("days");
+
+  try {
+    const [csv, noms] = await Promise.all([lireTexte(NOMS_CSV), recupererTousLesNoms()]);
+    const table: Record<string, string> = {};
+    // Chaque ligne du fichier : numéro de l'espèce, numéro de la langue, nom, catégorie.
+    for (const ligne of (csv ?? "").split("\n")) {
+      const [numero, langue, nom] = ligne.split(",");
+      const identifiant = noms[Number(numero) - 1]; // le Pokémon n° 6 est le 6e de la liste
+      if (langue === LANGUE_FRANCAIS && identifiant && nom) table[identifiant] = normaliser(nom);
+    }
+    return table;
+  } catch {
+    // Fichier indisponible : la recherche continue de fonctionner sur les noms anglais.
+    // On ne garde ce résultat vide que quelques minutes, pour réessayer bientôt.
+    cacheLife("minutes");
+    return {};
+  }
+}
+
 export type ResultatListe = {
   pokemons: Pokemon[];
   total: number; // nombre total de résultats (toutes pages confondues)
@@ -139,8 +175,9 @@ export async function recupererListe(q: string, type: NomType | null, page: numb
   // 1. Point de départ : tous les noms, ou seulement ceux du type demandé.
   const noms = type ? await recupererNomsDuType(type) : await recupererTousLesNoms();
 
-  // 2. Recherche sur les noms (on ne charge pas encore les Pokémon).
-  const trouves = filtrerNoms(noms, q);
+  // 2. Recherche sur les noms, anglais ou français (on ne charge pas encore les Pokémon).
+  //    La table des noms français n'est lue que s'il y a bien une recherche.
+  const trouves = q ? filtrerNoms(noms, q, await recupererNomsFrancais()) : noms;
 
   // 3. Pagination. Une page trop grande (?page=9999) est ramenée à la dernière page.
   const total = trouves.length;

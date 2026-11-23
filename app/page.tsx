@@ -60,8 +60,8 @@ async function Resultats({ searchParams }: { searchParams: Props["searchParams"]
           titre="Aucun Pokémon trouvé"
           message={
             filtres.type
-              ? `Aucun Pokémon de type ${TYPES[filtres.type].libelle} ne correspond à « ${filtres.q} ». La recherche porte sur les noms anglais.`
-              : `Aucun Pokémon ne correspond à « ${filtres.q} ». La recherche porte sur les noms anglais.`
+              ? `Aucun Pokémon de type ${TYPES[filtres.type].libelle} ne correspond à « ${filtres.q} ». Essaie un nom français ou anglais, même incomplet.`
+              : `Aucun Pokémon ne correspond à « ${filtres.q} ». Essaie un nom français ou anglais, même incomplet.`
           }
           lien={{ href: "/", libelle: "Effacer la recherche et le filtre" }}
         />

@@ -43,9 +43,23 @@ export function construireAdresse(filtres: Filtres): string {
   return texte ? `/?${texte}` : "/";
 }
 
-// Garde les noms qui contiennent le texte cherché. "mr mime" trouve "mr-mime".
-export function filtrerNoms(noms: string[], q: string): string[] {
-  if (!q) return noms;
-  const cherche = q.replaceAll(" ", "-");
-  return noms.filter((nom) => nom.includes(cherche));
+// Met un texte sous une forme comparable : minuscules, sans accents, et tout ce qui n'est ni une lettre
+// ni un chiffre devient un tiret. « Évoli » → "evoli", « M. Mime » → "m-mime", « mr mime » → "mr-mime".
+export function normaliser(texte: string): string {
+  return texte
+    .toLowerCase()
+    .normalize("NFD") // sépare la lettre de son accent : « é » devient « e » + accent
+    .replace(/[\u0300-\u036f]/g, "") // retire les accents
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, ""); // pas de tiret au début ni à la fin
+}
+
+// Garde les noms qui correspondent au texte cherché, en anglais OU en français.
+// - noms : les identifiants anglais de l'API ("charizard", "mr-mime") ;
+// - nomsFr : pour chaque identifiant, son nom français déjà normalisé ("dracaufeu", "m-mime").
+// « drac » trouve Dracaufeu, « char » trouve Charizard, « evoli » trouve Évoli.
+export function filtrerNoms(noms: string[], q: string, nomsFr: Record<string, string> = {}): string[] {
+  const cherche = normaliser(q);
+  if (!cherche) return noms;
+  return noms.filter((nom) => nom.includes(cherche) || (nomsFr[nom] ?? "").includes(cherche));
 }
