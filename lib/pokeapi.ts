@@ -32,29 +32,14 @@ const API = "https://pokeapi.co/api/v2";
 export const TOTAL_POKEMONS = 1025;
 export const PAR_PAGE = 24;
 
-// ---- Appels à l'API : limités en nombre et relancés en cas d'échec passager ----
+// ---- Appels à l'API : relancés en cas d'échec passager ----
 // Une page de la liste demande 24 Pokémon d'un coup. Si UN seul de ces appels échouait (connexion
-// refusée, délai dépassé), toute la page tombait sur l'écran d'erreur. Deux protections :
-// 1. pas plus de 6 appels en même temps (les autres attendent leur tour) ;
-// 2. un appel qui échoue pour une raison passagère est retenté, jusqu'à 3 essais.
-const APPELS_SIMULTANES = 6;
+// refusée, délai dépassé), toute la page tombait sur l'écran d'erreur. Un appel qui échoue pour une
+// raison passagère est donc retenté, jusqu'à 3 essais.
+// (Pas de file d'attente partagée entre les visites : si un rendu est interrompu en cours de route,
+// sa place ne serait jamais rendue et les visites suivantes resteraient bloquées.)
 const ESSAIS = 3;
 const DELAI_MAX = 6000; // millisecondes avant d'abandonner un essai
-
-let enCours = 0;
-const fileAttente: (() => void)[] = [];
-
-// Attend qu'une place se libère, exécute la tâche, puis passe la main à l'appel suivant.
-async function chacunSonTour<T>(tache: () => Promise<T>): Promise<T> {
-  if (enCours >= APPELS_SIMULTANES) await new Promise<void>((suivant) => fileAttente.push(suivant));
-  enCours++;
-  try {
-    return await tache();
-  } finally {
-    enCours--;
-    fileAttente.shift()?.();
-  }
-}
 
 const pause = (ms: number) => new Promise((resoudre) => setTimeout(resoudre, ms));
 
@@ -63,22 +48,20 @@ const pause = (ms: number) => new Promise((resoudre) => setTimeout(resoudre, ms)
 // - échec passager (réseau, délai dépassé, erreur 5xx, trop de requêtes) → on retente ;
 // - échec après tous les essais → on lève une erreur (captée par error.tsx).
 async function lire<T>(url: string): Promise<T | null> {
-  return chacunSonTour(async () => {
-    for (let essai = 1; ; essai++) {
-      try {
-        // AbortSignal.timeout : abandonne l'essai s'il dure trop longtemps, au lieu de bloquer la page.
-        const reponse = await fetch(url, { signal: AbortSignal.timeout(DELAI_MAX) });
-        if (reponse.status === 404) return null;
-        if (reponse.ok) return (await reponse.json()) as T;
-        // Une erreur 4xx (autre que 429) ne changera pas en réessayant : on arrête tout de suite.
-        if (reponse.status < 500 && reponse.status !== 429) essai = ESSAIS;
-        throw new Error(`La PokéAPI a répondu ${reponse.status} pour ${url}`);
-      } catch (erreur) {
-        if (essai >= ESSAIS) throw erreur;
-        await pause(300 * essai); // petite attente, un peu plus longue à chaque essai
-      }
+  for (let essai = 1; ; essai++) {
+    try {
+      // AbortSignal.timeout : abandonne l'essai s'il dure trop longtemps, au lieu de bloquer la page.
+      const reponse = await fetch(url, { signal: AbortSignal.timeout(DELAI_MAX) });
+      if (reponse.status === 404) return null;
+      if (reponse.ok) return (await reponse.json()) as T;
+      // Une erreur 4xx (autre que 429) ne changera pas en réessayant : on arrête tout de suite.
+      if (reponse.status < 500 && reponse.status !== 429) essai = ESSAIS;
+      throw new Error(`La PokéAPI a répondu ${reponse.status} pour ${url}`);
+    } catch (erreur) {
+      if (essai >= ESSAIS) throw erreur;
+      await pause(300 * essai); // petite attente, un peu plus longue à chaque essai
     }
-  });
+  }
 }
 
 // Nom français et adresse de la chaîne d'évolution d'une espèce.

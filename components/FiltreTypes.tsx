@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useOptimistic, useState, useTransition, type MouseEvent } from "react";
+import { useCallback, useOptimistic, useRef, useState, useTransition, type MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import EffetType from "@/components/EffetType";
@@ -34,6 +34,9 @@ export default function FiltreTypes({ q, typeActif }: Props) {
   // Précharger toutes les tuiles à chaque affichage lançait 19 rendus serveur par clic.
   const [vise, setVise] = useState<NomType | "tous" | null>(null);
 
+  // Numéro du dernier clic : sert à reconnaître, après une courte attente, si un clic plus récent est arrivé.
+  const dernierClic = useRef(0);
+
   const [effet, setEffet] = useState<Effet | null>(null);
   const retirerEffet = useCallback(() => setEffet(null), []);
 
@@ -48,9 +51,20 @@ export default function FiltreTypes({ q, typeActif }: Props) {
       // « numero » change à chaque clic : React recrée l'effet, qui rejoue donc son animation.
       setEffet({ type, origine: { x: zone.left + zone.width / 2, y: zone.top + zone.height / 2 }, numero: Date.now() });
     }
-    demarrerTransition(() => {
+    const adresse = construireAdresse({ q, type, page: 1 });
+    const numero = ++dernierClic.current;
+    const dejaEnAttente = enAttente;
+    demarrerTransition(async () => {
       setActifOptimiste(type);
-      router.push(construireAdresse({ q, type, page: 1 }), { scroll: false });
+      // Clics en rafale : si une liste est déjà en route, on attend un court instant. Si un autre clic
+      // arrive entre-temps, celui-ci est abandonné : le serveur n'est appelé que pour le DERNIER type choisi,
+      // au lieu d'une fois par clic. Un clic isolé, lui, part tout de suite.
+      if (dejaEnAttente) {
+        await new Promise((suite) => setTimeout(suite, 140));
+        if (numero !== dernierClic.current) return;
+      }
+      // Après un « await », il faut rouvrir une transition pour que la navigation en fasse partie.
+      demarrerTransition(() => router.push(adresse, { scroll: false }));
     });
   }
 

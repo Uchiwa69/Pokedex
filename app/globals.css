@@ -46,7 +46,7 @@
   /* ---- Animations : uniquement transform et opacity ----
      Chaque --animate-xxx crée la classe animate-xxx. "both" : l'élément garde l'état de départ
      avant l'animation (pendant son délai) et l'état d'arrivée après. */
-  --animate-apparition: apparition 350ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-apparition: apparition 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-fondu: fondu 300ms ease-out both;
   --animate-levitation: levitation 4s ease-in-out infinite;
   --animate-remplissage: remplissage 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
