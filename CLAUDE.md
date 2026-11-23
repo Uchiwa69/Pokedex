@@ -103,4 +103,10 @@ Règles :
 ## Avancement des phases
 0 Création · 1 Coque + thème · 2 Données + grille · 3 Fiche · 4 Recherche/filtre/pagination · 5 Favoris + sacoche
 (puis déploiement Vercel) · 6 Direction artistique · 7 Animations · 8 Vue Équipe · 9 Attaques · 10 Combat · 11 Finitions.
-Voir `git log` pour savoir quelle phase est terminée.
+Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites ; la suite = retouches à la demande.
+
+## Vérifier le rendu sans navigateur interactif
+- Captures : Chrome sans fenêtre sur le site Vercel
+  (`chrome.exe --headless=new --window-size=1280,800 --screenshot=... URL` ; thème clair : `--blink-settings=preferredColorScheme=1`).
+- Audit : `npx lighthouse URL --output=json --chrome-flags="--headless=new"` (émulation mobile, capture finale incluse).
+- Les captures du README sont dans docs/captures/.
