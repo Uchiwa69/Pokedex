@@ -8,7 +8,10 @@ export const metadata: Metadata = {
 export default function PageFavoris() {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-titre text-3xl font-bold">Mes favoris</h1>
+      <header className="flex flex-col gap-2">
+        <p className="etiquette">Collection</p>
+        <h1 className="font-titre text-3xl font-bold">Mes favoris</h1>
+      </header>
       {/* La page reste un composant serveur (titre, metadata) ; seule la liste est un composant client. */}
       <ListeFavoris />
     </div>

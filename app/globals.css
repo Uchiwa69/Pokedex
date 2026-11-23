@@ -12,18 +12,30 @@
 }
 
 /* Tailwind 4 : toute la configuration est ici (pas de tailwind.config.js).
-   Chaque --color-xxx crée les utilitaires bg-xxx, text-xxx, border-xxx… */
-@theme {
-  /* Jetons sémantiques — valeurs du thème CLAIR (le thème sombre les redéfinit plus bas). */
+   Chaque --color-xxx crée les utilitaires bg-xxx, text-xxx, border-xxx… et chaque --shadow-xxx crée shadow-xxx.
+   "static" : toutes ces variables sont écrites dans le CSS final, même celles utilisées seulement ci-dessous. */
+@theme static {
+  /* ---- Jetons sémantiques — thème CLAIR : gris-bleu très pâle, verre blanc, ombres bleutées ---- */
   --color-fond: #eef2f8;
-  --color-surface: #ffffff;
-  --color-bordure: #cbd5e6;
-  --color-texte: #0f172a;
-  --color-texte-doux: #475569;
-  --color-piste: #dbe3f0;
-  --color-accent: #1d4ed8;
-  --color-sur-accent: #ffffff;
+  --color-surface: rgb(255 255 255 / 0.72); /* « verre » : blanc translucide */
+  --color-bordure: #c3cce2; /* bordure visible (champs, séparateurs) */
+  --color-bordure-verre: rgb(255 255 255 / 0.95); /* liseré lumineux des panneaux en verre */
+  --color-texte: #171a3a;
+  --color-texte-doux: #4a5578;
+  --color-piste: #dbe1f3; /* fond des barres, survols */
+  --color-accent: #4338ca;
+  --color-accent-bis: #0ea5e9; /* 2e couleur des dégradés */
+  --color-sur-accent: #ffffff; /* texte posé sur l'accent */
   --color-danger: #b91c1c;
+
+  /* Décor de fond : grille fine et deux lueurs */
+  --color-grille: rgb(67 56 202 / 0.05);
+  --color-lueur-1: rgb(99 102 241 / 0.2);
+  --color-lueur-2: rgb(56 189 248 / 0.2);
+
+  /* Une seule ombre de panneau et une seule lueur de bouton pour tout le site */
+  --shadow-carte: 0 18px 40px -18px rgb(67 56 202 / 0.35), 0 2px 6px -2px rgb(30 41 100 / 0.1);
+  --shadow-lueur: 0 10px 24px -10px rgb(67 56 202 / 0.7);
 
   /* Texte foncé posé sur les badges de type clairs (identique dans les deux thèmes). */
   --color-encre: #0b1020;
@@ -49,18 +61,28 @@
   --color-type-fairy: #d685ad;
 }
 
-/* Thème SOMBRE : on redéfinit seulement les variables.
-   Comme bg-fond vaut var(--color-fond), toute l'interface change sans toucher aux composants. */
+/* ---- Thème SOMBRE : nuit bleu très sombre, verre fumé, lueurs ----
+   On redéfinit seulement les variables : comme bg-fond vaut var(--color-fond),
+   toute l'interface change sans toucher aux composants. */
 .dark {
-  --color-fond: #070b18;
-  --color-surface: #0f1629;
-  --color-bordure: #26324f;
-  --color-texte: #e6ebf5;
-  --color-texte-doux: #9aa7c0;
-  --color-piste: #1b2440;
-  --color-accent: #7cb3ff;
-  --color-sur-accent: #0b1020;
+  --color-fond: #070a1c;
+  --color-surface: rgb(255 255 255 / 0.06);
+  --color-bordure: #2c3460;
+  --color-bordure-verre: rgb(255 255 255 / 0.1);
+  --color-texte: #eef0ff;
+  --color-texte-doux: #a9b1d6;
+  --color-piste: rgb(255 255 255 / 0.1);
+  --color-accent: #aab6ff;
+  --color-accent-bis: #67e8f9;
+  --color-sur-accent: #12143a;
   --color-danger: #fca5a5;
+
+  --color-grille: rgb(170 182 255 / 0.05);
+  --color-lueur-1: rgb(129 140 248 / 0.26);
+  --color-lueur-2: rgb(56 189 248 / 0.18);
+
+  --shadow-carte: 0 18px 40px -18px rgb(0 0 0 / 0.8);
+  --shadow-lueur: 0 10px 24px -10px rgb(170 182 255 / 0.55);
 }
 
 /* Indique au navigateur le thème en cours (barres de défilement, champs de formulaire…). */
@@ -71,8 +93,83 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Décor de fond, fixe derrière tout le site : deux lueurs + une grille fine de 32 px. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 10% 0%, var(--color-lueur-1), transparent 45%),
+    radial-gradient(circle at 100% 100%, var(--color-lueur-2), transparent 45%),
+    linear-gradient(var(--color-grille) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grille) 1px, transparent 1px);
+  background-size:
+    auto,
+    auto,
+    32px 32px,
+    32px 32px;
+}
+
 /* Focus clavier visible partout, avec la couleur d'accent du thème. */
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+/* Changement de thème : fondu de 300 ms entre l'ancien et le nouvel écran (voir BoutonTheme). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 300ms;
+}
+
+/* ---- Utilitaires maison (@utility = une classe utilisable comme celles de Tailwind) ----
+   Ils garantissent les mêmes arrondis, ombres et boutons sur toutes les pages. */
+
+/* Panneau en verre : la surface de base de toutes les cartes et de tous les encadrés. */
+@utility verre {
+  border: 1px solid var(--color-bordure-verre);
+  border-radius: 1.5rem;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-carte);
+}
+
+/* Petite étiquette en capitales espacées (N°, VITESSE, TAILLE…) : le côté « appareil ». */
+@utility etiquette {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-texte-doux);
+}
+
+/* Base commune des boutons et des liens en forme de bouton (44 px de haut au minimum). */
+@utility bouton {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding-inline: 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
+@utility bouton-principal {
+  background-color: var(--color-accent);
+  color: var(--color-sur-accent);
+  box-shadow: var(--shadow-lueur);
+}
+
+@utility bouton-secondaire {
+  border: 1px solid var(--color-bordure);
+  background-color: var(--color-surface);
+  color: var(--color-texte);
+  &:hover {
+    background-color: var(--color-piste);
+  }
 }

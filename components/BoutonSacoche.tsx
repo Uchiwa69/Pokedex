@@ -7,10 +7,9 @@ type Props = {
   pokemon: Pokemon;
   // "complet" : bouton avec texte (fiche). "rapide" : petite icône (carte de la grille).
   variante?: "complet" | "rapide";
-  className?: string;
 };
 
-export default function BoutonSacoche({ pokemon, variante = "complet", className = "" }: Props) {
+export default function BoutonSacoche({ pokemon, variante = "complet" }: Props) {
   // Un sélecteur par valeur, chacun renvoie un booléen ou une fonction (jamais un objet créé à la volée).
   const dedans = useSacoche((etat) => etat.membres.some((m) => m.pokemon.nom === pokemon.nom));
   const pleine = useSacoche((etat) => etat.membres.length >= TAILLE_MAX_SACOCHE);
@@ -41,9 +40,9 @@ export default function BoutonSacoche({ pokemon, variante = "complet", className
         aria-pressed={dedans}
         aria-label={libelle}
         title={libelle}
-        className={`flex h-11 w-11 items-center justify-center rounded-lg hover:bg-piste disabled:opacity-40 ${
+        className={`flex h-10 w-10 items-center justify-center rounded-full hover:bg-piste disabled:opacity-40 ${
           dedans ? "text-accent" : "text-texte-doux"
-        } ${className}`}
+        }`}
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           {/* Sac */}
@@ -62,9 +61,7 @@ export default function BoutonSacoche({ pokemon, variante = "complet", className
       onClick={surClic}
       disabled={bloque}
       aria-pressed={dedans}
-      className={`flex min-h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold disabled:opacity-60 ${
-        dedans ? "border border-bordure bg-surface text-texte hover:bg-piste" : "bg-accent text-sur-accent"
-      } ${className}`}
+      className={`bouton disabled:opacity-60 ${dedans ? "bouton-secondaire" : "bouton-principal"}`}
     >
       {dedans ? "Retirer de la sacoche" : bloque ? "Sacoche pleine (6 sur 6)" : "Ajouter à la sacoche"}
     </button>

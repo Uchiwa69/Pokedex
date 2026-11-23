@@ -1,5 +1,6 @@
 "use client";
 
+import { flushSync } from "react-dom";
 import { useTheme } from "next-themes";
 import { useEstMonte } from "@/hooks/useEstMonte";
 
@@ -17,12 +18,28 @@ export default function BoutonTheme() {
 
   const sombre = resolvedTheme === "dark";
 
+  function changerDeTheme() {
+    const suivant = sombre ? "light" : "dark";
+
+    // Transition douce : l'API View Transitions prend une « photo » de l'écran avant et après,
+    // puis fait un fondu entre les deux (on n'anime donc que l'opacité).
+    // Si le navigateur ne la connaît pas, on change simplement de thème.
+    if (!("startViewTransition" in document)) {
+      setTheme(suivant);
+      return;
+    }
+    document.startViewTransition(() => {
+      // flushSync : applique le changement tout de suite, pour qu'il soit sur la « photo d'après ».
+      flushSync(() => setTheme(suivant));
+    });
+  }
+
   return (
     <button
       type="button"
-      onClick={() => setTheme(sombre ? "light" : "dark")}
+      onClick={changerDeTheme}
       aria-label={sombre ? "Passer en thème clair" : "Passer en thème sombre"}
-      className="flex h-11 w-11 items-center justify-center rounded-lg border border-bordure bg-surface text-texte hover:bg-piste"
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-bordure-verre bg-surface text-texte hover:bg-piste"
     >
       {sombre ? (
         // Soleil

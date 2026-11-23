@@ -49,10 +49,23 @@ export default function BarreRecherche() {
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="recherche" className="text-sm font-medium">
+      <label htmlFor="recherche" className="etiquette">
         Rechercher un Pokémon
       </label>
       <div className="relative">
+        {/* Loupe décorative */}
+        <svg
+          viewBox="0 0 24 24"
+          className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-texte-doux"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-3.5-3.5" />
+        </svg>
         <input
           ref={champ}
           id="recherche"
@@ -62,18 +75,18 @@ export default function BarreRecherche() {
           onChange={(evenement) => chercher(evenement.target.value)}
           placeholder="Nom anglais : pikachu, char…"
           autoComplete="off"
-          className="min-h-11 w-full rounded-lg border border-bordure bg-surface px-4 pr-12 text-sm text-texte placeholder:text-texte-doux"
+          className="min-h-12 w-full rounded-full border border-bordure bg-surface pl-12 pr-12 text-sm text-texte shadow-carte placeholder:text-texte-doux"
         />
         <kbd
           aria-hidden="true"
-          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-bordure px-2 text-xs text-texte-doux"
+          className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-bordure px-2 text-xs text-texte-doux"
         >
           /
         </kbd>
       </div>
       {/* Zone toujours présente (hauteur fixe) : rien ne bouge quand le message apparaît.
           role="status" : le message est annoncé par les lecteurs d'écran. */}
-      <p role="status" className="h-4 text-xs text-texte-doux">
+      <p role="status" className="etiquette h-4 pl-4">
         {enAttente ? "Recherche…" : ""}
       </p>
     </div>

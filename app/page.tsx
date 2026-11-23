@@ -16,10 +16,13 @@ type Props = PageProps<"/">;
 export default function PageAccueil({ searchParams }: Props) {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-titre text-3xl font-bold">Tous les Pokémon</h1>
+      <header className="flex flex-col gap-2">
+        <p className="etiquette">Pokédex national</p>
+        <h1 className="font-titre text-3xl font-bold">Tous les Pokémon</h1>
+      </header>
 
       {/* BarreRecherche lit l'adresse avec useSearchParams → elle aussi a besoin d'un Suspense. */}
-      <Suspense fallback={<div className="h-24" />}>
+      <Suspense fallback={<div className="h-28" />}>
         <BarreRecherche />
       </Suspense>
 
@@ -53,7 +56,7 @@ async function Resultats({ searchParams }: { searchParams: Props["searchParams"]
         />
       ) : (
         <>
-          <p className="text-sm text-texte-doux">
+          <p className="etiquette">
             {resultat.total.toLocaleString("fr-FR")} {resultat.total > 1 ? "Pokémon trouvés" : "Pokémon trouvé"}
           </p>
           <GrillePokemons pokemons={resultat.pokemons} />

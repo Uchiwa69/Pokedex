@@ -3,7 +3,8 @@ import Link from "next/link";
 import BadgeType from "@/components/BadgeType";
 import BoutonFavori from "@/components/BoutonFavori";
 import BoutonSacoche from "@/components/BoutonSacoche";
-import { formaterNumero, type Pokemon } from "@/lib/conversion";
+import type { Pokemon } from "@/lib/conversion";
+import { styleTeinte } from "@/lib/teinte";
 
 type Props = {
   pokemon: Pokemon;
@@ -12,38 +13,68 @@ type Props = {
 };
 
 // Carte d'un Pokémon dans la grille : composant serveur. Seuls les deux boutons sont des composants client.
+// La variable --teinte (couleur du type principal) colore le dégradé, les halos et la lueur de survol.
 export default function CartePokemon({ pokemon, prioritaire = false }: Props) {
-  return (
-    <article className="relative h-full">
-      <Link
-        href={`/pokemon/${pokemon.nom}`}
-        className="flex h-full flex-col gap-2 rounded-2xl border border-bordure bg-surface p-4 hover:border-accent"
-      >
-        <p className="flex min-h-8 items-center text-xs font-semibold text-texte-doux">{formaterNumero(pokemon.id)}</p>
+  const numero = String(pokemon.id).padStart(4, "0");
 
-        <div className="relative mx-auto aspect-square w-full max-w-40">
+  return (
+    <article
+      style={styleTeinte(pokemon.types[0])}
+      // "group" : les enfants peuvent réagir au survol de la carte entière (group-hover:…).
+      className="group relative h-full transition-transform duration-200 hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+    >
+      {/* Lueur de survol : un contour et une ombre de la teinte, déjà dessinés mais invisibles.
+          On n'anime que leur opacité (on n'anime jamais box-shadow directement). */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 shadow-[0_0_0_1px_var(--teinte),0_22px_44px_-14px_var(--teinte)] transition-opacity duration-200 group-hover:opacity-100 motion-reduce:transition-none"
+      />
+
+      <Link href={`/pokemon/${pokemon.nom}`} className="verre relative flex h-full flex-col gap-2 p-3 sm:p-4">
+        {/* Décor découpé aux arrondis de la carte (l'artwork, lui, n'est pas découpé et peut « sortir »). */}
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+          {/* Dégradé de la teinte */}
+          <span className="absolute inset-0 bg-[linear-gradient(145deg,var(--teinte),transparent_60%)] opacity-30 transition-opacity duration-200 group-hover:opacity-50 motion-reduce:transition-none dark:opacity-25 dark:group-hover:opacity-45" />
+          {/* Numéro en filigrane : petit, calé à droite à l'intérieur, très discret */}
+          <span className="absolute right-3 top-12 font-titre text-4xl font-bold leading-none text-texte opacity-[0.06] sm:right-4 sm:text-5xl">
+            {numero}
+          </span>
+        </span>
+
+        <p className="etiquette relative flex min-h-8 items-center">N° {numero}</p>
+
+        <div className="relative mx-auto aspect-square w-full max-w-36">
+          {/* Halo diffus derrière l'artwork */}
+          <span aria-hidden="true" className="absolute inset-2 rounded-full bg-[var(--teinte)] opacity-30 blur-2xl dark:opacity-40" />
+          {/* Halo net au sol, comme une ombre portée de la couleur du type ; il s'élargit au survol */}
+          <span
+            aria-hidden="true"
+            className="absolute bottom-0 left-1/2 h-3 w-3/5 -translate-x-1/2 rounded-[100%] bg-[var(--teinte)] opacity-70 blur-xs transition-transform duration-200 group-hover:scale-x-125 motion-reduce:transition-none dark:opacity-60"
+          />
           {pokemon.artwork ? (
             <Image
               src={pokemon.artwork}
               alt={`Illustration de ${pokemon.nomFr}`}
               fill
               // sizes dit au navigateur quelle largeur occupera l'image → il télécharge la bonne taille.
-              sizes="160px"
+              sizes="144px"
               // Par défaut les images sont chargées « paresseusement » (lazy), à l'approche de l'écran.
               loading={prioritaire ? "eager" : "lazy"}
-              className="object-contain"
+              // Au survol l'artwork grossit et monte : il dépasse du cadre de la carte.
+              className="object-contain drop-shadow-[0_10px_12px_rgb(15_23_42/0.25)] transition-transform duration-200 group-hover:-translate-y-2 group-hover:scale-[1.18] motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 motion-reduce:group-hover:scale-100"
             />
           ) : (
             <div className="h-full w-full rounded-full bg-piste" aria-hidden="true" />
           )}
         </div>
 
-        <h2 className="font-titre text-xl font-semibold">{pokemon.nomFr}</h2>
+        {/* truncate + une seule ligne de badges : toutes les cartes ont exactement la même hauteur. */}
+        <h2 className="relative truncate font-titre text-xl font-semibold">{pokemon.nomFr}</h2>
 
-        <ul className="flex flex-wrap gap-2">
+        <ul className="relative flex flex-nowrap gap-1">
           {pokemon.types.map((type) => (
-            <li key={type}>
-              <BadgeType type={type} />
+            <li key={type} className="flex min-w-0">
+              <BadgeType type={type} petit />
             </li>
           ))}
         </ul>

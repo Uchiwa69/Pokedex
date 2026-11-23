@@ -8,7 +8,10 @@ export const metadata: Metadata = {
 export default function PageSacoche() {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-titre text-3xl font-bold">Ma sacoche</h1>
+      <header className="flex flex-col gap-2">
+        <p className="etiquette">Équipe</p>
+        <h1 className="font-titre text-3xl font-bold">Ma sacoche</h1>
+      </header>
       <ContenuSacoche />
     </div>
   );

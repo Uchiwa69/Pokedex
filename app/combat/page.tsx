@@ -8,7 +8,10 @@ export const metadata: Metadata = {
 export default function PageCombat() {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-titre text-3xl font-bold">Combat</h1>
+      <header className="flex flex-col gap-2">
+        <p className="etiquette">Arène</p>
+        <h1 className="font-titre text-3xl font-bold">Combat</h1>
+      </header>
       <EtatVide
         titre="L'arène n'est pas encore ouverte"
         message="Bientôt : ta sacoche contre une équipe tirée au hasard."

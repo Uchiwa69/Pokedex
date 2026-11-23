@@ -9,9 +9,10 @@ import BoutonFavori from "@/components/BoutonFavori";
 import BoutonSacoche from "@/components/BoutonSacoche";
 import ChaineEvolution from "@/components/ChaineEvolution";
 import SqueletteFiche from "@/components/SqueletteFiche";
-import { formaterMesure, formaterNumero } from "@/lib/conversion";
+import { formaterMesure } from "@/lib/conversion";
 import { recupererPokemon, recupererTousLesNoms } from "@/lib/pokeapi";
 import { LIBELLES_STATS } from "@/lib/stats";
+import { styleTeinte } from "@/lib/teinte";
 
 // Route dynamique : le dossier [nom] capte /pokemon/pikachu, /pokemon/mew…
 // PageProps est un type généré par Next : ici params est une PROMESSE de { nom: string }.
@@ -41,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default function PagePokemon({ params }: Props) {
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/" className="flex min-h-11 items-center self-start text-sm font-medium text-accent underline">
+      <Link href="/" className="etiquette flex min-h-11 items-center self-start hover:text-texte">
         ← Tous les Pokémon
       </Link>
       <Suspense fallback={<SqueletteFiche />}>
@@ -58,10 +59,22 @@ async function Fiche({ params }: { params: Props["params"] }) {
   // null = ce Pokémon n'existe pas → page 404 (app/not-found.tsx).
   if (!pokemon) notFound();
 
+  const numero = String(pokemon.id).padStart(4, "0");
+
   return (
-    <div className="flex flex-col gap-8">
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="relative mx-auto aspect-square w-full max-w-sm rounded-2xl border border-bordure bg-surface">
+    // --teinte : couleur du type principal, utilisée par le décor de l'illustration.
+    <div className="flex flex-col gap-8" style={styleTeinte(pokemon.types[0])}>
+      <div className="grid items-start gap-6 md:grid-cols-2">
+        {/* Écran de l'illustration */}
+        <div className="verre relative mx-auto aspect-square w-full max-w-sm overflow-hidden">
+          <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(145deg,var(--teinte),transparent_65%)] opacity-35 dark:opacity-30" />
+          {/* Numéro en filigrane */}
+          <span aria-hidden="true" className="absolute right-6 top-6 font-titre text-6xl font-bold leading-none text-texte opacity-[0.07]">
+            {numero}
+          </span>
+          {/* Halo diffus + halo net au sol, de la teinte du type */}
+          <span aria-hidden="true" className="absolute inset-1/4 rounded-full bg-[var(--teinte)] opacity-35 blur-3xl dark:opacity-45" />
+          <span aria-hidden="true" className="absolute bottom-8 left-1/2 h-5 w-1/2 -translate-x-1/2 rounded-[100%] bg-[var(--teinte)] opacity-70 blur-xs dark:opacity-60" />
           {pokemon.artwork ? (
             <Image
               src={pokemon.artwork}
@@ -69,16 +82,16 @@ async function Fiche({ params }: { params: Props["params"] }) {
               fill
               sizes="(min-width: 768px) 384px, 90vw"
               loading="eager"
-              className="object-contain p-6"
+              className="object-contain p-8 drop-shadow-[0_16px_18px_rgb(15_23_42/0.3)]"
             />
           ) : (
-            <p className="flex h-full items-center justify-center text-sm text-texte-doux">Pas d&apos;illustration</p>
+            <p className="relative flex h-full items-center justify-center text-sm text-texte-doux">Pas d&apos;illustration</p>
           )}
         </div>
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <p className="text-sm font-semibold text-texte-doux">{formaterNumero(pokemon.id)}</p>
+            <p className="etiquette">N° {numero}</p>
             <h1 className="font-titre text-3xl font-bold">{pokemon.nomFr}</h1>
             <ul className="flex flex-wrap gap-2" aria-label="Types">
               {pokemon.types.map((type) => (
@@ -91,22 +104,22 @@ async function Fiche({ params }: { params: Props["params"] }) {
 
           <div className="flex flex-wrap items-center gap-2">
             <BoutonSacoche pokemon={pokemon} />
-            <BoutonFavori nom={pokemon.nom} nomFr={pokemon.nomFr} className="border border-bordure bg-surface" />
+            <BoutonFavori nom={pokemon.nom} nomFr={pokemon.nomFr} variante="fiche" />
           </div>
 
           {/* dl = liste de paires « terme / valeur ». */}
-          <dl className="grid grid-cols-2 gap-4 rounded-2xl border border-bordure bg-surface p-4">
-            <div className="flex flex-col gap-2">
-              <dt className="text-sm text-texte-doux">Taille</dt>
+          <dl className="grid grid-cols-2 gap-4">
+            <div className="verre flex flex-col gap-2 p-4">
+              <dt className="etiquette">Taille</dt>
               <dd className="font-titre text-xl font-semibold">{formaterMesure(pokemon.taille, "m")}</dd>
             </div>
-            <div className="flex flex-col gap-2">
-              <dt className="text-sm text-texte-doux">Poids</dt>
+            <div className="verre flex flex-col gap-2 p-4">
+              <dt className="etiquette">Poids</dt>
               <dd className="font-titre text-xl font-semibold">{formaterMesure(pokemon.poids, "kg")}</dd>
             </div>
           </dl>
 
-          <section aria-labelledby="titre-stats" className="flex flex-col gap-4 rounded-2xl border border-bordure bg-surface p-4">
+          <section aria-labelledby="titre-stats" className="verre flex flex-col gap-4 p-4 sm:p-6">
             <h2 id="titre-stats" className="font-titre text-xl font-semibold">
               Statistiques
             </h2>
@@ -124,7 +137,7 @@ async function Fiche({ params }: { params: Props["params"] }) {
           Chaîne d&apos;évolution
         </h2>
         {/* Suspense imbriqué : la chaîne arrive après le reste, sans bloquer la fiche. */}
-        <Suspense fallback={<p className="text-sm text-texte-doux">Chargement des évolutions…</p>}>
+        <Suspense fallback={<p className="etiquette">Chargement des évolutions…</p>}>
           <ChaineEvolution nomEspece={pokemon.espece} nomActuel={pokemon.nom} />
         </Suspense>
       </section>

@@ -17,7 +17,8 @@ export default function Erreur({ error, retry }: Props) {
   }, [error]);
 
   return (
-    <div role="alert" className="flex flex-col items-center gap-4 py-8 text-center">
+    <div role="alert" className="verre flex flex-col items-center gap-4 px-6 py-8 text-center">
+      <p className="etiquette">Erreur</p>
       <h1 className="font-titre text-3xl font-bold">Une erreur est survenue</h1>
       <p className="max-w-md text-sm text-texte-doux">
         Impossible de charger les données pour le moment. La PokéAPI est peut-être indisponible.
@@ -25,7 +26,7 @@ export default function Erreur({ error, retry }: Props) {
       <button
         type="button"
         onClick={() => retry()}
-        className="flex min-h-11 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-sur-accent"
+        className="bouton bouton-principal"
       >
         Réessayer
       </button>

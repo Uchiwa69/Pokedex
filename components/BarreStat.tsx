@@ -12,14 +12,14 @@ export default function BarreStat({ libelle, valeur }: Props) {
   const proportion = Math.min(valeur / STAT_MAX, 1);
 
   return (
-    <li className="grid grid-cols-[6rem_2.5rem_1fr] items-center gap-2 text-sm">
-      <span className="text-texte-doux">{libelle}</span>
-      <span className="text-right font-semibold tabular-nums">{valeur}</span>
+    <li className="grid grid-cols-[5.5rem_2.5rem_1fr] items-center gap-2">
+      <span className="etiquette">{libelle}</span>
+      <span className="text-right font-titre text-sm font-semibold tabular-nums">{valeur}</span>
       <span className="h-2 overflow-hidden rounded-full bg-piste" aria-hidden="true">
         {/* La longueur dépend d'une donnée : on passe par style (une classe Tailwind dynamique ne marcherait pas).
             scaleX + origin-left : la barre est « écrasée » depuis la gauche, et transform s'anime bien (phase 7). */}
         <span
-          className="block h-full origin-left rounded-full bg-accent"
+          className="block h-full origin-left rounded-full bg-linear-to-r from-accent to-accent-bis"
           style={{ transform: `scaleX(${proportion})` }}
         />
       </span>

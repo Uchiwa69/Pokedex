@@ -59,7 +59,17 @@ Règles :
 - Couleurs : toujours les jetons sémantiques de @theme (bg-fond, bg-surface, border-bordure, text-texte,
   text-texte-doux, bg-piste, accent…), jamais de couleur en dur dans les composants.
 
-## Direction artistique (appliquée en phase 6)
+## Direction artistique (phase 6 — direction B « Verre holographique » choisie et appliquée)
+- Jetons dans app/globals.css (@theme static + bloc .dark) : fond, surface (verre translucide), bordure, bordure-verre,
+  texte, texte-doux, piste, accent (bleu-violet), accent-bis, sur-accent, danger, grille, lueur-1/2, shadow-carte, shadow-lueur.
+- Utilitaires maison (@utility) à réutiliser partout : `verre` (panneau : bordure, fond, ombre, arrondi 1.5rem),
+  `etiquette` (petites capitales espacées pour les libellés secondaires : N°, TAILLE, VITESSE…),
+  `bouton` + `bouton-principal` / `bouton-secondaire` (gélules de 44 px).
+- Arrondis : panneaux = `verre` (rounded-3xl), contrôles = rounded-full. Tailles de texte : 3xl (h1), xl (h2), sm (texte), etiquette.
+- `styleTeinte(type)` (lib/teinte.ts) pose --teinte ; cartes : dégradé, halo diffus, halo net au sol, lueur de survol.
+- Cartes de même hauteur : `auto-rows-fr`, nom en `truncate`, badges `petit` sur une seule ligne.
+- En-tête de page : `<header>` avec une `etiquette` au-dessus du h1.
+- Changement de thème : View Transitions (fondu) dans BoutonTheme.
 - Les DEUX thèmes aussi soignés l'un que l'autre :
   sombre = nuit bleu très sombre, grille fine, verre fumé, lueurs ;
   clair = fond gris-bleu très pâle (#EEF2F8), surfaces blanches translucides, ombres douces bleutées, mêmes teintes de type.

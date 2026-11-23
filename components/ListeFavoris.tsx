@@ -30,12 +30,12 @@ export default function ListeFavoris() {
   // 3. Erreur de chargement.
   if (erreur) {
     return (
-      <div role="alert" className="flex flex-col items-center gap-4 rounded-2xl border border-bordure bg-surface px-6 py-8 text-center">
+      <div role="alert" className="verre flex flex-col items-center gap-4 px-6 py-8 text-center">
         <p className="text-sm text-texte-doux">Impossible de charger tes favoris. Vérifie ta connexion.</p>
         <button
           type="button"
           onClick={reessayer}
-          className="flex min-h-11 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-sur-accent"
+          className="bouton bouton-principal"
         >
           Réessayer
         </button>
@@ -49,7 +49,7 @@ export default function ListeFavoris() {
   // 5. Les données.
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-texte-doux">
+      <p className="etiquette">
         {noms.length} {noms.length > 1 ? "favoris" : "favori"}
       </p>
       <GrillePokemons pokemons={pokemons} />

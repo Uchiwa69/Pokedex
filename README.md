@@ -5,7 +5,7 @@ données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 
 **Démo en ligne : https://pokedex-pi-coral-47.vercel.app**
 
-> Statut : en cours de développement (phases 0 à 5 terminées sur 11).
+> Statut : en cours de développement (phases 0 à 6 terminées sur 11).
 
 ## Fonctionnalités
 
@@ -17,7 +17,10 @@ données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 - **Thème clair / sombre** qui suit le système, avec choix mémorisé.
 - **Accessibilité** : navigation au clavier, focus visible, libellés ARIA, contrastes vérifiés dans les deux thèmes.
 
-À venir : direction artistique, animations, vue « équipe », attaques, mode combat, quiz.
+- **Direction artistique « verre holographique »** : fond à grille fine et lueurs, panneaux translucides, une teinte
+  par Pokémon (couleur de son type principal), soignée en clair comme en sombre.
+
+À venir : animations, vue « équipe », attaques, mode combat, quiz.
 
 ## Stack
 

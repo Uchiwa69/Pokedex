@@ -13,7 +13,7 @@ export default function IndicateurSacoche() {
     <Link
       href="/sacoche"
       aria-label={`Sacoche : ${nombre} Pokémon sur ${TAILLE_MAX_SACOCHE}`}
-      className="flex min-h-11 items-center gap-1 rounded-lg px-2 hover:bg-piste"
+      className="flex min-h-11 items-center gap-1 rounded-full border border-bordure-verre bg-surface px-3 hover:bg-piste"
     >
       {Array.from({ length: TAILLE_MAX_SACOCHE }, (_, i) => (
         <span
@@ -21,8 +21,8 @@ export default function IndicateurSacoche() {
           aria-hidden="true"
           className={
             i < nombre
-              ? "h-3 w-3 rounded-full border-2 border-accent bg-accent"
-              : "h-3 w-3 rounded-full border-2 border-bordure"
+              ? "h-2.5 w-2.5 rounded-full bg-linear-to-br from-accent-bis to-accent"
+              : "h-2.5 w-2.5 rounded-full border border-texte-doux opacity-60"
           }
         />
       ))}

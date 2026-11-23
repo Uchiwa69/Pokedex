@@ -7,10 +7,8 @@ type Props = {
   totalPages: number;
 };
 
-const CLASSES_LIEN =
-  "flex min-h-11 items-center rounded-lg border border-bordure bg-surface px-4 text-sm font-semibold text-texte hover:bg-piste";
-const CLASSES_INACTIF =
-  "flex min-h-11 items-center rounded-lg border border-bordure px-4 text-sm font-semibold text-texte-doux opacity-60";
+const CLASSES_LIEN = "bouton bouton-secondaire";
+const CLASSES_INACTIF = "bouton border border-bordure text-texte-doux opacity-50";
 
 // Pagination en liens serveur : « Précédent », « Page 2 sur 43 », « Suivant ».
 export default function Pagination({ filtres, page, totalPages }: Props) {
@@ -29,7 +27,7 @@ export default function Pagination({ filtres, page, totalPages }: Props) {
         </span>
       )}
 
-      <p className="text-sm text-texte-doux">
+      <p className="etiquette text-center">
         Page {page} sur {totalPages}
       </p>
 
