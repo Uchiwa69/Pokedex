@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pokédex — Next.js 16
 
-## Getting Started
+Un Pokédex complet construit avec **Next.js 16 (App Router)**, **TypeScript** et **Tailwind CSS 4**, à partir des
+données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 
-First, run the development server:
+> Statut : en cours de développement (phases 0 à 5 terminées sur 11).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Fonctionnalités
+
+- **Liste des 1 025 Pokémon** en grille paginée (24 par page), avec noms français.
+- **Recherche** avec debounce, **filtre par type** et **pagination** entièrement pilotés par l'adresse
+  (`?q=&type=&page=`), validés côté serveur.
+- **Fiche détaillée** : illustration officielle, types, taille, poids, six statistiques et chaîne d'évolution cliquable.
+- **Favoris** et **sacoche** (équipe de 6 Pokémon avec surnoms), conservés dans le navigateur.
+- **Thème clair / sombre** qui suit le système, avec choix mémorisé.
+- **Accessibilité** : navigation au clavier, focus visible, libellés ARIA, contrastes vérifiés dans les deux thèmes.
+
+À venir : direction artistique, animations, vue « équipe », attaques, mode combat, quiz.
+
+## Stack
+
+| Domaine | Choix |
+| --- | --- |
+| Framework | Next.js 16 — App Router, Cache Components (`"use cache"`), Partial Prerendering |
+| Langage | TypeScript |
+| Styles | Tailwind CSS 4 (configuration dans `app/globals.css` avec `@theme`) |
+| État client | Zustand (`persist` + réhydratation après l'hydratation React) |
+| Thème | next-themes |
+| Données | PokéAPI v2 (lecture seule, sans clé) |
+
+## Architecture
+
+```
+app/          Routes (liste, fiche /pokemon/[nom], favoris, sacoche, combat, à propos)
+components/   Composants d'interface — serveur par défaut, client seulement pour l'interactivité
+hooks/        Hooks réutilisables (debounce, raccourci clavier, chargement client…)
+lib/          Accès à la PokéAPI, conversion des données, validation des paramètres d'adresse
+stores/       Stores Zustand (favoris, sacoche) avec leurs règles métier
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Quelques principes suivis dans le code :
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Composants serveur par défaut** ; `"use client"` uniquement sur de petites feuilles interactives.
+- **Données mises en cache côté serveur** (`"use cache"` + `cacheLife("days")`) ; les 151 premières fiches sont
+  générées au build avec `generateStaticParams`.
+- **Tout ce qui dépend de la requête** (`params`, `searchParams`) est lu sous `<Suspense>`.
+- **Les données restent en anglais** (`fire`) et ne sont traduites qu'à l'affichage.
+- **Les règles métier vivent dans les stores** (6 Pokémon maximum, pas de doublon).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Lancer le projet
 
-## Learn More
+Prérequis : Node.js 20 ou plus.
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev      # http://localhost:3000
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Autres commandes :
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run lint     # ESLint
+npm run build    # build de production (nécessite un accès à la PokéAPI)
+npm start        # sert le build de production
+```
 
-## Deploy on Vercel
+## Déploiement
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+L'application a besoin d'un serveur Node.js (rendu serveur, cache, routes dynamiques) : elle se déploie sur
+[Vercel](https://vercel.com) ou tout hébergeur Node.js. Elle ne peut pas être servie telle quelle par un hébergement
+purement statique.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Crédits et mentions
+
+- Données et images : [PokéAPI](https://pokeapi.co).
+- Pokémon est une marque de Nintendo / Game Freak / The Pokémon Company. Projet étudiant non commercial, sans
+  affiliation avec ces sociétés.
