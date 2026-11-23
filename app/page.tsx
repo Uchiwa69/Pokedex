@@ -26,11 +26,24 @@ export default function PageAccueil({ searchParams }: Props) {
         <BarreRecherche />
       </Suspense>
 
+      {/* Le filtre a son propre <Suspense> : il s'affiche sans attendre la liste des Pokémon.
+          En attendant l'adresse, on montre déjà le filtre (sans type actif) : il occupe exactement
+          la même place, donc rien ne se décale. */}
+      <Suspense fallback={<FiltreTypes q="" typeActif={null} />}>
+        <Filtre searchParams={searchParams} />
+      </Suspense>
+
       <Suspense fallback={<SqueletteGrille />}>
         <Resultats searchParams={searchParams} />
       </Suspense>
     </div>
   );
+}
+
+// Lit l'adresse (aucune donnée à charger) et passe le type actif au filtre.
+async function Filtre({ searchParams }: { searchParams: Props["searchParams"] }) {
+  const filtres = validerFiltres(await searchParams);
+  return <FiltreTypes q={filtres.q} typeActif={filtres.type} />;
 }
 
 async function Resultats({ searchParams }: { searchParams: Props["searchParams"] }) {
@@ -42,8 +55,6 @@ async function Resultats({ searchParams }: { searchParams: Props["searchParams"]
 
   return (
     <div className="flex flex-col gap-6">
-      <FiltreTypes q={filtres.q} typeActif={filtres.type} />
-
       {resultat.total === 0 ? (
         <EtatVide
           titre="Aucun Pokémon trouvé"

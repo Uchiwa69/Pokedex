@@ -32,16 +32,53 @@ const API = "https://pokeapi.co/api/v2";
 export const TOTAL_POKEMONS = 1025;
 export const PAR_PAGE = 24;
 
-// Lit une adresse de l'API et distingue deux situations :
-// - 404 → la ressource n'existe pas → on renvoie null (la page appellera notFound()) ;
-// - toute autre réponse en échec → l'API est en panne → on lève une erreur (captée par error.tsx).
-async function lire<T>(url: string): Promise<T | null> {
-  const reponse = await fetch(url);
-  if (reponse.status === 404) return null;
-  if (!reponse.ok) {
-    throw new Error(`La PokéAPI a répondu ${reponse.status} pour ${url}`);
+// ---- Appels à l'API : limités en nombre et relancés en cas d'échec passager ----
+// Une page de la liste demande 24 Pokémon d'un coup. Si UN seul de ces appels échouait (connexion
+// refusée, délai dépassé), toute la page tombait sur l'écran d'erreur. Deux protections :
+// 1. pas plus de 6 appels en même temps (les autres attendent leur tour) ;
+// 2. un appel qui échoue pour une raison passagère est retenté, jusqu'à 3 essais.
+const APPELS_SIMULTANES = 6;
+const ESSAIS = 3;
+const DELAI_MAX = 6000; // millisecondes avant d'abandonner un essai
+
+let enCours = 0;
+const fileAttente: (() => void)[] = [];
+
+// Attend qu'une place se libère, exécute la tâche, puis passe la main à l'appel suivant.
+async function chacunSonTour<T>(tache: () => Promise<T>): Promise<T> {
+  if (enCours >= APPELS_SIMULTANES) await new Promise<void>((suivant) => fileAttente.push(suivant));
+  enCours++;
+  try {
+    return await tache();
+  } finally {
+    enCours--;
+    fileAttente.shift()?.();
   }
-  return (await reponse.json()) as T;
+}
+
+const pause = (ms: number) => new Promise((resoudre) => setTimeout(resoudre, ms));
+
+// Lit une adresse de l'API et distingue trois situations :
+// - 404 → la ressource n'existe pas → on renvoie null (la page appellera notFound()) ;
+// - échec passager (réseau, délai dépassé, erreur 5xx, trop de requêtes) → on retente ;
+// - échec après tous les essais → on lève une erreur (captée par error.tsx).
+async function lire<T>(url: string): Promise<T | null> {
+  return chacunSonTour(async () => {
+    for (let essai = 1; ; essai++) {
+      try {
+        // AbortSignal.timeout : abandonne l'essai s'il dure trop longtemps, au lieu de bloquer la page.
+        const reponse = await fetch(url, { signal: AbortSignal.timeout(DELAI_MAX) });
+        if (reponse.status === 404) return null;
+        if (reponse.ok) return (await reponse.json()) as T;
+        // Une erreur 4xx (autre que 429) ne changera pas en réessayant : on arrête tout de suite.
+        if (reponse.status < 500 && reponse.status !== 429) essai = ESSAIS;
+        throw new Error(`La PokéAPI a répondu ${reponse.status} pour ${url}`);
+      } catch (erreur) {
+        if (essai >= ESSAIS) throw erreur;
+        await pause(300 * essai); // petite attente, un peu plus longue à chaque essai
+      }
+    }
+  });
 }
 
 // Nom français et adresse de la chaîne d'évolution d'une espèce.
@@ -55,7 +92,10 @@ export async function recupererEspece(nom: string): Promise<Espece | null> {
 
 // Un Pokémon complet, ou null s'il n'existe pas.
 export async function recupererPokemon(nom: string): Promise<Pokemon | null> {
-  "use cache";
+  // "use cache: remote" : variante de "use cache" dont le résultat est rangé dans un cache PARTAGÉ et durable
+  // de l'hébergeur. Sur Vercel, le cache ordinaire vit dans la mémoire d'une fonction qui s'éteint après
+  // chaque visite : sans « remote », chaque filtre relançait ses appels à la PokéAPI.
+  "use cache: remote";
   cacheLife("days");
 
   const brut = await lire<PokemonBrut>(`${API}/pokemon/${encodeURIComponent(nom.toLowerCase())}`);
@@ -72,7 +112,7 @@ type ListeBrute = {
 
 // Les noms (anglais) des 1 025 Pokémon, dans l'ordre du Pokédex. Une seule requête.
 export async function recupererTousLesNoms(): Promise<string[]> {
-  "use cache";
+  "use cache: remote"; // cache partagé : voir recupererPokemon
   cacheLife("days");
 
   const brute = await lire<ListeBrute>(`${API}/pokemon?limit=${TOTAL_POKEMONS}&offset=0`);
@@ -87,7 +127,7 @@ type PokemonsDuTypeBruts = {
 
 // Les noms des Pokémon d'un type donné (limités au Pokédex national), dans l'ordre des numéros.
 export async function recupererNomsDuType(type: NomType): Promise<string[]> {
-  "use cache";
+  "use cache: remote"; // cache partagé : voir recupererPokemon
   cacheLife("days");
 
   const brut = await lire<PokemonsDuTypeBruts>(`${API}/type/${type}`);

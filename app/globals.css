@@ -269,3 +269,196 @@ html.dark {
     background-color: var(--color-piste);
   }
 }
+
+/* ---- Filtre par type : une tuile par type (symbole + libellé) ---- */
+@utility puce-tuile {
+  @apply flex min-h-11 w-[4.75rem] flex-col items-center gap-1 rounded-2xl border border-bordure bg-surface px-1 py-2 text-[11px] font-semibold text-texte transition-colors duration-200;
+}
+
+/* ---- Effet joué sur l'écran quand on choisit un type (components/EffetType.tsx) ----
+   Uniquement transform et opacity : le navigateur les anime sans recalculer la mise en page.
+   --ox / --oy : centre de la tuile cliquée. Les autres variables (--x, --y, --dx, --jx, --jy, --a,
+   --rayon, --s, --r, --delai, --duree) sont posées sur chaque élément par le composant. */
+@utility barre-attente {
+  /* N'apparaît que si l'attente dépasse 150 ms : invisible quand la réponse est immédiate. */
+  transform-origin: left;
+  animation: barre-attente 2.5s cubic-bezier(0.1, 0.6, 0.2, 1) 150ms both;
+}
+@utility effet-voile {
+  animation: effet-voile 650ms ease-out both;
+}
+@utility effet-anneau {
+  /* L'anneau est dessiné UNE fois à grande taille puis seulement agrandi un peu : le navigateur garde
+     une seule image en mémoire (will-change) au lieu de la redessiner de plus en plus grande. */
+  left: var(--ox);
+  top: var(--oy);
+  width: 60vmax;
+  height: 60vmax;
+  margin: -30vmax 0 0 -30vmax;
+  border-radius: 9999px;
+  background: radial-gradient(circle, transparent 60%, var(--teinte) 65%, transparent 70%);
+  will-change: transform, opacity;
+  animation: effet-anneau 900ms cubic-bezier(0.1, 0.6, 0.3, 1) var(--delai, 0ms) both;
+}
+
+/* Les fonds */
+@utility effet-foudre {
+  animation: effet-foudre 560ms linear var(--delai, 0ms) both;
+}
+@utility effet-vague {
+  /* Une lueur arrondie, sans bord net, qui monte du bas de l'écran puis s'efface. */
+  background: radial-gradient(ellipse 75% 100% at 50% 100%, var(--teinte) 0%, transparent 72%);
+  animation: effet-vague 1000ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@utility effet-rafale {
+  top: var(--y);
+  background: linear-gradient(90deg, transparent, var(--teinte), transparent);
+  animation: effet-rafale 750ms cubic-bezier(0.3, 0.1, 0.5, 1) var(--delai, 0ms) both;
+}
+@utility effet-vignette {
+  background: radial-gradient(ellipse at center, transparent 40%, var(--teinte) 125%);
+  animation: effet-vignette 1150ms ease-out both;
+}
+@utility effet-reflet {
+  background: linear-gradient(90deg, transparent, white 45%, var(--teinte) 55%, transparent);
+  animation: effet-reflet 750ms cubic-bezier(0.3, 0.1, 0.3, 1) 80ms both;
+}
+
+/* Les mouvements des symboles */
+@utility effet-jet {
+  animation: effet-jet var(--duree) cubic-bezier(0.1, 0.7, 0.3, 1) var(--delai, 0ms) both;
+}
+@utility effet-pluie {
+  animation: effet-pluie var(--duree) linear var(--delai, 0ms) both;
+}
+@utility effet-montee {
+  animation: effet-montee var(--duree) cubic-bezier(0.3, 0.4, 0.5, 1) var(--delai, 0ms) both;
+}
+@utility effet-flotte {
+  animation: effet-flotte var(--duree) linear var(--delai, 0ms) both;
+}
+@utility effet-scintille {
+  animation: effet-scintille var(--duree) ease-in-out var(--delai, 0ms) both;
+}
+@utility effet-orbite {
+  animation: effet-orbite var(--duree) cubic-bezier(0.2, 0.6, 0.3, 1) var(--delai, 0ms) both;
+}
+@utility effet-envol {
+  animation: effet-envol var(--duree) cubic-bezier(0.3, 0, 0.3, 1) var(--delai, 0ms) both;
+}
+@utility effet-traverse {
+  animation: effet-traverse var(--duree) linear var(--delai, 0ms) both;
+}
+@utility effet-lourde {
+  animation: effet-lourde var(--duree) linear var(--delai, 0ms) both;
+}
+
+@keyframes barre-attente {
+  0% { transform: scaleX(0); opacity: 0; }
+  5% { opacity: 1; }
+  100% { transform: scaleX(0.92); opacity: 1; }
+}
+@keyframes effet-voile {
+  0% { opacity: 0; }
+  18% { opacity: 0.2; }
+  100% { opacity: 0; }
+}
+@keyframes effet-anneau {
+  0% { transform: scale(0.02); opacity: 0.95; }
+  100% { transform: scale(3.6); opacity: 0; }
+}
+@keyframes effet-foudre {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  22% { opacity: 0.15; }
+  34% { opacity: 1; }
+  55% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+@keyframes effet-vague {
+  0% { transform: translate3d(0, 55%, 0); opacity: 0; }
+  40% { opacity: 0.5; }
+  100% { transform: translate3d(0, -12%, 0); opacity: 0; }
+}
+@keyframes effet-rafale {
+  0% { transform: translate3d(-60vw, 0, 0) rotate(-16deg); opacity: 0; }
+  25% { opacity: 0.9; }
+  100% { transform: translate3d(115vw, -32vh, 0) rotate(-16deg); opacity: 0; }
+}
+@keyframes effet-vignette {
+  0% { transform: scale(1.3); opacity: 0; }
+  35% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.05); opacity: 0; }
+}
+@keyframes effet-reflet {
+  0% { transform: translate3d(-45vw, 0, 0) skewX(-20deg); opacity: 0; }
+  20% { opacity: 0.35; }
+  100% { transform: translate3d(125vw, 0, 0) skewX(-20deg); opacity: 0; }
+}
+
+/* jet : jaillit de la tuile dans la direction (--jx, --jy) */
+@keyframes effet-jet {
+  0% { transform: translate3d(var(--ox), var(--oy), 0) scale(0.2) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  70% { opacity: 0.9; }
+  100% { transform: translate3d(calc(var(--ox) + var(--jx)), calc(var(--oy) + var(--jy)), 0) scale(var(--s)) rotate(var(--r)); opacity: 0; }
+}
+/* pluie : tombe vite, légèrement en biais */
+@keyframes effet-pluie {
+  0% { transform: translate3d(var(--x), -10vh, 0) rotate(14deg); opacity: 0; }
+  10% { opacity: 0.9; }
+  90% { opacity: 0.9; }
+  100% { transform: translate3d(calc(var(--x) - 9vw), 106vh, 0) rotate(14deg); opacity: 0; }
+}
+/* montee : s'élève du bas en ondulant de gauche à droite */
+@keyframes effet-montee {
+  0% { transform: translate3d(var(--x), 106vh, 0) scale(0.6); opacity: 0; }
+  15% { opacity: 0.95; }
+  50% { transform: translate3d(calc(var(--x) + var(--dx)), 52vh, 0) scale(1); }
+  80% { opacity: 0.7; }
+  100% { transform: translate3d(calc(var(--x) - var(--dx)), 4vh, 0) scale(var(--s)); opacity: 0; }
+}
+/* flotte : descend lentement en se balançant et en tournant */
+@keyframes effet-flotte {
+  0% { transform: translate3d(var(--x), -10vh, 0) rotate(0deg); opacity: 0; }
+  12% { opacity: 0.95; }
+  33% { transform: translate3d(calc(var(--x) + var(--dx)), 26vh, 0) rotate(calc(var(--r) * 0.33)); }
+  66% { transform: translate3d(calc(var(--x) - var(--dx)), 64vh, 0) rotate(calc(var(--r) * 0.66)); }
+  85% { opacity: 0.8; }
+  100% { transform: translate3d(calc(var(--x) + var(--dx)), 104vh, 0) rotate(var(--r)); opacity: 0; }
+}
+/* scintille : apparaît puis disparaît sur place */
+@keyframes effet-scintille {
+  0% { transform: translate3d(var(--x), var(--y), 0) scale(0) rotate(0deg); opacity: 0; }
+  40% { transform: translate3d(var(--x), var(--y), 0) scale(var(--s)) rotate(40deg); opacity: 1; }
+  100% { transform: translate3d(var(--x), var(--y), 0) scale(0) rotate(90deg); opacity: 0; }
+}
+/* orbite : tourne autour de la tuile en s'éloignant */
+@keyframes effet-orbite {
+  0% { transform: translate3d(var(--ox), var(--oy), 0) rotate(var(--a)) translateX(4vmin) scale(0.4); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate3d(var(--ox), var(--oy), 0) rotate(calc(var(--a) + 320deg)) translateX(var(--rayon)) scale(var(--s)); opacity: 0; }
+}
+/* envol : file vers le haut en diagonale */
+@keyframes effet-envol {
+  0% { transform: translate3d(var(--x), 106vh, 0) rotate(-35deg) scale(0.7); opacity: 0; }
+  15% { opacity: 0.95; }
+  100% { transform: translate3d(calc(var(--x) + 38vw), -12vh, 0) rotate(-35deg) scale(var(--s)); opacity: 0; }
+}
+/* traverse : zigzague d'un bord de l'écran à l'autre */
+@keyframes effet-traverse {
+  0% { transform: translate3d(-8vw, var(--y), 0); opacity: 0; }
+  10% { opacity: 0.95; }
+  25% { transform: translate3d(22vw, calc(var(--y) - 7vh), 0); }
+  50% { transform: translate3d(50vw, calc(var(--y) + 7vh), 0); }
+  75% { transform: translate3d(78vw, calc(var(--y) - 7vh), 0); }
+  90% { opacity: 0.9; }
+  100% { transform: translate3d(108vw, var(--y), 0); opacity: 0; }
+}
+/* lourde : tombe en accélérant, puis rebondit une fois au sol */
+@keyframes effet-lourde {
+  0% { transform: translate3d(var(--x), -14vh, 0) rotate(0deg); opacity: 1; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.5); }
+  65% { transform: translate3d(var(--x), 90vh, 0) rotate(var(--r)); opacity: 1; animation-timing-function: ease-out; }
+  82% { transform: translate3d(calc(var(--x) + var(--dx)), 80vh, 0) rotate(var(--r)); opacity: 0.9; animation-timing-function: ease-in; }
+  100% { transform: translate3d(calc(var(--x) + var(--dx) * 2), 94vh, 0) rotate(var(--r)); opacity: 0; }
+}
