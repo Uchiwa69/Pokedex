@@ -3,6 +3,8 @@
 Un Pokédex complet construit avec **Next.js 16 (App Router)**, **TypeScript** et **Tailwind CSS 4**, à partir des
 données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 
+**Démo en ligne : https://pokedex-pi-coral-47.vercel.app**
+
 > Statut : en cours de développement (phases 0 à 5 terminées sur 11).
 
 ## Fonctionnalités
@@ -59,12 +61,23 @@ npm run dev      # http://localhost:3000
 Autres commandes :
 
 ```bash
-npm run lint     # ESLint
-npm run build    # build de production (nécessite un accès à la PokéAPI)
-npm start        # sert le build de production
+npm run lint        # ESLint
+npm run typecheck   # vérification des types TypeScript
+npm run build       # build de production (nécessite un accès à la PokéAPI)
+npm start           # sert le build de production
+npm run clean       # supprime le dossier .next
+```
+
+Les mêmes commandes sont disponibles en raccourcis avec [`make`](Makefile) ou [`just`](justfile) :
+
+```bash
+make help    # ou : just
+make check   # lint + typecheck + build, à lancer avant un commit
 ```
 
 ## Déploiement
+
+Le site est déployé sur Vercel : https://pokedex-pi-coral-47.vercel.app (redéployé à chaque `git push` sur `main`).
 
 L'application a besoin d'un serveur Node.js (rendu serveur, cache, routes dynamiques) : elle se déploie sur
 [Vercel](https://vercel.com) ou tout hébergeur Node.js. Elle ne peut pas être servie telle quelle par un hébergement

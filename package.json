@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "clean": "node -e \"require('fs').rmSync('.next', { recursive: true, force: true })\""
   },
   "dependencies": {
     "next": "16.4.6",
