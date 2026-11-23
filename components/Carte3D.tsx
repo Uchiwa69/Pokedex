@@ -72,6 +72,23 @@ const PIXELS = `
   }
 `;
 
+// Rend la main au navigateur un instant. Entre deux étapes lourdes, cela lui laisse le temps de
+// réagir à un clic ou à un défilement : la préparation de la carte ne bloque plus la page d'un seul bloc.
+const souffler = () => new Promise<void>((resoudre) => setTimeout(resoudre, 0));
+
+// Attend que la page ait fini de se charger ET que le navigateur soit inoccupé : la carte 3D est un
+// plus, elle ne doit pas ralentir l'affichage du contenu principal de la fiche.
+function attendreRepos() {
+  return new Promise<void>((resoudre) => {
+    const quandInoccupe = () => {
+      if ("requestIdleCallback" in window) requestIdleCallback(() => resoudre(), { timeout: 2000 });
+      else setTimeout(resoudre, 300); // Safari ne connaît pas requestIdleCallback
+    };
+    if (document.readyState === "complete") quandInoccupe();
+    else window.addEventListener("load", quandInoccupe, { once: true });
+  });
+}
+
 export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, surPret, surEchec }: Props) {
   const refConteneur = useRef<HTMLDivElement>(null);
   const refCommandes = useRef<Commandes | null>(null);
@@ -97,6 +114,8 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
     let nettoyer = () => {};
 
     (async () => {
+      await attendreRepos();
+      if (annule) return;
       const THREE = await import("three");
       const { OrbitControls } = await import("three/examples/jsm/controls/OrbitControls.js");
       if (annule) return;
@@ -188,8 +207,16 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       // (hauteur de la zone × densité de pixels de l'écran), avec une petite marge pour le zoom.
       const pixelsAffiches = conteneur.clientHeight * 0.87 * rendu.getPixelRatio();
       const finesse = Math.min(2.4, Math.max(1, (pixelsAffiches * 1.35) / HAUTEUR));
+      await souffler();
       dessinerFace(toileFace, donnees, image, finesse);
+      await souffler();
       dessinerDos(toileDos, teinte, policeTitre, finesse);
+      await souffler();
+      if (annule) {
+        rendu.dispose();
+        rendu.domElement.remove();
+        return;
+      }
       const textureFace = new THREE.CanvasTexture(toileFace);
       const textureDos = new THREE.CanvasTexture(toileDos);
       for (const texture of [textureFace, textureDos]) {
@@ -307,11 +334,6 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
           aria-label={`Carte holographique de ${nom}, orientable à la souris, au doigt ou avec les boutons ci-dessous`}
           className="absolute inset-0 touch-none"
         />
-        {etat === "chargement" && (
-          <p role="status" className="etiquette absolute inset-0 flex items-center justify-center">
-            Préparation de la carte…
-          </p>
-        )}
         {etat === "erreur" && (
           <p role="alert" className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-texte-doux">
             La 3D n&apos;est pas disponible sur cet appareil.
