@@ -6,14 +6,6 @@ par tour et quiz. Projet de fin de cours.
 
 **Démo en ligne : https://pokedex-pi-coral-47.vercel.app**
 
-## Captures
-
-| Thème sombre | Thème clair |
-| --- | --- |
-| ![Liste des Pokémon et filtre par type, thème sombre](docs/captures/accueil-sombre.png) | ![Liste des Pokémon et filtre par type, thème clair](docs/captures/accueil-clair.png) |
-| ![Fiche d'Ectoplasma avec sa carte holographique, thème sombre](docs/captures/fiche-sombre.png) | ![Fiche de Dracaufeu avec sa carte holographique, thème clair](docs/captures/fiche-clair.png) |
-| ![Effet joué à l'écran quand on choisit le type Électrik](docs/captures/effet-type.png) | ![Attaques apprises par niveau d'Ectoplasma](docs/captures/attaques-sombre.png) |
-
 ## Fonctionnalités
 
 - **Liste des 1 025 Pokémon** en grille paginée (24 par page), avec noms français.
@@ -32,14 +24,12 @@ par tour et quiz. Projet de fin de cours.
   précision, ordre selon la vitesse, IA adverse, journal de combat accessible, et **effets d'attaque dessinés sur
   un canvas** (projectile, trajectoire, impact) choisis selon le type, la catégorie et la puissance de l'attaque.
 - **Quiz « Qui est ce Pokémon ? »** : une silhouette, quatre propositions, révélation animée.
-- **Direction artistique « verre holographique »** : panneaux translucides sur fond uni, une teinte par Pokémon
-  (couleur de son type principal), soignée en clair comme en sombre. Le thème suit le système et le choix est
-  mémorisé.
+- **Direction artistique « verre holographique »** : thème sombre, panneaux translucides sur fond uni, une teinte
+  par Pokémon (couleur de son type principal).
 - **Animations** : apparition en cascade, inclinaison 3D des cartes, transition partagée de l'illustration entre la
   grille et la fiche (View Transitions) — uniquement `transform` et `opacity`, et réduites à de simples fondus avec
   `prefers-reduced-motion`. Aucun son automatique.
-- **Accessibilité** : navigation au clavier, focus visible, libellés ARIA, zones `aria-live`, contrastes vérifiés
-  dans les deux thèmes.
+- **Accessibilité** : navigation au clavier, focus visible, libellés ARIA, zones `aria-live`, contrastes vérifiés.
 
 ## Stack
 
@@ -49,7 +39,7 @@ par tour et quiz. Projet de fin de cours.
 | Langage | TypeScript |
 | Styles | Tailwind CSS 4 (configuration dans `app/globals.css` avec `@theme`) |
 | État client | Zustand (`persist` + réhydratation après l'hydratation React) |
-| Thème | next-themes |
+| Thème | next-themes (thème sombre imposé avec `forcedTheme`) |
 | Animations | motion (`motion/react`) et CSS, `prefers-reduced-motion` respecté |
 | 3D | three.js, pour la carte holographique de la fiche (chargée après la page) |
 | Tests | vitest (fonctions pures de `lib/combat.ts` et de `lib/labo/effets2d.ts`) |

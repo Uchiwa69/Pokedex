@@ -25,7 +25,8 @@ Code simple, lisible, commenté en français quand une notion du cours est appli
 - Données : PokéAPI https://pokeapi.co/api/v2 (lecture seule, sans clé).
 - Ajout autorisé pour l'UX : la bibliothèque motion (import depuis "motion/react"), seulement dans des composants client.
 - Tests : vitest, uniquement pour les fonctions pures de lib/combat.ts.
-- Thème clair/sombre : next-themes (attribute="class", defaultTheme="system", enableSystem), ThemeProvider dans un
+- Thème : SOMBRE UNIQUEMENT (choix de l'utilisateur, novembre 2026) — next-themes avec forcedTheme="dark", plus de
+  bouton de thème. Les jetons clairs de globals.css ne servent plus. ThemeProvider dans un
   petit composant client Fournisseurs monté dans le layout, avec suppressHydrationWarning sur <html>. Tailwind 4 :
   `@custom-variant dark (&:where(.dark, .dark *));` dans globals.css.
 
@@ -72,11 +73,7 @@ Règles :
 - `styleTeinte(type)` (lib/teinte.ts) pose --teinte ; cartes : dégradé, halo diffus, halo net au sol, lueur de survol.
 - Cartes de même hauteur : `auto-rows-fr`, nom en `truncate`, badges `petit` sur une seule ligne.
 - En-tête de page : `<header>` avec une `etiquette` au-dessus du h1.
-- Changement de thème : View Transitions (fondu) dans BoutonTheme.
-- Les DEUX thèmes aussi soignés l'un que l'autre :
-  sombre = nuit bleu très sombre, grille fine, verre fumé, lueurs ;
-  clair = fond gris-bleu très pâle (#EEF2F8), surfaces blanches translucides, ombres douces bleutées, mêmes teintes de type.
-- Le thème suit le système par défaut et le choix est mémorisé. Transition douce des couleurs au changement de thème.
+- Un seul thème, le sombre : nuit bleu très sombre, verre fumé, lueurs de la teinte du type.
 - Inspiration écran de Pokédex rétro-futuriste, sans logo officiel.
 - Polices next/font : Chakra Petch pour les titres, Inter pour le texte.
 - Une variable --teinte par carte (couleur du type principal) pour le dégradé, le halo derrière l'artwork et la lueur
@@ -93,8 +90,7 @@ Règles :
 
 ## Définition de « terminé » (à vérifier à chaque phase)
 - npm run lint et npm run build passent, sans erreur d'hydratation dans la console.
-- Rendu correct à 375 px, en thème clair ET en thème sombre (contraste du texte au moins 4,5:1 dans les deux), et avec
-  les animations réduites. Aucun flash de mauvais thème au chargement.
+- Rendu correct à 375 px (contraste du texte au moins 4,5:1) et avec les animations réduites.
 - Tout fonctionne au clavier avec un focus visible ; alt sur chaque image ; un seul h1 par page ; les actions sont
   des <button>, les navigations des liens.
 
@@ -122,6 +118,6 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 
 ## Vérifier le rendu sans navigateur interactif
 - Captures : Chrome sans fenêtre sur le site Vercel
-  (`chrome.exe --headless=new --window-size=1280,800 --screenshot=... URL` ; thème clair : `--blink-settings=preferredColorScheme=1`).
+  (`chrome.exe --headless=new --window-size=1280,800 --screenshot=... URL`).
 - Audit : `npx lighthouse URL --output=json --chrome-flags="--headless=new"` (émulation mobile, capture finale incluse).
-- Les captures du README sont dans docs/captures/.
+- Le README n'a plus de captures (choix de l'utilisateur).

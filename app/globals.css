@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 /* Tailwind 4 : la variante dark: s'active quand <html> porte la classe .dark
-   (c'est next-themes qui pose cette classe). */
+   (c'est next-themes qui pose cette classe). Le site est toujours en thème sombre :
+   la classe .dark est donc toujours présente (forcedTheme dans components/Fournisseurs.tsx). */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Polices : next/font crée les variables --font-inter et --font-chakra (voir app/layout.tsx).
@@ -200,12 +201,6 @@ html.dark {
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
-}
-
-/* Changement de thème : fondu de 300 ms entre l'ancien et le nouvel écran (voir BoutonTheme). */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 300ms;
 }
 
 /* Transition partagée de l'artwork entre la carte et la fiche (<ViewTransition share="morph">) :

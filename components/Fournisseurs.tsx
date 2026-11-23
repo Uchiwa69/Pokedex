@@ -8,8 +8,9 @@ export default function Fournisseurs({ children }: { children: React.ReactNode }
   return (
     <ThemeProvider
       attribute="class" // pose la classe "dark" sur <html>
-      defaultTheme="system" // suit le thème du système par défaut…
-      enableSystem // …et le choix de l'utilisateur est mémorisé dans le localStorage
+      // Le site n'a plus qu'un thème, le sombre (choix de l'utilisateur). forcedTheme l'impose à tout le
+      // monde, quels que soient le réglage du système et un ancien choix mémorisé dans le navigateur.
+      forcedTheme="dark"
     >
       {children}
     </ThemeProvider>
