@@ -130,6 +130,10 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       conteneur.appendChild(rendu.domElement);
       rendu.domElement.style.display = "block";
+      // Le canvas contient plus de pixels que sa taille affichée sur les écrans denses (téléphones) :
+      // sa taille À L'ÉCRAN doit donc être fixée en CSS, sinon il déborde de sa zone et la carte est coupée.
+      rendu.domElement.style.width = "100%";
+      rendu.domElement.style.height = "100%";
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
@@ -213,7 +217,10 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       const arriere = new THREE.Mesh(geometrieFace, new THREE.MeshBasicMaterial({ map: textureDos }));
       arriere.position.z = -epaisseur / 2 - 0.001;
       arriere.rotation.y = Math.PI;
-      const refletArriere = new THREE.Mesh(geometrieFace, reflet);
+      // Le dos est plus clair et plus chargé que la face : son reflet est un peu renforcé pour rester visible.
+      const refletDos = reflet.clone();
+      refletDos.uniforms.uForce.value = 1.6;
+      const refletArriere = new THREE.Mesh(geometrieFace, refletDos);
       refletArriere.position.z = -epaisseur / 2 - 0.003;
       refletArriere.rotation.y = Math.PI;
       carte.add(tranche, avant, refletAvant, arriere, refletArriere);
@@ -276,6 +283,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         (avant.material as import("three").Material).dispose();
         (arriere.material as import("three").Material).dispose();
         reflet.dispose();
+        refletDos.dispose();
         rendu.dispose();
         rendu.domElement.remove();
         refCommandes.current = null;
