@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Chakra_Petch, Inter } from "next/font/google";
 import EnTete from "@/components/EnTete";
 import Fournisseurs from "@/components/Fournisseurs";
+import HydratationStores from "@/components/HydratationStores";
 import PiedDePage from "@/components/PiedDePage";
 import "./globals.css";
 
@@ -34,6 +35,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="fr" suppressHydrationWarning className={`${inter.variable} ${chakra.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-fond font-sans text-texte">
         <Fournisseurs>
+          {/* Relit favoris et sacoche dans le localStorage, après l'hydratation. */}
+          <HydratationStores />
           {/* Lien d'évitement : visible seulement au focus clavier. */}
           <a
             href="#contenu"

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import BadgeType from "@/components/BadgeType";
 import BarreStat from "@/components/BarreStat";
+import BoutonFavori from "@/components/BoutonFavori";
+import BoutonSacoche from "@/components/BoutonSacoche";
 import ChaineEvolution from "@/components/ChaineEvolution";
 import SqueletteFiche from "@/components/SqueletteFiche";
 import { formaterMesure, formaterNumero } from "@/lib/conversion";
@@ -85,6 +87,11 @@ async function Fiche({ params }: { params: Props["params"] }) {
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <BoutonSacoche pokemon={pokemon} />
+            <BoutonFavori nom={pokemon.nom} nomFr={pokemon.nomFr} className="border border-bordure bg-surface" />
           </div>
 
           {/* dl = liste de paires « terme / valeur ». */}

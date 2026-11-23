@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import BadgeType from "@/components/BadgeType";
+import BoutonFavori from "@/components/BoutonFavori";
+import BoutonSacoche from "@/components/BoutonSacoche";
 import { formaterNumero, type Pokemon } from "@/lib/conversion";
 
 type Props = {
@@ -9,7 +11,7 @@ type Props = {
   prioritaire?: boolean;
 };
 
-// Carte d'un Pokémon dans la grille : composant serveur (aucune interactivité, juste un lien).
+// Carte d'un Pokémon dans la grille : composant serveur. Seuls les deux boutons sont des composants client.
 export default function CartePokemon({ pokemon, prioritaire = false }: Props) {
   return (
     <article className="relative h-full">
@@ -17,7 +19,7 @@ export default function CartePokemon({ pokemon, prioritaire = false }: Props) {
         href={`/pokemon/${pokemon.nom}`}
         className="flex h-full flex-col gap-2 rounded-2xl border border-bordure bg-surface p-4 hover:border-accent"
       >
-        <p className="text-xs font-semibold text-texte-doux">{formaterNumero(pokemon.id)}</p>
+        <p className="flex min-h-8 items-center text-xs font-semibold text-texte-doux">{formaterNumero(pokemon.id)}</p>
 
         <div className="relative mx-auto aspect-square w-full max-w-40">
           {pokemon.artwork ? (
@@ -46,6 +48,13 @@ export default function CartePokemon({ pokemon, prioritaire = false }: Props) {
           ))}
         </ul>
       </Link>
+
+      {/* Les boutons sont HORS du <Link> (un bouton dans un lien est du HTML invalide, et un clic
+          dessus ouvrirait la fiche). Ils sont posés par-dessus la carte en position absolute. */}
+      <div className="absolute right-1 top-1 flex">
+        <BoutonSacoche pokemon={pokemon} variante="rapide" />
+        <BoutonFavori nom={pokemon.nom} nomFr={pokemon.nomFr} />
+      </div>
     </article>
   );
 }

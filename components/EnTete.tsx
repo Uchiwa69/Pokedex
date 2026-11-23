@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import BoutonTheme from "@/components/BoutonTheme";
+import IndicateurSacoche from "@/components/IndicateurSacoche";
 import LiensNavigation from "@/components/LiensNavigation";
 import Navigation from "@/components/Navigation";
 
-// En-tête du site : composant serveur. Seuls Navigation et BoutonTheme sont des composants client.
+// En-tête du site : composant serveur. Seuls Navigation, IndicateurSacoche et BoutonTheme sont des composants client.
 export default function EnTete() {
   return (
     <header className="sticky top-0 z-40 border-b border-bordure bg-surface">
@@ -23,7 +24,10 @@ export default function EnTete() {
           </Suspense>
         </nav>
 
-        <BoutonTheme />
+        <div className="flex items-center gap-2">
+          <IndicateurSacoche />
+          <BoutonTheme />
+        </div>
       </div>
     </header>
   );
