@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
-import { dessinerDos, dessinerFace, HAUTEUR, LARGEUR, type DonneesCarte } from "@/lib/carte3d";
+import { dessinerDos, dessinerFace, HAUTEUR, type DonneesCarte } from "@/lib/carte3d";
 
 type Props = {
   illustration: string | null; // adresse de l'image déjà affichée sur la fiche
@@ -15,48 +15,72 @@ type Props = {
   types: string[]; // libellés français
   typePrincipal: string; // clé anglaise ("fire"), pour lire la couleur --color-type-fire
   mesures: string;
+  // Prévenir le parent quand la carte est affichée, ou quand la 3D est indisponible.
+  surPret?: () => void;
+  surEchec?: () => void;
 };
 
 type Commandes = { retourner: () => void; recentrer: () => void; tourner: (degres: number) => void };
 
 // Programme exécuté par la carte graphique pour chaque pixel du reflet (langage GLSL).
-// La lumière dépend de l'angle entre la surface et le regard : en inclinant la carte,
-// une bande de reflet la traverse, comme sur une carte brillante.
+// Le reflet est calculé comme un VRAI reflet : une lumière fixe dans la scène, dont l'éclat apparaît
+// là où la surface la renvoie vers l'œil. La carte est traitée comme très légèrement bombée (comme une
+// vraie carte) : l'éclat forme donc un trait fin, qui glisse sur elle dès qu'elle bouge, au repos
+// comme quand on la fait tourner.
 const SOMMETS = `
   varying vec2 vUv;
-  varying vec3 vNormale;
-  varying vec3 vRegard;
+  varying vec3 vNormale;   // direction de la surface, dans la scène
+  varying vec3 vAxeX;      // largeur de la carte, dans la scène
+  varying vec3 vAxeY;      // hauteur de la carte, dans la scène
+  varying vec3 vPosition;  // position du point, dans la scène
   void main() {
     vUv = uv;
-    vec4 position_vue = modelViewMatrix * vec4(position, 1.0);
-    vNormale = normalize(normalMatrix * normal);
-    vRegard = normalize(-position_vue.xyz);
-    gl_Position = projectionMatrix * position_vue;
+    mat3 orientation = mat3(modelMatrix);
+    vNormale = orientation * normal;
+    vAxeX = orientation * vec3(1.0, 0.0, 0.0);
+    vAxeY = orientation * vec3(0.0, 1.0, 0.0);
+    vec4 position_scene = modelMatrix * vec4(position, 1.0);
+    vPosition = position_scene.xyz;
+    gl_Position = projectionMatrix * viewMatrix * position_scene;
   }
 `;
 const PIXELS = `
   varying vec2 vUv;
   varying vec3 vNormale;
-  varying vec3 vRegard;
+  varying vec3 vAxeX;
+  varying vec3 vAxeY;
+  varying vec3 vPosition;
   uniform float uForce;
   void main() {
-    float angle = dot(normalize(vNormale), normalize(vRegard)); // 1 = vue de face, 0 = vue rasante
-    // Une seule bande de lumière, en diagonale, qui glisse sur la carte quand on l'incline.
-    float position = vUv.x * 0.7 + vUv.y * 0.5 + (1.0 - angle) * 2.2;
-    float bande = smoothstep(0.86, 1.0, sin(position * 3.7)); // plus le seuil est élevé, plus la bande est fine
-    // Lumière presque blanche, à peine teintée : c'est ce qui la rend naturelle.
-    vec3 irise = 0.5 + 0.5 * cos(6.2831 * (position * 0.35 + vec3(0.0, 0.33, 0.67)));
-    vec3 couleur = mix(vec3(1.0), irise, 0.3);
-    // Un peu plus de brillance quand la carte est vue de biais, comme une surface vernie.
-    float rasant = pow(1.0 - angle, 2.0);
-    gl_FragColor = vec4(couleur, (bande * 0.19 + rasant * 0.2) * uForce);
+    // Surface légèrement bombée : la normale penche un peu vers les bords. Le terme en vUv.y incline
+    // le trait en diagonale.
+    float penche = (vUv.x - 0.5) + (vUv.y - 0.5) * 0.35;
+    vec3 normale = normalize(vNormale + vAxeX * penche * 0.7 + vAxeY * (vUv.y - 0.5) * 0.1);
+    vec3 regard = normalize(cameraPosition - vPosition);   // du point vers l'œil
+    vec3 lumiere = normalize(vec3(-0.45, 0.06, 1.0));      // vers la source, fixe dans la scène
+    // Le reflet est maximal quand la surface fait face à la direction à mi-chemin entre la lumière
+    // et le regard (modèle de Blinn-Phong). Plus l'exposant est grand, plus le trait est fin.
+    float alignement = max(dot(normale, normalize(lumiere + regard)), 0.0);
+    float eclat = pow(alignement, 420.0);   // le trait
+    float voile = pow(alignement, 45.0);    // halo très léger autour
+    // Le bord du trait se teinte à peine, comme sur une surface irisée.
+    vec3 irise = 0.5 + 0.5 * cos(6.2831 * (penche * 1.5 + vec3(0.0, 0.33, 0.67)));
+    vec3 couleur = mix(vec3(1.0), irise, 0.3 * (1.0 - eclat));
+    // Un peu de brillance en vue rasante (effet de Fresnel).
+    float rasant = pow(1.0 - max(dot(normalize(vNormale), regard), 0.0), 3.0);
+    gl_FragColor = vec4(couleur, (eclat * 0.36 + voile * 0.05 + rasant * 0.14) * uForce);
   }
 `;
 
-export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures }: Props) {
+export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, surPret, surEchec }: Props) {
   const refConteneur = useRef<HTMLDivElement>(null);
   const refCommandes = useRef<Commandes | null>(null);
   const animationsReduites = useReducedMotion();
+  // Les fonctions reçues du parent sont gardées dans un ref : la scène 3D n'est pas recréée quand elles changent.
+  const refRappels = useRef({ surPret, surEchec });
+  useEffect(() => {
+    refRappels.current = { surPret, surEchec };
+  }, [surPret, surEchec]);
   const refReduit = useRef(animationsReduites);
   useEffect(() => {
     refReduit.current = animationsReduites;
@@ -100,6 +124,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       } catch {
         setEtat("erreur"); // pas de 3D disponible sur cet appareil
+        refRappels.current.surEchec?.();
         return;
       }
       rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -108,11 +133,11 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
-      camera.position.set(0, 0, 6.2);
+      camera.position.set(0, 0, 5); // assez près pour que la carte occupe presque toute la hauteur
       const controles = new OrbitControls(camera, rendu.domElement);
       controles.enableDamping = true;
       controles.enablePan = false; // on tourne et on zoome, mais la carte reste au centre
-      controles.minDistance = 3.4;
+      controles.minDistance = 3;
       controles.maxDistance = 9;
 
       /* ---------- Géométrie : un rectangle aux coins arrondis, avec une épaisseur ---------- */
@@ -155,13 +180,20 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       const donnees: DonneesCarte = { numero, nom, types: typesTexte.split("|"), mesures, teinte, policeTitre };
       const toileFace = document.createElement("canvas");
       const toileDos = document.createElement("canvas");
-      dessinerFace(toileFace, donnees, image);
-      dessinerDos(toileDos, teinte, policeTitre);
+      // Netteté du texte : la texture est dessinée à peu près à la taille où la carte apparaît à l'écran
+      // (hauteur de la zone × densité de pixels de l'écran), avec une petite marge pour le zoom.
+      const pixelsAffiches = conteneur.clientHeight * 0.87 * rendu.getPixelRatio();
+      const finesse = Math.min(2.4, Math.max(1, (pixelsAffiches * 1.35) / HAUTEUR));
+      dessinerFace(toileFace, donnees, image, finesse);
+      dessinerDos(toileDos, teinte, policeTitre, finesse);
       const textureFace = new THREE.CanvasTexture(toileFace);
       const textureDos = new THREE.CanvasTexture(toileDos);
       for (const texture of [textureFace, textureDos]) {
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.anisotropy = rendu.capabilities.getMaxAnisotropy(); // texture nette même vue de biais
+        // Pas de versions réduites floues de la texture (« mipmaps ») : elle est déjà à la bonne taille.
+        texture.generateMipmaps = false;
+        texture.minFilter = THREE.LinearFilter;
       }
 
       const reflet = new THREE.ShaderMaterial({
@@ -220,13 +252,16 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         // Animations réduites : la carte passe directement à la position demandée, sans balancement.
         rotation = reduit ? rotationCible : rotation + (rotationCible - rotation) * Math.min(1, dt * 7);
         temps += dt;
-        carte.rotation.y = rotation + (reduit ? 0 : Math.sin(temps * 0.8) * 0.16);
-        carte.rotation.x = reduit ? 0 : Math.sin(temps * 0.6) * 0.05;
-        carte.position.y = reduit ? 0 : Math.sin(temps * 1.2) * 0.04;
+        // Au repos, la carte se balance : elle pivote de gauche à droite, s'incline et flotte.
+        carte.rotation.y = rotation + (reduit ? 0 : Math.sin(temps * 0.9) * 0.34);
+        carte.rotation.x = reduit ? 0 : Math.sin(temps * 0.7) * 0.1;
+        carte.rotation.z = reduit ? 0 : Math.sin(temps * 0.5) * 0.025;
+        carte.position.y = reduit ? 0 : Math.sin(temps * 1.3) * 0.07;
         controles.update();
         rendu.render(scene, camera);
       });
       setEtat("pret");
+      refRappels.current.surPret?.();
 
       nettoyer = () => {
         rendu.setAnimationLoop(null);
@@ -256,7 +291,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative h-[26rem] overflow-hidden rounded-3xl">
+      <div className="relative h-[30rem] overflow-hidden rounded-3xl sm:h-[34rem]">
         {/* role="img" : la zone 3D est annoncée comme une image, avec une description. */}
         <div
           ref={refConteneur}
@@ -291,9 +326,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
           Recentrer
         </button>
       </div>
-      <p className="etiquette">
-        Texture de {LARGEUR} × {HAUTEUR} px · fais glisser pour tourner, molette ou pincement pour zoomer
-      </p>
+      <p className="etiquette">Fais glisser pour tourner · molette ou pincement pour zoomer</p>
     </div>
   );
 }

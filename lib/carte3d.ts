@@ -5,6 +5,8 @@
 
 export const LARGEUR = 720;
 export const HAUTEUR = 1000;
+// Ces dimensions sont des dimensions de TRAVAIL. La texture réelle est dessinée à l'échelle « finesse »,
+// calculée par Carte3D pour correspondre à la taille de la carte à l'écran : c'est ce qui garde le texte net.
 
 export type DonneesCarte = {
   numero: string; // "0006"
@@ -61,29 +63,36 @@ function dessinerFond(ctx: CanvasRenderingContext2D, teinte: string) {
 
 // Écrit un texte en capitales espacées (les « étiquettes » du site).
 function etiquette(ctx: CanvasRenderingContext2D, texte: string, x: number, y: number, alignement: CanvasTextAlign = "left") {
-  ctx.font = "600 24px system-ui, sans-serif";
-  ctx.letterSpacing = "4px";
+  ctx.font = "700 32px system-ui, sans-serif";
+  ctx.letterSpacing = "3px";
   ctx.textAlign = alignement;
-  ctx.fillStyle = "rgba(238,240,255,0.78)";
+  ctx.fillStyle = "#ffffff";
   ctx.fillText(texte.toUpperCase(), x, y);
   ctx.letterSpacing = "0px";
 }
 
 // Face avant : numéro, types, illustration sur son halo, nom, mesures.
-export function dessinerFace(toile: HTMLCanvasElement, donnees: DonneesCarte, illustration: HTMLImageElement | null) {
-  toile.width = LARGEUR;
-  toile.height = HAUTEUR;
+export function dessinerFace(toile: HTMLCanvasElement, donnees: DonneesCarte, illustration: HTMLImageElement | null, finesse: number) {
+  toile.width = Math.round(LARGEUR * finesse);
+  toile.height = Math.round(HAUTEUR * finesse);
   const ctx = toile.getContext("2d")!;
+  ctx.scale(toile.width / LARGEUR, toile.height / HAUTEUR);
   dessinerFond(ctx, donnees.teinte);
 
-  etiquette(ctx, `N° ${donnees.numero}`, 60, 92);
-  etiquette(ctx, donnees.types.join(" · "), LARGEUR - 60, 92, "right");
+  // Bandeau sombre en haut : le numéro et les types restent lisibles quelle que soit la teinte.
+  const haut = ctx.createLinearGradient(0, 0, 0, 170);
+  haut.addColorStop(0, "rgba(5,7,22,0.75)");
+  haut.addColorStop(1, "rgba(5,7,22,0)");
+  ctx.fillStyle = haut;
+  ctx.fillRect(0, 0, LARGEUR, 170);
+  etiquette(ctx, `N° ${donnees.numero}`, 60, 100);
+  etiquette(ctx, donnees.types.join(" · "), LARGEUR - 60, 100, "right");
 
   // Numéro en filigrane.
   ctx.font = `700 220px ${donnees.policeTitre}`;
   ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(238,240,255,0.07)";
-  ctx.fillText(donnees.numero, LARGEUR - 50, 330);
+  ctx.fillStyle = "rgba(238,240,255,0.05)";
+  ctx.fillText(donnees.numero, LARGEUR - 50, 340);
 
   // Halo diffus derrière l'illustration, puis halo net au sol.
   const centreX = LARGEUR / 2;
@@ -106,24 +115,33 @@ export function dessinerFace(toile: HTMLCanvasElement, donnees: DonneesCarte, il
     ctx.drawImage(illustration, centreX - cote / 2, centreY - cote / 2 - 10, cote, cote);
   }
 
+  // Bandeau sombre en bas, derrière le nom et les mesures.
+  const bas = ctx.createLinearGradient(0, 720, 0, HAUTEUR);
+  bas.addColorStop(0, "rgba(5,7,22,0)");
+  bas.addColorStop(0.45, "rgba(5,7,22,0.8)");
+  bas.addColorStop(1, "rgba(5,7,22,0.9)");
+  ctx.fillStyle = bas;
+  ctx.fillRect(0, 720, LARGEUR, HAUTEUR - 720);
+
   // Nom, réduit s'il est trop long pour la carte.
-  let taille = 76;
+  let taille = 96;
   ctx.textAlign = "left";
   do {
     ctx.font = `700 ${taille}px ${donnees.policeTitre}`;
     taille -= 4;
   } while (ctx.measureText(donnees.nom).width > LARGEUR - 120 && taille > 36);
-  ctx.fillStyle = "#eef0ff";
-  ctx.fillText(donnees.nom, 60, 850);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(donnees.nom, 60, 862);
 
-  etiquette(ctx, donnees.mesures, 60, 912);
+  etiquette(ctx, donnees.mesures, 60, 926);
 }
 
 // Dos de la carte : motif original (anneaux, « lentille » en dégradé, nom du site).
-export function dessinerDos(toile: HTMLCanvasElement, teinte: string, policeTitre: string) {
-  toile.width = LARGEUR;
-  toile.height = HAUTEUR;
+export function dessinerDos(toile: HTMLCanvasElement, teinte: string, policeTitre: string, finesse: number) {
+  toile.width = Math.round(LARGEUR * finesse);
+  toile.height = Math.round(HAUTEUR * finesse);
   const ctx = toile.getContext("2d")!;
+  ctx.scale(toile.width / LARGEUR, toile.height / HAUTEUR);
   dessinerFond(ctx, teinte);
 
   const centreX = LARGEUR / 2;
