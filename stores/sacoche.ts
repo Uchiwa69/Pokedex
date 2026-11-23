@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Pokemon } from "@/lib/conversion";
+import type { Attaque, Pokemon } from "@/lib/conversion";
 
 export const TAILLE_MAX_SACOCHE = 6;
 export const LONGUEUR_MAX_SURNOM = 12;
@@ -9,6 +9,8 @@ export const LONGUEUR_MAX_SURNOM = 12;
 export type Membre = {
   pokemon: Pokemon;
   surnom: string;
+  // Ses 4 attaques. Absent tant qu'elles n'ont pas été chargées depuis le serveur (voir useChargementAttaques).
+  attaques?: Attaque[];
 };
 
 type EtatSacoche = {
@@ -24,6 +26,8 @@ type EtatSacoche = {
   // Déplace un membre d'un cran (-1 = vers le début, +1 = vers la fin) : équivalent clavier du glisser-déposer.
   deplacer: (nom: string, sens: -1 | 1) => void;
   accuserAjout: () => void;
+  // Enregistre les attaques d'un membre une fois chargées.
+  definirAttaques: (nom: string, attaques: Attaque[]) => void;
 };
 
 // Les RÈGLES MÉTIER sont appliquées ICI, dans le store, et pas dans les boutons :
@@ -89,6 +93,12 @@ export const useSacoche = create<EtatSacoche>()(
         }),
 
       accuserAjout: () => set({ dernierAjout: null }),
+
+      definirAttaques: (nom, attaques) =>
+        set((etat) => ({
+          // 4 attaques au maximum, quoi qu'on reçoive.
+          membres: etat.membres.map((m) => (m.pokemon.nom === nom ? { ...m, attaques: attaques.slice(0, 4) } : m)),
+        })),
     }),
     {
       name: "pokedex-sacoche",

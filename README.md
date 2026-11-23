@@ -5,7 +5,7 @@ données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 
 **Démo en ligne : https://pokedex-pi-coral-47.vercel.app**
 
-> Statut : en cours de développement (phases 0 à 8 terminées sur 11).
+> Statut : en cours de développement (phases 0 à 9 terminées sur 11).
 
 ## Fonctionnalités
 
@@ -24,7 +24,10 @@ données publiques de la [PokéAPI](https://pokeapi.co). Projet de fin de cours.
 - **Animations** : apparition en cascade, inclinaison 3D des cartes, transition partagée de l'illustration entre la
   grille et la fiche (View Transitions), sprite animé, cri au clic — le tout coupé avec « animations réduites ».
 
-À venir : attaques, mode combat, quiz.
+- **Attaques** : onglet de la fiche listant les attaques apprises par niveau (nom français, type, catégorie,
+  puissance, précision, PP, description) ; chaque membre de la sacoche reçoit ses 4 meilleures attaques.
+
+À venir : mode combat, quiz.
 
 ## Stack
 

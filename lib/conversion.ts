@@ -30,6 +30,26 @@ export type Pokemon = {
   cri: string | null; // adresse du fichier audio
 };
 
+export type CategorieAttaque = "physique" | "speciale" | "statut";
+
+export type Attaque = {
+  id: number;
+  nom: string; // identifiant anglais : "flamethrower"
+  nomFr: string; // "Lance-Flammes"
+  type: NomType;
+  categorie: CategorieAttaque;
+  puissance: number | null; // null pour les attaques de statut
+  precision: number | null; // en %, null = ne rate jamais
+  pp: number;
+  description: string; // en français ("" si absente)
+};
+
+// Une attaque apprise par montée de niveau : son nom et le niveau d'apprentissage.
+export type Apprentissage = {
+  nom: string;
+  niveau: number;
+};
+
 export type Espece = {
   nomFr: string | null;
   urlEvolutions: string | null;
@@ -52,6 +72,27 @@ export type PokemonBrut = {
     };
   };
   cries?: { latest: string | null };
+  // Toutes les attaques que le Pokémon peut apprendre, avec le détail par version du jeu.
+  moves?: {
+    move: { name: string };
+    version_group_details: {
+      level_learned_at: number;
+      move_learn_method: { name: string };
+      version_group: { url: string };
+    }[];
+  }[];
+};
+
+export type AttaqueBrute = {
+  id: number;
+  name: string;
+  names: { name: string; language: { name: string } }[];
+  type: { name: string };
+  damage_class: { name: string } | null;
+  power: number | null;
+  accuracy: number | null;
+  pp: number | null;
+  flavor_text_entries: { flavor_text: string; language: { name: string } }[];
 };
 
 export type EspeceBrute = {
@@ -146,4 +187,63 @@ export function aplatir(maillon: MaillonBrut): number[] {
 // 0.7 → "0,7 m" (virgule française)
 export function formaterMesure(valeur: number, unite: string): string {
   return `${valeur.toLocaleString("fr-FR")} ${unite}`;
+}
+
+// Table de correspondance : catégorie de l'API → notre catégorie.
+const CATEGORIES: Record<string, CategorieAttaque> = {
+  physical: "physique",
+  special: "speciale",
+  status: "statut",
+};
+
+export function convertirAttaque(brute: AttaqueBrute): Attaque {
+  const nomFr = brute.names.find((n) => n.language.name === "fr");
+
+  // Plusieurs descriptions françaises existent (une par jeu) : on prend la plus récente, la dernière.
+  const descriptionsFr = brute.flavor_text_entries.filter((d) => d.language.name === "fr");
+  const derniere = descriptionsFr[descriptionsFr.length - 1];
+
+  return {
+    id: brute.id,
+    nom: brute.name,
+    nomFr: nomFr ? nomFr.name : mettreEnForme(brute.name),
+    type: estUnType(brute.type.name) ? brute.type.name : "normal",
+    categorie: CATEGORIES[brute.damage_class?.name ?? ""] ?? "statut",
+    puissance: brute.power,
+    precision: brute.accuracy,
+    pp: brute.pp ?? 0,
+    // Les descriptions contiennent des retours à la ligne du jeu : on les remplace par des espaces.
+    description: derniere ? derniere.flavor_text.replace(/\s+/g, " ").trim() : "",
+  };
+}
+
+// Attaques apprises par MONTÉE DE NIVEAU, dans la version la plus récente du jeu où le Pokémon existe,
+// triées par niveau.
+export function extraireApprentissages(brut: PokemonBrut): Apprentissage[] {
+  // 1. On aplatit : une ligne par (attaque, version du jeu), en ne gardant que la montée de niveau.
+  const lignes = (brut.moves ?? []).flatMap((entree) =>
+    entree.version_group_details
+      .filter((detail) => detail.move_learn_method.name === "level-up")
+      .map((detail) => ({
+        nom: entree.move.name,
+        niveau: detail.level_learned_at,
+        version: extraireId(detail.version_group.url), // plus le numéro est grand, plus le jeu est récent
+      })),
+  );
+  if (lignes.length === 0) return [];
+
+  // 2. On ne garde que la version la plus récente.
+  const versionRecente = Math.max(...lignes.map((ligne) => ligne.version));
+  const recentes = lignes.filter((ligne) => ligne.version === versionRecente);
+
+  // 3. Tri par niveau, puis une seule ligne par attaque (la première, donc le niveau le plus bas).
+  recentes.sort((a, b) => a.niveau - b.niveau || a.nom.localeCompare(b.nom));
+  const dejaVues = new Set<string>();
+  const resultat: Apprentissage[] = [];
+  for (const ligne of recentes) {
+    if (dejaVues.has(ligne.nom)) continue;
+    dejaVues.add(ligne.nom);
+    resultat.push({ nom: ligne.nom, niveau: ligne.niveau });
+  }
+  return resultat;
 }

@@ -8,7 +8,7 @@ import BarreStat from "@/components/BarreStat";
 import BoutonCri from "@/components/BoutonCri";
 import BoutonFavori from "@/components/BoutonFavori";
 import BoutonSacoche from "@/components/BoutonSacoche";
-import ChaineEvolution from "@/components/ChaineEvolution";
+import OngletsFiche from "@/components/OngletsFiche";
 import SpriteAnime from "@/components/SpriteAnime";
 import SqueletteFiche from "@/components/SqueletteFiche";
 import { formaterMesure } from "@/lib/conversion";
@@ -41,20 +41,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // La page elle-même ne lit pas params : elle le transmet à Fiche, placée sous <Suspense>.
 // Ainsi, pour un Pokémon non préparé au build, le squelette s'affiche tout de suite.
-export default function PagePokemon({ params }: Props) {
+export default function PagePokemon({ params, searchParams }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <Link href="/" className="etiquette flex min-h-11 items-center self-start hover:text-texte">
         ← Tous les Pokémon
       </Link>
       <Suspense fallback={<SqueletteFiche />}>
-        <Fiche params={params} />
+        <Fiche params={params} searchParams={searchParams} />
       </Suspense>
     </div>
   );
 }
 
-async function Fiche({ params }: { params: Props["params"] }) {
+// Fiche lit params (avec await) mais se contente de TRANSMETTRE searchParams sans le lire :
+// le haut de la fiche reste donc préparé à l'avance, seul le bloc des onglets dépend de la requête.
+async function Fiche({ params, searchParams }: Pick<Props, "params" | "searchParams">) {
   const { nom } = await params;
   const pokemon = await recupererPokemon(nom);
 
@@ -146,15 +148,11 @@ async function Fiche({ params }: { params: Props["params"] }) {
         </div>
       </div>
 
-      <section aria-labelledby="titre-evolutions" className="flex flex-col gap-4">
-        <h2 id="titre-evolutions" className="font-titre text-xl font-semibold">
-          Chaîne d&apos;évolution
-        </h2>
-        {/* Suspense imbriqué : la chaîne arrive après le reste, sans bloquer la fiche. */}
-        <Suspense fallback={<p className="etiquette">Chargement des évolutions…</p>}>
-          <ChaineEvolution nomEspece={pokemon.espece} nomActuel={pokemon.nom} />
-        </Suspense>
-      </section>
+      {/* Onglets « Évolutions » / « Attaques ». L'onglet actif est dans l'adresse (?onglet=attaques),
+          lue sous Suspense : en attendant, on affiche un squelette. */}
+      <Suspense fallback={<div role="status" aria-label="Chargement" className="h-48 animate-pulse rounded-3xl bg-piste motion-reduce:animate-none" />}>
+        <OngletsFiche pokemon={pokemon} searchParams={searchParams} />
+      </Suspense>
     </div>
   );
 }

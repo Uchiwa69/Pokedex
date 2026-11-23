@@ -4,11 +4,17 @@
 // ce qui convient très bien ici car les Pokémon ne changent pas.
 
 import { cacheLife } from "next/cache";
+import { choisirMeilleuresAttaques } from "@/lib/combat";
 import {
   aplatir,
+  convertirAttaque,
   convertirEspece,
   convertirPokemon,
+  extraireApprentissages,
   extraireId,
+  type Apprentissage,
+  type Attaque,
+  type AttaqueBrute,
   type ChaineBrute,
   type Espece,
   type EspeceBrute,
@@ -144,4 +150,57 @@ export async function recupererEvolutions(nomEspece: string): Promise<Pokemon[]>
   const ids = aplatir(chaine.chain);
   const pokemons = await Promise.all(ids.map((id) => recupererPokemon(String(id))));
   return pokemons.filter((p): p is Pokemon => p !== null);
+}
+
+// Une attaque (par son nom anglais ou son numéro), ou null si elle n'existe pas.
+export async function recupererAttaque(id: string): Promise<Attaque | null> {
+  "use cache";
+  cacheLife("days");
+
+  const brute = await lire<AttaqueBrute>(`${API}/move/${encodeURIComponent(id)}`);
+  return brute ? convertirAttaque(brute) : null;
+}
+
+// Les attaques qu'un Pokémon apprend par montée de niveau : noms et niveaux seulement.
+export async function recupererApprentissages(nom: string): Promise<Apprentissage[]> {
+  "use cache";
+  cacheLife("days");
+
+  const brut = await lire<PokemonBrut>(`${API}/pokemon/${encodeURIComponent(nom.toLowerCase())}`);
+  return brut ? extraireApprentissages(brut) : [];
+}
+
+export type AttaqueApprise = {
+  niveau: number;
+  attaque: Attaque;
+};
+
+// Les mêmes attaques, complètes (nom FR, type, puissance…), triées par niveau.
+export async function recupererAttaquesParNiveau(nom: string): Promise<AttaqueApprise[]> {
+  "use cache";
+  cacheLife("days");
+
+  const apprentissages = await recupererApprentissages(nom);
+  // Une requête par attaque, toutes lancées en parallèle.
+  const attaques = await Promise.all(apprentissages.map((a) => recupererAttaque(a.nom)));
+
+  const resultat: AttaqueApprise[] = [];
+  attaques.forEach((attaque, index) => {
+    if (attaque) resultat.push({ niveau: apprentissages[index].niveau, attaque });
+  });
+  return resultat;
+}
+
+// Les 4 meilleures attaques offensives d'un Pokémon : celles que reçoit par défaut un membre de la sacoche.
+export async function recupererMeilleuresAttaques(nom: string): Promise<Attaque[]> {
+  "use cache";
+  cacheLife("days");
+
+  const pokemon = await recupererPokemon(nom);
+  if (!pokemon) return [];
+  const apprises = await recupererAttaquesParNiveau(nom);
+  return choisirMeilleuresAttaques(
+    apprises.map((a) => a.attaque),
+    pokemon.types,
+  );
 }

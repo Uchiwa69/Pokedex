@@ -5,7 +5,9 @@ import Link from "next/link";
 import { motion, Reorder, useReducedMotion } from "motion/react";
 import BadgeType from "@/components/BadgeType";
 import BarreStat from "@/components/BarreStat";
+import CarteAttaque from "@/components/CarteAttaque";
 import SocleEquipe from "@/components/SocleEquipe";
+import { useChargementAttaques } from "@/hooks/useChargementAttaques";
 import { useTypesCouverts } from "@/hooks/useTypesCouverts";
 import { LIBELLES_STATS } from "@/lib/stats";
 import { styleTeinte } from "@/lib/teinte";
@@ -35,6 +37,8 @@ function ContenuArene() {
   const vider = useSacoche((etat) => etat.vider);
   const accuserAjout = useSacoche((etat) => etat.accuserAjout);
   const typesCouverts = useTypesCouverts();
+  // Charge en arrière-plan les 4 attaques des membres qui n'en ont pas encore.
+  useChargementAttaques();
 
   // Membre sélectionné (son nom), état LOCAL à la page : inutile de le mettre dans le store.
   const [selection, setSelection] = useState<string | null>(null);
@@ -215,7 +219,7 @@ function EmplacementMembre({ membre, index, selectionne, nouveau, surSelection }
 /* ------------------------------------------------------------------ */
 
 function PanneauDetail({ membre }: { membre: Membre }) {
-  const { pokemon, surnom } = membre;
+  const { pokemon, surnom, attaques } = membre;
   const renommer = useSacoche((etat) => etat.renommer);
   const retirer = useSacoche((etat) => etat.retirer);
 
@@ -278,7 +282,21 @@ function PanneauDetail({ membre }: { membre: Membre }) {
 
           <div className="flex flex-col gap-2">
             <h3 className="etiquette">Attaques</h3>
-            <p className="text-sm text-texte-doux">Les 4 attaques de ce Pokémon arriveront avec la phase 9.</p>
+            {attaques === undefined ? (
+              <p role="status" className="text-sm text-texte-doux">
+                Chargement des attaques…
+              </p>
+            ) : attaques.length === 0 ? (
+              <p className="text-sm text-texte-doux">Ce Pokémon n&apos;apprend aucune attaque offensive.</p>
+            ) : (
+              <ul className="grid grid-cols-2 gap-2">
+                {attaques.map((attaque) => (
+                  <li key={attaque.id} className="min-w-0">
+                    <CarteAttaque attaque={attaque} />
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
