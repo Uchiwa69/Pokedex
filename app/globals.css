@@ -29,9 +29,9 @@
   --color-danger: #b91c1c;
 
   /* Décor de fond : grille fine et deux lueurs */
-  --color-grille: rgb(67 56 202 / 0.05);
-  --color-lueur-1: rgb(99 102 241 / 0.2);
-  --color-lueur-2: rgb(56 189 248 / 0.2);
+  --color-grille: rgb(67 56 202 / 0.08);
+  --color-lueur-1: rgb(99 102 241 / 0.3); /* violet */
+  --color-lueur-2: rgb(56 189 248 / 0.28); /* bleu ciel */
 
   /* Une seule ombre de panneau et une seule lueur de bouton pour tout le site */
   --shadow-carte: 0 18px 40px -18px rgb(67 56 202 / 0.35), 0 2px 6px -2px rgb(30 41 100 / 0.1);
@@ -125,9 +125,9 @@
   --color-sur-accent: #12143a;
   --color-danger: #fca5a5;
 
-  --color-grille: rgb(170 182 255 / 0.05);
-  --color-lueur-1: rgb(129 140 248 / 0.26);
-  --color-lueur-2: rgb(56 189 248 / 0.18);
+  --color-grille: rgb(170 182 255 / 0.07);
+  --color-lueur-1: rgb(129 140 248 / 0.36);
+  --color-lueur-2: rgb(56 189 248 / 0.24);
 
   --shadow-carte: 0 18px 40px -18px rgb(0 0 0 / 0.8);
   --shadow-lueur: 0 10px 24px -10px rgb(170 182 255 / 0.55);
@@ -141,7 +141,13 @@ html.dark {
   color-scheme: dark;
 }
 
-/* Décor de fond, fixe derrière tout le site : deux lueurs + une grille fine de 32 px. */
+/* Décor de fond, fixe derrière tout le site : trois lueurs + une grille fine de 32 px.
+   Les lueurs ont une taille fixe (en rem) et sont placées près du contenu : elles restent
+   bien visibles sur un grand écran, au lieu de se perdre dans les coins.
+   C'est un pseudo-élément fixe (et non un background-attachment: fixed, mal géré sur mobile). */
+body {
+  isolation: isolate; /* le z-index: -1 ci-dessous reste « derrière le contenu, devant la couleur de fond » */
+}
 body::before {
   content: "";
   position: fixed;
@@ -149,11 +155,13 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background-image:
-    radial-gradient(circle at 10% 0%, var(--color-lueur-1), transparent 45%),
-    radial-gradient(circle at 100% 100%, var(--color-lueur-2), transparent 45%),
+    radial-gradient(48rem circle at 12% -8%, var(--color-lueur-1), transparent 70%),
+    radial-gradient(42rem circle at 92% 18%, var(--color-lueur-2), transparent 70%),
+    radial-gradient(52rem circle at 50% 112%, var(--color-lueur-1), transparent 70%),
     linear-gradient(var(--color-grille) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-grille) 1px, transparent 1px);
   background-size:
+    auto,
     auto,
     auto,
     32px 32px,
