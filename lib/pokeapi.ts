@@ -5,8 +5,10 @@
 
 import { cacheLife } from "next/cache";
 import {
+  aplatir,
   convertirEspece,
   convertirPokemon,
+  type ChaineBrute,
   type Espece,
   type EspeceBrute,
   type Pokemon,
@@ -80,5 +82,22 @@ export async function recupererListe(page: number): Promise<Pokemon[]> {
   const pokemons = await Promise.all(noms.map((nom) => recupererPokemon(nom)));
 
   // On retire les éventuels null, en l'expliquant à TypeScript avec une garde de type.
+  return pokemons.filter((p): p is Pokemon => p !== null);
+}
+
+// Tous les Pokémon de la chaîne d'évolution d'une espèce, dans l'ordre (ex. Salamèche, Reptincel, Dracaufeu).
+export async function recupererEvolutions(nomEspece: string): Promise<Pokemon[]> {
+  "use cache";
+  cacheLife("days");
+
+  const espece = await recupererEspece(nomEspece);
+  if (!espece || !espece.urlEvolutions) return [];
+
+  const chaine = await lire<ChaineBrute>(espece.urlEvolutions);
+  if (!chaine) return [];
+
+  // L'arbre devient une liste de numéros, puis on charge chaque Pokémon en parallèle.
+  const ids = aplatir(chaine.chain);
+  const pokemons = await Promise.all(ids.map((id) => recupererPokemon(String(id))));
   return pokemons.filter((p): p is Pokemon => p !== null);
 }

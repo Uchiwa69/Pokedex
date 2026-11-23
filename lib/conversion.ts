@@ -19,6 +19,7 @@ export type Pokemon = {
   id: number;
   nom: string; // identifiant anglais de l'API, utilisé dans l'adresse : "charizard"
   nomFr: string; // nom affiché : "Dracaufeu"
+  espece: string; // nom de l'espèce dans l'API (sert à retrouver la chaîne d'évolution)
   types: NomType[]; // en anglais, traduits à l'affichage via TYPES
   taille: number; // en mètres
   poids: number; // en kilogrammes
@@ -58,6 +59,17 @@ export type EspeceBrute = {
   evolution_chain: { url: string } | null;
 };
 
+// Un maillon de la chaîne d'évolution : une espèce, et la liste des espèces en lesquelles elle évolue.
+// C'est un ARBRE : chaque maillon contient d'autres maillons (Évoli en a 8).
+export type MaillonBrut = {
+  species: { name: string; url: string };
+  evolves_to: MaillonBrut[];
+};
+
+export type ChaineBrute = {
+  chain: MaillonBrut;
+};
+
 // ---------- Fonctions de conversion ----------
 
 // "mr-mime" → "Mr Mime" : nom de secours quand il n'y a pas de nom français.
@@ -87,6 +99,7 @@ export function convertirPokemon(brut: PokemonBrut, espece: Espece | null): Poke
     id: brut.id,
     nom: brut.name,
     nomFr: espece?.nomFr ?? mettreEnForme(brut.name),
+    espece: brut.species.name,
     // On trie par emplacement (slot) : le premier type est le type principal.
     types: [...brut.types]
       .sort((a, b) => a.slot - b.slot)
@@ -114,4 +127,23 @@ export function convertirPokemon(brut: PokemonBrut, espece: Espece | null): Poke
 // 25 → "#0025"
 export function formaterNumero(id: number): string {
   return `#${String(id).padStart(4, "0")}`;
+}
+
+// "https://pokeapi.co/api/v2/pokemon-species/4/" → 4
+export function extraireId(url: string): number {
+  const morceaux = url.split("/").filter((morceau) => morceau !== "");
+  return Number(morceaux[morceaux.length - 1]);
+}
+
+// Fonction RÉCURSIVE : transforme l'arbre des évolutions en une simple liste de numéros.
+// Elle prend le maillon courant, puis s'appelle elle-même sur chacune de ses évolutions.
+// La récursion s'arrête toute seule quand evolves_to est vide (flatMap sur [] renvoie []).
+// Exemple : Salamèche → Reptincel → Dracaufeu donne [4, 5, 6].
+export function aplatir(maillon: MaillonBrut): number[] {
+  return [extraireId(maillon.species.url), ...maillon.evolves_to.flatMap(aplatir)];
+}
+
+// 0.7 → "0,7 m" (virgule française)
+export function formaterMesure(valeur: number, unite: string): string {
+  return `${valeur.toLocaleString("fr-FR")} ${unite}`;
 }
