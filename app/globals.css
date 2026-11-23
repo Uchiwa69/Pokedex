@@ -1,26 +1,78 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Tailwind 4 : la variante dark: s'active quand <html> porte la classe .dark
+   (c'est next-themes qui pose cette classe). */
+@custom-variant dark (&:where(.dark, .dark *));
 
+/* Polices : next/font crée les variables --font-inter et --font-chakra (voir app/layout.tsx).
+   "inline" car la valeur est elle-même une variable CSS. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-titre: var(--font-chakra), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Tailwind 4 : toute la configuration est ici (pas de tailwind.config.js).
+   Chaque --color-xxx crée les utilitaires bg-xxx, text-xxx, border-xxx… */
+@theme {
+  /* Jetons sémantiques — valeurs du thème CLAIR (le thème sombre les redéfinit plus bas). */
+  --color-fond: #eef2f8;
+  --color-surface: #ffffff;
+  --color-bordure: #cbd5e6;
+  --color-texte: #0f172a;
+  --color-texte-doux: #475569;
+  --color-piste: #dbe3f0;
+  --color-accent: #1d4ed8;
+  --color-sur-accent: #ffffff;
+  --color-danger: #b91c1c;
+
+  /* Texte foncé posé sur les badges de type clairs (identique dans les deux thèmes). */
+  --color-encre: #0b1020;
+
+  /* Les 18 types (mêmes teintes dans les deux thèmes). */
+  --color-type-normal: #a8a77a;
+  --color-type-fire: #ee8130;
+  --color-type-water: #6390f0;
+  --color-type-electric: #f7d02c;
+  --color-type-grass: #7ac74c;
+  --color-type-ice: #96d9d6;
+  --color-type-fighting: #c22e28;
+  --color-type-poison: #a33ea1;
+  --color-type-ground: #e2bf65;
+  --color-type-flying: #a98ff3;
+  --color-type-psychic: #f95587;
+  --color-type-bug: #a6b91a;
+  --color-type-rock: #b6a136;
+  --color-type-ghost: #735797;
+  --color-type-dragon: #6f35fc;
+  --color-type-dark: #705746;
+  --color-type-steel: #b7b7ce;
+  --color-type-fairy: #d685ad;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Thème SOMBRE : on redéfinit seulement les variables.
+   Comme bg-fond vaut var(--color-fond), toute l'interface change sans toucher aux composants. */
+.dark {
+  --color-fond: #070b18;
+  --color-surface: #0f1629;
+  --color-bordure: #26324f;
+  --color-texte: #e6ebf5;
+  --color-texte-doux: #9aa7c0;
+  --color-piste: #1b2440;
+  --color-accent: #7cb3ff;
+  --color-sur-accent: #0b1020;
+  --color-danger: #fca5a5;
+}
+
+/* Indique au navigateur le thème en cours (barres de défilement, champs de formulaire…). */
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+/* Focus clavier visible partout, avec la couleur d'accent du thème. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
