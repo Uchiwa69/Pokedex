@@ -61,7 +61,10 @@ const sansAbonnement = () => () => {};
 const SEUIL_FIN = 0.62;
 // Pour ROUVRIR l'introduction, il faut insister : cumuler ce nombre de pixels de molette vers le haut,
 // alors qu'on est déjà tout en haut de la page.
-const EFFORT_POUR_ROUVRIR = 500;
+const EFFORT_POUR_ROUVRIR = 1800;
+// Avant de compter cet effort, il faut être resté immobile tout en haut pendant ce temps (en millisecondes) :
+// l'élan d'une remontée de page (molette libre, pavé tactile) ne doit pas suffire à rouvrir l'introduction.
+const REPOS_AVANT_EFFORT = 500;
 
 // true si le visiteur a demandé moins d'animations dans son système.
 // On n'utilise pas ici useReducedMotion() de motion : il donne la vraie réponse dès le premier rendu du
@@ -159,23 +162,39 @@ export default function IntroPokedex({ children }: Props) {
   }, [introAffichee, opacite, taille, x, y, decoupe, clics]);
 
   // « Blocage » en haut de page : une fois dans le site, remonter s'arrête en haut de la page, comme sur
-  // n'importe quel site. Pour revoir l'introduction à l'envers, il faut INSISTER avec la molette (ou le pavé
-  // tactile) alors qu'on est déjà tout en haut. Un geste isolé ne suffit pas : le cumul retombe à zéro après
-  // 300 ms sans mouvement.
+  // n'importe quel site. Pour revoir l'introduction à l'envers, il faut d'abord S'ARRÊTER tout en haut, puis
+  // INSISTER longuement avec la molette (ou le pavé tactile). Un coup de molette, ou l'élan d'une remontée
+  // rapide de la page, ne suffit pas.
   useEffect(() => {
     if (introAffichee || animationsReduites) return;
     let cumul = 0;
+    // « arme » : vrai une fois que le visiteur est resté immobile en haut de page. Au départ, c'est le cas
+    // seulement si la page est déjà tout en haut.
+    let arme = window.scrollY === 0;
     let minuterie: ReturnType<typeof setTimeout> | undefined;
     function surMolette(evenement: WheelEvent) {
-      if (window.scrollY > 0 || evenement.deltaY >= 0) {
+      // Après REPOS_AVANT_EFFORT sans aucun geste : le cumul retombe à zéro, et le blocage se désarme si l'on
+      // est bien tout en haut. Chaque nouveau geste repousse ce moment.
+      clearTimeout(minuterie);
+      minuterie = setTimeout(() => {
+        cumul = 0;
+        arme = window.scrollY === 0;
+      }, REPOS_AVANT_EFFORT);
+
+      if (window.scrollY > 0) {
+        // On n'est pas en haut : rien ne compte, et il faudra de nouveau marquer un temps d'arrêt en haut.
+        cumul = 0;
+        arme = false;
+        return;
+      }
+      if (!arme || evenement.deltaY >= 0) {
         cumul = 0;
         return;
       }
       cumul -= evenement.deltaY;
-      clearTimeout(minuterie);
-      minuterie = setTimeout(() => (cumul = 0), 300);
       if (cumul >= EFFORT_POUR_ROUVRIR) {
         cumul = 0;
+        arme = false;
         changerEtat("intro");
       }
     }
