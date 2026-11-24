@@ -39,6 +39,10 @@
   --color-socle-haut: #ffffff;
   --color-socle-bas: #dde4f6;
 
+  /* Pokéball du logo : calotte rouge, base blanche (mêmes couleurs dans les deux thèmes) */
+  --color-balle-haut: #ef4444;
+  --color-balle-bas: #f8fafc;
+
 
   /* Une seule ombre de panneau et une seule lueur de bouton pour tout le site */
   --shadow-carte: 0 18px 40px -18px rgb(67 56 202 / 0.35), 0 2px 6px -2px rgb(30 41 100 / 0.1);
