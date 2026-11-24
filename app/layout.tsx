@@ -4,6 +4,7 @@ import EnTete from "@/components/EnTete";
 import Fournisseurs from "@/components/Fournisseurs";
 import HydratationStores from "@/components/HydratationStores";
 import PiedDePage from "@/components/PiedDePage";
+import Prechargeur3D from "@/components/labo/Prechargeur3D";
 import "./globals.css";
 
 // next/font télécharge les polices au build et les sert depuis notre site (pas de requête vers Google).
@@ -37,6 +38,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Fournisseurs>
           {/* Relit favoris et sacoche dans le localStorage, après l'hydratation. */}
           <HydratationStores />
+          {/* LOCAL UNIQUEMENT : précharge les modèles 3D des Pokémon de la sacoche. */}
+          <Prechargeur3D />
           {/* Lien d'évitement : visible seulement au focus clavier. */}
           <a
             href="#contenu"

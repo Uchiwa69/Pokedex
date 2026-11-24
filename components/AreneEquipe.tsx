@@ -7,6 +7,8 @@ import BadgeType from "@/components/BadgeType";
 import BarreStat from "@/components/BarreStat";
 import CarteAttaque from "@/components/CarteAttaque";
 import SocleEquipe from "@/components/SocleEquipe";
+import Scene2D from "@/components/labo/Scene2D";
+import VitrineMembre from "@/components/labo/VitrineMembre";
 import { useChargementAttaques } from "@/hooks/useChargementAttaques";
 import { useTypesCouverts } from "@/hooks/useTypesCouverts";
 import { LIBELLES_STATS } from "@/lib/stats";
@@ -223,6 +225,69 @@ function PanneauDetail({ membre }: { membre: Membre }) {
   const renommer = useSacoche((etat) => etat.renommer);
   const retirer = useSacoche((etat) => etat.retirer);
 
+  // true quand ce Pokémon n'a pas de modèle 3D (voir VitrineMembre) : on affiche alors la scène 2D à la place.
+  const [sans3d, setSans3d] = useState(false);
+
+  // Les trois blocs de la colonne de droite, rangés dans des constantes pour garder le rendu final lisible.
+  const blocSurnom = (
+    // Le surnom est validé à la sortie du champ ou avec Entrée (soumission du formulaire).
+    // key={surnom} sur le champ : quand le store change le surnom, le champ est recréé avec la nouvelle valeur.
+    <form
+      className="flex flex-col gap-2"
+      onSubmit={(evenement) => {
+        evenement.preventDefault(); // pas de rechargement de la page
+        const donnees = new FormData(evenement.currentTarget);
+        renommer(pokemon.nom, String(donnees.get("surnom") ?? ""));
+      }}
+    >
+      <label htmlFor="surnom" className="etiquette">
+        Surnom ({LONGUEUR_MAX_SURNOM} caractères max.)
+      </label>
+      <input
+        key={surnom}
+        id="surnom"
+        name="surnom"
+        defaultValue={surnom}
+        maxLength={LONGUEUR_MAX_SURNOM}
+        onBlur={(evenement) => renommer(pokemon.nom, evenement.target.value)}
+        autoComplete="off"
+        className="min-h-11 w-full rounded-full border border-bordure bg-surface px-4 text-sm text-texte"
+      />
+    </form>
+  );
+
+  const blocStats = (
+    <div className="flex flex-col gap-2">
+      <h3 className="etiquette">Statistiques</h3>
+      <ul className="flex flex-col gap-2">
+        {LIBELLES_STATS.map((stat, index) => (
+          <BarreStat key={stat.cle} libelle={stat.libelle} valeur={pokemon.stats[stat.cle]} index={index} />
+        ))}
+      </ul>
+    </div>
+  );
+
+  const blocAttaques = (
+    <div className="flex flex-col gap-2">
+      <h3 className="etiquette">Attaques</h3>
+      {attaques === undefined ? (
+        <p role="status" className="text-sm text-texte-doux">
+          Chargement des attaques…
+        </p>
+      ) : attaques.length === 0 ? (
+        <p className="text-sm text-texte-doux">Ce Pokémon n&apos;apprend aucune attaque offensive.</p>
+      ) : (
+        <ul className="grid grid-cols-2 gap-2">
+          {attaques.map((attaque) => (
+            <li key={attaque.id} className="min-w-0">
+              <CarteAttaque attaque={attaque} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
   return (
     <section
       aria-label={`Détail de ${surnom}`}
@@ -253,60 +318,19 @@ function PanneauDetail({ membre }: { membre: Membre }) {
         </div>
       </div>
 
+      {/* LOCAL UNIQUEMENT : à gauche, un carré avec le modèle 3D du membre (préchargé à son ajout dans la sacoche)
+          ou, s'il n'en a pas, son illustration mise en scène en 2D. À droite, les informations. */}
       <div className="relative grid gap-6 md:grid-cols-2">
+        {sans3d ? (
+          <Scene2D pokemon={pokemon} />
+        ) : (
+          // setSans3d est passé tel quel : VitrineMembre l'appelle s'il découvre qu'il n'y a pas de modèle.
+          <VitrineMembre numero={pokemon.id} nom={surnom} surAbsence={setSans3d} />
+        )}
         <div className="flex flex-col gap-6">
-          {/* Le surnom est validé à la sortie du champ ou avec Entrée (soumission du formulaire).
-              key={surnom} : quand le store change le surnom, le champ est recréé avec la nouvelle valeur. */}
-          <form
-            className="flex flex-col gap-2"
-            onSubmit={(evenement) => {
-              evenement.preventDefault(); // pas de rechargement de la page
-              const donnees = new FormData(evenement.currentTarget);
-              renommer(pokemon.nom, String(donnees.get("surnom") ?? ""));
-            }}
-          >
-            <label htmlFor="surnom" className="etiquette">
-              Surnom ({LONGUEUR_MAX_SURNOM} caractères max.)
-            </label>
-            <input
-              key={surnom}
-              id="surnom"
-              name="surnom"
-              defaultValue={surnom}
-              maxLength={LONGUEUR_MAX_SURNOM}
-              onBlur={(evenement) => renommer(pokemon.nom, evenement.target.value)}
-              autoComplete="off"
-              className="min-h-11 w-full rounded-full border border-bordure bg-surface px-4 text-sm text-texte"
-            />
-          </form>
-
-          <div className="flex flex-col gap-2">
-            <h3 className="etiquette">Attaques</h3>
-            {attaques === undefined ? (
-              <p role="status" className="text-sm text-texte-doux">
-                Chargement des attaques…
-              </p>
-            ) : attaques.length === 0 ? (
-              <p className="text-sm text-texte-doux">Ce Pokémon n&apos;apprend aucune attaque offensive.</p>
-            ) : (
-              <ul className="grid grid-cols-2 gap-2">
-                {attaques.map((attaque) => (
-                  <li key={attaque.id} className="min-w-0">
-                    <CarteAttaque attaque={attaque} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <h3 className="etiquette">Statistiques</h3>
-          <ul className="flex flex-col gap-2">
-            {LIBELLES_STATS.map((stat, index) => (
-              <BarreStat key={stat.cle} libelle={stat.libelle} valeur={pokemon.stats[stat.cle]} index={index} />
-            ))}
-          </ul>
+          {blocSurnom}
+          {blocStats}
+          {blocAttaques}
         </div>
       </div>
     </section>

@@ -82,6 +82,10 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
       rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // au-delà de 2, coût élevé pour un gain invisible
       conteneur.appendChild(rendu.domElement);
       rendu.domElement.style.display = "block";
+      // Taille AFFICHÉE du canvas = celle de sa zone. Sans cela, sur un écran à haute densité (téléphone),
+      // le canvas s'afficherait à sa taille en pixels réels, deux fois trop grand, et le modèle serait coupé.
+      rendu.domElement.style.width = "100%";
+      rendu.domElement.style.height = "100%";
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 100);
@@ -103,12 +107,15 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
       socle.add(pivot);
       scene.add(socle);
 
+      // Rempli une fois le modèle chargé : recadre la caméra quand la zone change de forme.
+      let apresRedimension = () => {};
       const adapter = () => {
         const largeur = conteneur.clientWidth;
         const hauteur = conteneur.clientHeight;
         rendu.setSize(largeur, hauteur, false);
         camera.aspect = largeur / Math.max(hauteur, 1);
         camera.updateProjectionMatrix();
+        apresRedimension();
       };
       const observateur = new ResizeObserver(adapter);
       observateur.observe(conteneur);
@@ -209,16 +216,23 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
       const taille = boite.getSize(new THREE.Vector3());
       // Tous les modèles sont ramenés à 2 unités dans leur plus grande dimension utile.
       const echelle = 2 / Math.max(taille.y, taille.x * 0.8, taille.z * 0.8, 0.0001);
-      const centre = boite.getCenter(new THREE.Vector3());
       pivot.scale.setScalar(echelle);
-      pivot.position.set(-centre.x * echelle, -boite.min.y * echelle, -centre.z * echelle); // centré, pieds au sol
+      // Pieds au sol. En largeur et en profondeur, on garde le point d'origine du modèle (placé entre ses pieds
+      // par ses auteurs) : centrer sur la boîte décalerait le corps de ceux qui ont une longue queue, comme Mewtwo.
+      pivot.position.set(0, -boite.min.y * echelle, 0);
 
       const hauteur = taille.y * echelle;
+      // Rayon à cadrer : la moitié de la plus grande dimension du modèle.
       const rayon = (Math.max(taille.x, taille.y, taille.z) * echelle) / 2;
       const cible = new THREE.Vector3(0, hauteur / 2, 0);
-      const distance = (rayon / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.2;
 
       function recadrer() {
+        // Distance de la caméra pour que le modèle tienne en entier. camera.fov est l'angle de vue VERTICAL ;
+        // dans une zone plus haute que large (téléphone en portrait), c'est la largeur qui limite : on calcule
+        // alors l'angle de vue horizontal et on garde le plus petit des deux.
+        const demiVertical = THREE.MathUtils.degToRad(camera.fov / 2);
+        const demiHorizontal = Math.atan(Math.tan(demiVertical) * camera.aspect);
+        const distance = (rayon / Math.sin(Math.min(demiVertical, demiHorizontal))) * 1.2;
         const angle = THREE.MathUtils.degToRad(28); // vue de trois quarts
         camera.position.set(Math.sin(angle) * distance, cible.y + distance * 0.16, Math.cos(angle) * distance);
         controles.target.copy(cible);
@@ -227,6 +241,8 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
         controles.update();
       }
       recadrer();
+      // Téléphone tourné, fenêtre redimensionnée : on recadre pour que le modèle reste entier.
+      apresRedimension = recadrer;
 
       // Ombre au sol : un disque dont la texture est un dégradé dessiné dans un petit <canvas>.
       const dessin = document.createElement("canvas");
@@ -321,7 +337,9 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={`verre relative overflow-hidden ${compacte ? "h-[26rem]" : "h-[26rem] sm:h-[30rem]"}`}>
+      {/* Version compacte : un carré, mais jamais plus de 70 % de la hauteur de l'écran (svh). Sur un téléphone
+          tenu en paysage, il reste ainsi de la place autour de la zone 3D pour faire défiler la page avec le doigt. */}
+      <div className={`verre relative overflow-hidden ${compacte ? "aspect-square max-h-[70svh] w-full" : "h-[26rem] sm:h-[30rem]"}`}>
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_70%,var(--teinte,var(--color-accent)),transparent_62%)] opacity-25" />
         {/* role="img" + libellé : la zone 3D est annoncée comme une image par les lecteurs d'écran. */}
         <div ref={refConteneur} role="img" aria-label={`Modèle 3D de ${nom}, orientable à la souris ou avec les boutons ci-dessous`} className="absolute inset-0 touch-none" />
