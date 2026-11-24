@@ -72,11 +72,16 @@ function ContenuArene() {
           {typesCouverts.length > 0 ? (
             <ul className="flex flex-wrap gap-2">
               {typesCouverts.map((type) => (
-                // Les mêmes vignettes que le filtre par type de l'accueil (classe puce-tuile) : le symbole du type
-                // dans un disque teinté, le libellé dessous. Ici elles sont seulement affichées, pas cliquables.
-                <li key={type} style={styleTeinte(type)} className="puce-tuile">
-                  <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--teinte)_22%,transparent)]">
-                    <svg viewBox="0 0 24 24" className="size-5 fill-[var(--teinte)]">
+                // Les mêmes symboles que le filtre par type de l'accueil, mais en version discrète : une petite
+                // gélule (symbole dans un mini-disque teinté + libellé), pour ne pas prendre le pas sur l'équipe.
+                // Elles sont seulement affichées, pas cliquables.
+                <li
+                  key={type}
+                  style={styleTeinte(type)}
+                  className="flex items-center gap-1.5 rounded-full border border-bordure bg-surface py-1 pl-1 pr-3 text-xs font-semibold text-texte"
+                >
+                  <span aria-hidden="true" className="flex size-6 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--teinte)_22%,transparent)]">
+                    <svg viewBox="0 0 24 24" className="size-3.5 fill-[var(--teinte)]">
                       <path d={GLYPHES[type].trace} fillRule="evenodd" />
                     </svg>
                   </span>
