@@ -120,3 +120,23 @@ void main() {
 `;
   return { vertexShader: SOMMETS, fragmentShader };
 }
+
+// Même fonction du type, mais pour l'ÉCLAT plein écran des filtres de l'accueil (lib/effets-types/eclat.ts) :
+// pas de zones calmes, et le pixel est écrit pour être posé PAR-DESSUS la page.
+export function assemblerEclat(type: NomType) {
+  const fragmentShader = /* glsl */ `
+varying vec2 vUv;
+${GLSL_COMMUN}
+${EFFETS_PAR_TYPE[type]}
+
+void main() {
+  vec4 effet = effetType(vUv, uProportions, uTemps, uInclinaison, uProgression, uOrigine, uTeinte);
+  float force = clamp(effet.a * uForce, 0.0, 1.0);
+  // Le navigateur pose le canvas sur la page ainsi : page × (1 − alpha) + couleur. La couleur ajoute donc
+  // de la lumière, et l'alpha (volontairement faible : l'intensité au carré) assombrit à peine la page,
+  // qui reste visible pendant l'éclat.
+  gl_FragColor = vec4(effet.rgb * force, force * force);
+}
+`;
+  return { vertexShader: SOMMETS, fragmentShader };
+}

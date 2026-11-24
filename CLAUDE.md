@@ -110,7 +110,10 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   `effetType` par type, `index.ts` = table, zones calmes, assemblage). C'est une couche additive À PART, entre la face
   et le reflet : le reflet d'origine de `Carte3D` ne doit pas être modifié (à `uForce` = 0, carte d'origine).
   Shaders fournis par l'utilisateur (générés avec Gemini), corrigés ici : eau (voile uniforme), acier (moiré, `fwidth`).
-  Le mode « éclat » des fonctions (prévu pour les filtres de l'accueil) n'est pas branché : les filtres restent en CSS.
+  Filtres de l'accueil : le mode « éclat » des mêmes fonctions joue le FOND de l'effet (`lib/effets-types/eclat.ts` :
+  un seul canvas WebGL plein écran réutilisé, shader préparé au survol/focus de la tuile par `preparerEclat`).
+  `EffetType` garde les symboles CSS par-dessus (choix de l'utilisateur : shader + symboles) ; son voile, ses fonds et
+  ses ondes CSS restent le repli (moteur pas prêt, pas de WebGL) et le voile seul en animations réduites.
 - Accueil : introduction `IntroPokedex` (client, `components/`) autour de toute la page. Un Pokédex géant EN 3D
   (three.js, chargé à la demande : `lib/labo/pokedex3d.ts` = modèle repris d'un fichier fourni, `@ts-nocheck`, exclu
   d'ESLint ; `lib/labo/scene-pokedex.ts` = lumières et reflets validés par l'utilisateur) s'ouvre au défilement, puis

@@ -4,6 +4,7 @@ import { useCallback, useOptimistic, useRef, useState, useTransition, type Mouse
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import EffetType from "@/components/EffetType";
+import { jouerEclat, preparerEclat } from "@/lib/effets-types/eclat";
 import { GLYPHES } from "@/lib/glyphes";
 import { construireAdresse } from "@/lib/recherche";
 import { styleTeinte } from "@/lib/teinte";
@@ -14,7 +15,7 @@ type Props = {
   typeActif: NomType | null; // le type lu dans l'adresse par le serveur
 };
 
-type Effet = { type: NomType; origine: { x: number; y: number }; numero: number };
+type Effet = { type: NomType; origine: { x: number; y: number }; avecShader: boolean; numero: number };
 
 // Filtre par type : une tuile par type. Ce sont toujours de simples LIENS (l'adresse reste la source
 // de vérité), mais le composant est « client » pour deux raisons :
@@ -33,6 +34,12 @@ export default function FiltreTypes({ q, typeActif }: Props) {
   // cliquer dessus (survol, focus clavier ou doigt posé), pas pour les 19 tuiles d'un coup.
   // Précharger toutes les tuiles à chaque affichage lançait 19 rendus serveur par clic.
   const [vise, setVise] = useState<NomType | "tous" | null>(null);
+  // Même idée pour l'éclat : dès qu'une tuile est visée, on prépare son shader (téléchargement de three.js
+  // la première fois, puis compilation), pour qu'il parte sans attente au clic.
+  function viser(type: NomType) {
+    setVise(type);
+    preparerEclat(type);
+  }
 
   // Numéro du dernier clic : sert à reconnaître, après une courte attente, si un clic plus récent est arrivé.
   const dernierClic = useRef(0);
@@ -49,7 +56,11 @@ export default function FiltreTypes({ q, typeActif }: Props) {
       // L'effet part du centre de la tuile cliquée (valable aussi au clavier, où il n'y a pas de souris).
       const zone = evenement.currentTarget.getBoundingClientRect();
       // « numero » change à chaque clic : React recrée l'effet, qui rejoue donc son animation.
-      setEffet({ type, origine: { x: zone.left + zone.width / 2, y: zone.top + zone.height / 2 }, numero: Date.now() });
+      const origine = { x: zone.left + zone.width / 2, y: zone.top + zone.height / 2 };
+      // Le fond de l'effet est joué par le shader du type, entre 0,8 et 1,5 s. S'il n'est pas prêt
+      // (premier clic trop rapide, pas de WebGL, animations réduites), EffetType joue tout en CSS.
+      const avecShader = jouerEclat(type, origine, Math.min(Math.max(GLYPHES[type].duree, 800), 1500));
+      setEffet({ type, origine, avecShader, numero: Date.now() });
     }
     const adresse = construireAdresse({ q, type, page: 1 });
     const numero = ++dernierClic.current;
@@ -97,8 +108,8 @@ export default function FiltreTypes({ q, typeActif }: Props) {
               <Link
                 href={construireAdresse({ q, type, page: 1 })}
                 prefetch={vise === type}
-                onPointerEnter={() => setVise(type)}
-                onFocus={() => setVise(type)}
+                onPointerEnter={() => viser(type)}
+                onFocus={() => viser(type)}
                 scroll={false}
                 onClick={(evenement) => choisir(type, evenement)}
                 aria-current={actif ? "true" : undefined}
@@ -126,7 +137,7 @@ export default function FiltreTypes({ q, typeActif }: Props) {
       {/* Fine barre en haut de l'écran tant que la nouvelle liste n'est pas arrivée. */}
       {enAttente && <span aria-hidden="true" className="barre-attente fixed inset-x-0 top-0 z-50 h-0.5 bg-accent" />}
 
-      {effet && <EffetType key={effet.numero} type={effet.type} origine={effet.origine} surFin={retirerEffet} />}
+      {effet && <EffetType key={effet.numero} type={effet.type} origine={effet.origine} avecShader={effet.avecShader} surFin={retirerEffet} />}
     </nav>
   );
 }
