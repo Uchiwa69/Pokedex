@@ -110,6 +110,11 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   (`public/pokedex/` : ouvert, ferme, volet-dos, même cadrage) s'ouvre au défilement (`useScroll` + `useTransform`
   de motion), puis on plonge dans son écran, où s'affiche LA VRAIE PAGE, réduite et découpée au format de la dalle
   (`calerPage`). Jouée une fois par visite (sessionStorage `pokedex-intro-vue`), jamais en animations réduites.
+  Deux composants : `IntroPokedex` (décide, porte la page) et `ScenePokedex` (l'appareil, présent seulement pendant
+  l'introduction). Fin de plongée → la scène est RETIRÉE et le défilement compensé : le haut de la page redevient le
+  haut du site (sinon pagination, logo et « Tous » ramenaient au Pokédex fermé). Pour la revoir à l'envers, insister à
+  la molette tout en haut (`EFFORT_POUR_ROUVRIR`). Animations réduites lues par `useSyncExternalStore` (pas
+  `useReducedMotion`, qui provoquait une erreur d'hydratation ici).
   Exception assumée à « transform et opacity seulement » : `clip-path` pendant la plongée.
   Copies de sauvegarde et variante Pokéball dans le dossier local `effets/` (hors dépôt) ; essai dans `/labo/intro`.
 - Accueil : `FiltreTypes` (client) = tuiles avec symbole (`lib/glyphes.ts`), type actif optimiste (`useOptimistic` +
