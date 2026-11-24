@@ -254,11 +254,13 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
   const { scrollYProgress } = useScroll({ target: zone, offset: ["start start", "end end"] });
 
   // Traits de vitesse : ils apparaissent pendant la plongée et s'écartent du centre.
-  const traitsOpacite = useTransform(scrollYProgress, [0.32, 0.43, 0.54], [0, 0.55, 0]);
-  const traitsTaille = useTransform(scrollYProgress, [0.32, 0.54], [0.7, 2.6]);
-  const invitationOpacite = useTransform(scrollYProgress, [0, 0.03], [1, 0]);
   // Opacité de la scène 3D, réglée par calerPage.
   const fonduScene = useMotionValue(1);
+  const traitsCourbe = useTransform(scrollYProgress, [0.32, 0.43, 0.54], [0, 0.55, 0]);
+  // … multipliée par celle de la scène : les traits s'effacent avec l'appareil, en fin de plongée.
+  const traitsOpacite = useTransform(() => traitsCourbe.get() * fonduScene.get());
+  const traitsTaille = useTransform(scrollYProgress, [0.32, 0.54], [0.7, 2.6]);
+  const invitationOpacite = useTransform(scrollYProgress, [0, 0.03], [1, 0]);
   // Lumière de scène derrière l'appareil : elle s'éteint au moment de plonger. Elle reste au centre de la
   // fenêtre : fermé, l'appareil y est ; ouvert, il se décale justement pour que l'ensemble volet + corps y soit.
   const lumiereOpacite = useTransform(scrollYProgress, [0.24, 0.34], [1, 0]);
@@ -281,11 +283,17 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
 
     // La page est réduite pour avoir la largeur de l'écran ; jamais plus grande que sa taille normale.
     const echelle = Math.min(1, ecran.largeur / largeurPage);
-    // « fini » passe de 0 à 1 quand la page approche de sa taille normale : on relâche alors le calage,
-    // et la page retrouve en douceur sa place naturelle dans le site.
-    // (echelle >= 1 est testé à part : le calcul (1 - 0,8) / 0,2 donne 0,9999999999999998 et non 1, à cause des
-    // arrondis des nombres à virgule. La page gardait alors une transformation et une découpe résiduelles.)
-    const fini = echelle >= 1 ? 1 : entre0et1((echelle - 0.8) / 0.2);
+    // Quand la page approche de sa taille normale, on efface l'appareil et on ouvre la découpe en douceur.
+    // La page, elle, reste COLLÉE à l'écran jusqu'au bout (avant, on la relâchait
+    // vers sa place dans le site, qui dépend du défilement : elle faisait de petits bonds dans le cadre).
+    // La fin se joue en deux temps, pour que la page ne déborde jamais sur un appareil encore visible :
+    //   - « efface » (échelle de 0,6 à 0,85) : l'appareil disparaît, la page reste dans son cadre ;
+    //   - « fini » (échelle de 0,85 à 1) : le cadre s'ouvre sur toute la page.
+    // (echelle >= 1 est testé à part : un calcul comme (1 - 0,85) / 0,15 peut donner 0,9999999999999998 et non 1,
+    // à cause des arrondis des nombres à virgule.)
+    const efface = entre0et1((echelle - 0.6) / 0.25);
+    const fini = echelle >= 1 ? 1 : entre0et1((echelle - 0.85) / 0.15);
+    pageEnPlace.current = echelle >= 1;
 
     // Décalages pour poser le milieu de la page sur celui de l'écran, et son haut sur le haut de l'écran.
     const milieuEcran = zoneCadre.left + ecran.gauche + ecran.largeur / 2;
@@ -294,14 +302,15 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     // L'appareil s'efface à mesure que la page atteint sa taille normale. Sans cela, sur un téléphone (écran en
     // hauteur), la page arrivait à sa taille avant que l'écran de l'appareil ne couvre toute la fenêtre : une
     // bande de plastique rouge restait visible sous les cartes.
-    fonduScene.set(1 - fini);
-    valeurs.x.set((milieuEcran - (gauche + largeurPage / 2)) * (1 - fini));
-    valeurs.y.set((hautEcran - haut) * (1 - fini));
+    fonduScene.set(1 - efface);
+    valeurs.x.set(milieuEcran - (gauche + largeurPage / 2));
+    valeurs.y.set(hautEcran - haut);
 
     // Fenêtre de découpe (clip-path), exprimée dans le repère de la page AVANT mise à l'échelle :
     // on garde une bande centrée de la largeur de l'écran, et la hauteur de l'écran depuis le haut.
-    const cote = Math.max(0, (largeurPage - ecran.largeur / echelle) / 2);
-    const bas = Math.max(0, hauteurPage - ecran.hauteur / echelle);
+    // × (1 - fini) : en fin de plongée, le cadre s'ouvre progressivement au lieu de disparaître d'un coup.
+    const cote = Math.max(0, (largeurPage - ecran.largeur / echelle) / 2) * (1 - fini);
+    const bas = Math.max(0, hauteurPage - ecran.hauteur / echelle) * (1 - fini);
     // Plongée finie : plus aucune découpe, la page est une page normale.
     // Exception assumée à la règle « n'animer que transform et opacity » : clip-path est indispensable pour que
     // la page ne dépasse pas de l'écran de l'appareil. Elle ne sert que pendant la plongée.
@@ -315,7 +324,10 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
 
   // Mesures de la page dans le document. Les lire oblige le navigateur à recalculer la mise en page : on ne le
   // fait donc pas à chaque image, seulement quand une taille change (voir adapter).
-  const mesures = useRef({ largeurPage: 0, hauteurPage: 0, haut: 0, gauche: 0 });
+  const mesures = useRef({ largeurPage: 0, hauteurPage: 0, haut: 0, gauche: 0, hautDansLeSite: 0 });
+  // Vrai quand la page a atteint sa taille normale (noté par calerPage) : c'est le signal de fin de la plongée.
+  const pageEnPlace = useRef(false);
+  const enPlacePrecedent = useRef(false);
   function mesurer() {
     const p = page.current;
     if (!p) return;
@@ -326,7 +338,11 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
       haut += element.offsetTop;
       gauche += element.offsetLeft;
     }
-    mesures.current = { largeurPage: p.offsetWidth, hauteurPage: p.offsetHeight, haut, gauche };
+    // Place du haut de la page dans le site, une fois l'introduction refermée et le défilement tout en haut :
+    // le haut de <main> (juste sous l'en-tête) plus sa marge intérieure haute.
+    const principal = p.parentElement;
+    const hautDansLeSite = principal ? principal.offsetTop + parseFloat(getComputedStyle(principal).paddingTop) : 0;
+    mesures.current = { largeurPage: p.offsetWidth, hauteurPage: p.offsetHeight, haut, gauche, hautDansLeSite };
   }
 
   // Redessine la scène pour l'avancement du moment, puis recale la page. Tout est fait dans le même appel :
@@ -385,6 +401,7 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
       const centre = new THREE.Vector3();
       // Largeur de l'écran du modèle, en unités de la scène (largeur de sa plaque × son agrandissement).
       const largeurEcran = ecran ? (ecran.geometry as import("three").PlaneGeometry).parameters.width * ecran.scale.x : 1;
+      const hauteurEcran = ecran ? (ecran.geometry as import("three").PlaneGeometry).parameters.height * ecran.scale.y : 1;
 
       dessiner.current = (avancement) => {
         // Taille de la zone, mémorisée par adapter (pas de lecture de mise en page à chaque image).
@@ -407,12 +424,29 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
         // À zoom 1, une unité placée à DISTANCE mesure hauteur / (2 × DISTANCE × tan(champ / 2)) pixels.
         camera.zoom = pixelsParUnite / (hauteur / (2 * DISTANCE * demiChamp));
 
-        // 4. Place à l'écran. Comme avec les photos, le centre de l'écran de l'appareil est le point fixe de la
-        //    plongée : il reste à (décalage ; léger écart vertical) du centre de la fenêtre. On déplace la
-        //    caméra SANS la tourner : l'écran reste bien de face, donc parfaitement rectangulaire.
+        // 4. Place à l'écran. Au début, comme avec les photos, le centre de l'écran de l'appareil reste à
+        //    (décalage ; léger écart vertical) du centre de la fenêtre. Puis, à mesure que la page grandit dans
+        //    l'écran (« arrivee » de 0 à 1), on fait glisser l'écran pour que, pile quand la page atteint sa
+        //    taille normale, son haut soit sous l'en-tête (hautDansLeSite) et son milieu au milieu : exactement la place de la
+        //    page dans le site. La page n'a donc jamais à quitter l'écran de l'appareil.
+        //    On déplace la caméra SANS la tourner : l'écran reste de face, donc parfaitement rectangulaire.
         const decalage = transform(avancement, COURBE_DECALAGE.avancement, COURBE_DECALAGE.valeur);
-        const ecartX = (ECRAN.centreX - 0.5 + decalage) * largeurCadre;
-        const ecartY = (ECRAN.centreY - 0.5) * hauteurCadre;
+        const { largeurPage, hautDansLeSite } = mesures.current;
+        const echelleDepart = (ECRAN.largeur * largeurCadre) / Math.max(largeurPage, 1); // quand grossissement = 1
+        const echellePage = Math.min(1, (pixelsParUnite * largeurEcran) / Math.max(largeurPage, 1));
+        const lineaire = echelleDepart >= 1 ? 1 : entre0et1((echellePage - echelleDepart) / (1 - echelleDepart));
+        const arrivee = lineaire * lineaire * (3 - 2 * lineaire); // départ et arrivée en douceur
+        const hauteurEcranPixels = pixelsParUnite * hauteurEcran;
+        // Haut de l'écran tant que la plongée n'a pas commencé : l'écran grossit autour de son centre.
+        const milieuDepart = hauteur / 2 + (ECRAN.centreY - 0.5) * hauteurCadre;
+        const hautDepart = milieuDepart - hauteurEcranPixels / 2;
+        // Pendant la plongée : le haut de l'écran va, en ligne droite, de sa position au grossissement 1 jusqu'à
+        // sa place dans le site. (Partir du haut « autour du centre » le faisait d'abord remonter, puis
+        // redescendre : la page avait un léger aller-retour dans le cadre.)
+        const hautAuRepos = milieuDepart - hauteurEcranPixels / grossissement / 2;
+        const hautVoulu = arrivee === 0 ? hautDepart : hautAuRepos + (hautDansLeSite - hautAuRepos) * arrivee;
+        const ecartX = ((ECRAN.centreX - 0.5) * (1 - arrivee) + decalage) * largeurCadre;
+        const ecartY = hautVoulu + hauteurEcranPixels / 2 - hauteur / 2;
         ecran.getWorldPosition(centre);
         camera.aspect = largeur / hauteur;
         camera.position.set(centre.x - ecartX / pixelsParUnite, centre.y + ecartY / pixelsParUnite, centre.z + DISTANCE);
@@ -470,8 +504,12 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     setDebut(avancement < SEUIL_ENTETE);
     const precedent = avancementPrecedent.current;
     avancementPrecedent.current = avancement;
-    // On ne referme l'introduction qu'en DESCENDANT au-delà du seuil (pas en le retraversant vers le haut).
-    if (avancement >= SEUIL_FIN && precedent < SEUIL_FIN) {
+    const enPlace = pageEnPlace.current;
+    const vientDArriver = enPlace && !enPlacePrecedent.current;
+    enPlacePrecedent.current = enPlace;
+    // Fin de la plongée : la page vient d'atteindre sa taille normale, à sa place. On ne referme l'introduction
+    // qu'en DESCENDANT (pas en remontant). SEUIL_FIN reste en secours, si l'écran n'a pas pu être mesuré.
+    if (avancement > precedent && (vientDArriver || (avancement >= SEUIL_FIN && precedent < SEUIL_FIN))) {
       try {
         sessionStorage.setItem(CLE_VUE, "1");
       } catch {
