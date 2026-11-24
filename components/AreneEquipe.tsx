@@ -11,8 +11,10 @@ import Scene2D from "@/components/labo/Scene2D";
 import VitrineMembre from "@/components/labo/VitrineMembre";
 import { useChargementAttaques } from "@/hooks/useChargementAttaques";
 import { useTypesCouverts } from "@/hooks/useTypesCouverts";
+import { GLYPHES } from "@/lib/glyphes";
 import { LIBELLES_STATS } from "@/lib/stats";
 import { styleTeinte } from "@/lib/teinte";
+import { TYPES } from "@/lib/types";
 import { LONGUEUR_MAX_SURNOM, TAILLE_MAX_SACOCHE, useSacoche, useSacochePrete, type Membre } from "@/stores/sacoche";
 
 // Page « arène d'équipe » : les 6 emplacements de la sacoche, chacun sur un socle.
@@ -70,8 +72,15 @@ function ContenuArene() {
           {typesCouverts.length > 0 ? (
             <ul className="flex flex-wrap gap-2">
               {typesCouverts.map((type) => (
-                <li key={type}>
-                  <BadgeType type={type} />
+                // Les mêmes vignettes que le filtre par type de l'accueil (classe puce-tuile) : le symbole du type
+                // dans un disque teinté, le libellé dessous. Ici elles sont seulement affichées, pas cliquables.
+                <li key={type} style={styleTeinte(type)} className="puce-tuile">
+                  <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--teinte)_22%,transparent)]">
+                    <svg viewBox="0 0 24 24" className="size-5 fill-[var(--teinte)]">
+                      <path d={GLYPHES[type].trace} fillRule="evenodd" />
+                    </svg>
+                  </span>
+                  {TYPES[type].libelle}
                 </li>
               ))}
             </ul>
