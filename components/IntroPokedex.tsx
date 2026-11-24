@@ -5,8 +5,13 @@
 // L'appareil est fait de PHOTOS (images générées par l'utilisateur, détourées, dans public/pokedex) :
 //   - ouvert.webp    : le corps de l'appareil, écran noir et vide ;
 //   - ferme.webp     : le volet vu de l'extérieur ;
-//   - volet-dos.webp : la face intérieure du volet (la même plaque en miroir, assombrie).
-// Les trois ont exactement le même cadrage : on peut donc les superposer au pixel près.
+//   - volet-interieur.webp : la face intérieure du volet (nervures, plots de vis, joint), recalée sur sa silhouette ;
+//   - tranche.webp   : le plastique vu de profil, plaqué sur les bords pour donner de l'ÉPAISSEUR.
+// Les trois premières ont exactement le même cadrage : on peut donc les superposer au pixel près.
+//
+// Épaisseur : le volet n'est plus une feuille. Sa face extérieure est avancée de --ep vers nous (translateZ),
+// sa face intérieure reste au niveau du corps, et trois bandes perpendiculaires (rotateX / rotateY de 90°)
+// ferment les bords. C'est la même construction qu'un cube en CSS, en très plat.
 //
 // Technique : useScroll donne l'avancement du défilement (0 → 1) et useTransform le convertit en mouvement.
 // Le volet tourne autour de sa charnière (rotateY) dans un espace en perspective, comme l'écran du MacBook
@@ -21,7 +26,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import Image from "next/image";
-import { motion, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
+import { motion, transform, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
 
 type Props = {
   // La vraie page (titre, recherche, grille…), rendue par le serveur et transmise ici.
@@ -33,6 +38,18 @@ type Props = {
 const DALLE = { gauche: 0.1733, haut: 0.2999, largeur: 0.6933, hauteur: 0.3614 };
 // Centre de la dalle : c'est le point fixe de la plongée (transform-origin de l'appareil).
 const CENTRE = { x: DALLE.gauche + DALLE.largeur / 2, y: DALLE.haut + DALLE.hauteur / 2 };
+
+// Les deux courbes dont dépend le calage de la page dans l'écran, écrites une seule fois :
+// à tel avancement du défilement (1re liste) correspond telle valeur (2e liste).
+// - décalage de l'appareil vers la droite, en part de sa largeur (volet ouvert, il est deux fois plus large) ;
+// - grossissement de l'appareil : la plongée, lente puis de plus en plus rapide (1 → 3 → 14).
+const COURBE_DECALAGE = { avancement: [0.03, 0.2, 0.28], valeur: [0, 0.44, 0] };
+const COURBE_TAILLE = { avancement: [0, 0.24, 0.3, 0.41, 0.52], valeur: [0.9, 1, 1, 3, 14] };
+
+// Bords de l'appareil : la photo du plastique vu de profil, étirée sur toute la bande (bords verticaux),
+// ou un simple dégradé de rouges (bords du haut et du bas, trop courts pour la photo).
+const TRANCHE = "absolute bg-[url(/pokedex/tranche.webp)] bg-[length:100%_100%]";
+const TRANCHE_PLATE = "absolute bg-linear-to-r from-coque-sombre via-coque to-coque-clair";
 
 // Clé du sessionStorage : retient, le temps de la visite, que l'introduction a déjà été vue.
 // (sessionStorage est vidé à la fermeture de l'onglet : à la visite suivante, elle rejoue.)
@@ -225,12 +242,12 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
   // Volet ouvert, l'appareil est presque deux fois plus large : on le décale à droite de 44 % de sa largeur
   // pour garder l'ensemble centré, puis on le ramène au centre AVANT la plongée.
   // (decalage est une part de la largeur de l'appareil ; appareilX en fait un pourcentage pour le style.)
-  const decalage = useTransform(scrollYProgress, [0.03, 0.2, 0.28], [0, 0.44, 0]);
+  const decalage = useTransform(scrollYProgress, COURBE_DECALAGE.avancement, COURBE_DECALAGE.valeur);
   const appareilX = useTransform(decalage, (part) => `${part * 100}%`);
   // Il est d'abord vu légèrement de biais, puis il se redresse face à nous.
   const appareilAngle = useTransform(scrollYProgress, [0, 0.24], [-16, 0]);
   // La plongée : l'appareil grossit jusqu'à 14 fois, lentement puis de plus en plus vite (1 → 3 → 14).
-  const appareilTaille = useTransform(scrollYProgress, [0, 0.24, 0.3, 0.41, 0.52], [0.9, 1, 1, 3, 14]);
+  const appareilTaille = useTransform(scrollYProgress, COURBE_TAILLE.avancement, COURBE_TAILLE.valeur);
   // Traits de vitesse : ils apparaissent pendant la plongée et s'écartent du centre.
   const traitsOpacite = useTransform(scrollYProgress, [0.32, 0.43, 0.54], [0, 0.55, 0]);
   const traitsTaille = useTransform(scrollYProgress, [0.32, 0.54], [0.7, 2.6]);
@@ -243,7 +260,12 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     const m = mesures.current;
     if (m.largeurAppareil === 0) return; // pas encore mesuré
     const avancement = scrollYProgress.get();
-    const grossissement = appareilTaille.get();
+    // On recalcule ici le grossissement et le décalage à partir de l'avancement (transform = la même
+    // interpolation que useTransform, en fonction simple). Lire appareilTaille.get() ne suffisait pas : ces valeurs
+    // dérivées ne sont mises à jour qu'à l'image suivante, donc la page était calée sur la position PRÉCÉDENTE de
+    // l'appareil et restait décalée quand le défilement s'arrêtait.
+    const grossissement = transform(avancement, COURBE_TAILLE.avancement, COURBE_TAILLE.valeur);
+    const partDecalage = transform(avancement, COURBE_DECALAGE.avancement, COURBE_DECALAGE.valeur);
     // Taille de la dalle à l'écran, en pixels.
     const largeurDalle = DALLE.largeur * m.largeurAppareil * grossissement;
     const hauteurDalle = DALLE.hauteur * m.hauteurAppareil * grossissement;
@@ -259,7 +281,7 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     const centreY = m.hauteurFenetre / 2 + (CENTRE.y - 0.5) * m.hauteurAppareil;
     // Écart horizontal entre le milieu de la dalle et le milieu de la fenêtre : la dalle n'est pas tout à fait au
     // milieu de la photo, et l'appareil est encore décalé tant qu'il n'est pas revenu au centre.
-    const decalageX = (CENTRE.x - 0.5 + decalage.get()) * m.largeurAppareil;
+    const decalageX = (CENTRE.x - 0.5 + partDecalage) * m.largeurAppareil;
     const hautDalle = centreY - hauteurDalle / 2;
     // Position du haut de la page dans la fenêtre, à cause du défilement (sans transformation).
     const hautPage = m.hautPage - window.scrollY;
@@ -347,11 +369,16 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
             preserve-3d : ses enfants (le volet) tournent dans le même espace 3D que lui. */}
         <motion.div
           ref={appareil}
-          className="relative aspect-[1210/1834] h-[min(70svh,62vw)] [transform-style:preserve-3d]"
+          // --ep : l'épaisseur du volet et du corps (6,6 % de la hauteur de l'appareil, mesurée sur la vue de profil).
+          className="relative aspect-[1210/1834] h-[min(70svh,62vw)] [--ep:calc(min(70svh,62vw)*0.066)] [transform-style:preserve-3d]"
           style={{ x: appareilX, rotateY: appareilAngle, scale: appareilTaille, transformOrigin: `${CENTRE.x * 100}% ${CENTRE.y * 100}%` }}
         >
           {/* Ombre portée au sol */}
           <span className="absolute -bottom-[5%] left-[10%] h-[5%] w-[84%] rounded-[100%] bg-encre opacity-90 blur-xl" />
+
+          {/* Tranche du corps, côté charnière : une bande qui part vers l'arrière (rotateY 90°). On la voit tant
+              que l'appareil est de biais, au début. */}
+          <span className={`${TRANCHE} bottom-[2%] left-[5.6%] top-[2%] w-(--ep) origin-left [transform:rotateY(90deg)]`} />
 
           {/* ---- Le corps : la photo de l'appareil ouvert. sizes="100vw" : on demande la grande version de
               l'image, car elle est très agrandie pendant la plongée. ---- */}
@@ -367,16 +394,30 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
           {/* ---- Le volet : la photo de l'appareil fermé, posée sur le corps ----
               origin-[5.6%_50%] : il tourne autour de la charnière (à 5,6 % du bord gauche de l'image). */}
           <motion.div className="absolute inset-0 origin-[5.6%_50%] [transform-style:preserve-3d]" style={{ rotateY: voletAngle }}>
-            {/* Face extérieure. backface-visibility: hidden → elle disparaît dès qu'on la voit de dos. */}
-            <Image src="/pokedex/ferme.webp" alt="" fill sizes="(min-width: 640px) 450px, 45vw" priority className="object-contain [backface-visibility:hidden]" />
-            {/* Face intérieure : visible seulement de dos. L'image est déjà en miroir ; rotateY(180°) la remet à l'endroit. */}
+            {/* Face extérieure, avancée de l'épaisseur du volet. backface-visibility: hidden → elle disparaît dès
+                qu'on la voit de dos. */}
             <Image
-              src="/pokedex/volet-dos.webp"
+              src="/pokedex/ferme.webp"
+              alt=""
+              fill
+              sizes="(min-width: 640px) 450px, 45vw"
+              priority
+              className="object-contain [backface-visibility:hidden] [transform:translateZ(var(--ep))]"
+            />
+            {/* Face intérieure : visible seulement de dos (rotateY 180°). */}
+            <Image
+              src="/pokedex/volet-interieur.webp"
               alt=""
               fill
               sizes="(min-width: 640px) 450px, 45vw"
               className="object-contain [backface-visibility:hidden] [transform:rotateY(180deg)]"
             />
+            {/* Les bords du volet : trois bandes larges de --ep, couchées à 90° pour relier les deux faces.
+                Bord libre (à droite), puis haut et bas. Elles sont un peu plus courtes que le volet, à cause
+                de ses angles arrondis. */}
+            <span className={`${TRANCHE} bottom-[2%] left-[99.5%] top-[2%] w-(--ep) origin-left [transform:rotateY(-90deg)]`} />
+            <span className={`${TRANCHE_PLATE} left-[8%] right-[3%] top-[0.4%] h-(--ep) origin-top [transform:rotateX(90deg)]`} />
+            <span className={`${TRANCHE_PLATE} left-[8%] right-[3%] top-full h-(--ep) origin-top [transform:rotateX(90deg)]`} />
           </motion.div>
         </motion.div>
 
