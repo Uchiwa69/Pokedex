@@ -6,8 +6,7 @@ import { motion, Reorder, useReducedMotion } from "motion/react";
 import BadgeType from "@/components/BadgeType";
 import BarreStat from "@/components/BarreStat";
 import CarteAttaque from "@/components/CarteAttaque";
-import CarteInclinable from "@/components/CarteInclinable";
-import CorpsCartePokemon from "@/components/CorpsCartePokemon";
+import SocleEquipe from "@/components/SocleEquipe";
 import Scene2D from "@/components/labo/Scene2D";
 import VitrineMembre from "@/components/labo/VitrineMembre";
 import { useChargementAttaques } from "@/hooks/useChargementAttaques";
@@ -16,7 +15,7 @@ import { LIBELLES_STATS } from "@/lib/stats";
 import { styleTeinte } from "@/lib/teinte";
 import { LONGUEUR_MAX_SURNOM, TAILLE_MAX_SACOCHE, useSacoche, useSacochePrete, type Membre } from "@/stores/sacoche";
 
-// Page « arène d'équipe » : les 6 emplacements de la sacoche, avec les mêmes cartes que la grille de l'accueil.
+// Page « arène d'équipe » : les 6 emplacements de la sacoche, chacun sur un socle.
 export default function AreneEquipe() {
   const prete = useSacochePrete();
 
@@ -49,7 +48,7 @@ function ContenuArene() {
   const [confirmation, setConfirmation] = useState(false);
 
   // Nom du dernier Pokémon ajouté, lu UNE fois au montage (la fonction passée à useState ne s'exécute
-  // qu'au premier rendu). Sa carte jouera l'effet « Poké Ball ».
+  // qu'au premier rendu). Son socle jouera l'effet « Poké Ball ».
   const [nouveau] = useState(() => useSacoche.getState().dernierAjout);
   useEffect(() => {
     // L'effet est joué : on l'efface du store pour qu'il ne rejoue pas à la prochaine visite.
@@ -110,17 +109,17 @@ function ContenuArene() {
         </div>
       </div>
 
-      {/* Les 6 emplacements : 2 colonnes sur mobile, 3 à partir de sm. auto-rows-fr : rangées de même hauteur. */}
-      <ul className="grid auto-rows-fr grid-cols-2 gap-4 sm:grid-cols-3">
+      {/* Les 6 emplacements : 2 colonnes sur mobile, 3 à partir de sm */}
+      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {membres.map((membre, index) => (
           <li
             key={membre.pokemon.nom}
-            // relative + hover:z-10 : la carte survolée passe au-dessus de ses voisines (son artwork dépasse du cadre).
-            className="relative min-w-0 animate-apparition hover:z-10 motion-reduce:animate-fondu"
+            className="animate-apparition motion-reduce:animate-fondu"
             style={{ animationDelay: `${index * 60}ms` }}
           >
             <EmplacementMembre
               membre={membre}
+              index={index}
               selectionne={membre.pokemon.nom === selection}
               nouveau={membre.pokemon.nom === nouveau}
               // Recliquer sur le membre sélectionné le désélectionne.
@@ -157,8 +156,15 @@ function ContenuArene() {
         <PanneauDetail key={membreSelectionne.pokemon.nom} membre={membreSelectionne} />
       ) : (
         membres.length > 0 && (
-          // Invitation : un texte simple, de taille normale et de couleur claire (une étiquette grise passait inaperçue).
-          <p className="text-center font-titre text-base font-semibold text-texte">Sélectionne un Pokémon pour voir son détail</p>
+          // Invitation bien visible : un encadré en pointillés à la place du futur panneau de détail,
+          // avec une icône et un texte de taille normale (une simple étiquette passait inaperçue).
+          <p className="flex min-h-24 items-center justify-center gap-3 rounded-3xl border border-dashed border-bordure bg-surface p-6 text-center font-titre text-base font-semibold text-texte">
+            {/* Icône décorative : une main qui pointe */}
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 shrink-0 text-accent">
+              <path d="M9 11V5a1.5 1.5 0 0 1 3 0v5m0 0V9a1.5 1.5 0 0 1 3 0v2m0 0v-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.7-2.3L4 15a1.6 1.6 0 0 1 2.5-2L9 15" />
+            </svg>
+            Sélectionne un Pokémon pour voir son détail
+          </p>
         )
       )}
 
@@ -171,25 +177,30 @@ function ContenuArene() {
 
 type PropsEmplacement = {
   membre: Membre;
+  index: number;
   selectionne: boolean;
   nouveau: boolean;
   surSelection: () => void;
 };
 
-function EmplacementMembre({ membre, selectionne, nouveau, surSelection }: PropsEmplacement) {
+function EmplacementMembre({ membre, index, selectionne, nouveau, surSelection }: PropsEmplacement) {
   const { pokemon, surnom } = membre;
   const animationsReduites = useReducedMotion();
-  const numero = String(pokemon.id).padStart(4, "0");
 
   return (
-    // La même carte que sur l'accueil (CorpsCartePokemon), mais ici elle se SÉLECTIONNE au lieu d'ouvrir la fiche.
-    // "group" : les enfants réagissent au survol de la carte entière. --teinte : couleur du type principal.
-    <div
+    // Un vrai <button> : activable au clic, avec Entrée et avec Espace, sans code supplémentaire.
+    <button
+      type="button"
+      onClick={surSelection}
+      aria-pressed={selectionne}
+      aria-label={`${surnom} (${pokemon.nomFr})${selectionne ? ", sélectionné" : ""}`}
       style={styleTeinte(pokemon.types[0])}
-      className="group relative h-full transition-transform duration-200 hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      className={`relative flex h-full w-full flex-col items-center gap-2 rounded-3xl p-4 text-center hover:bg-piste ${
+        selectionne ? "verre" : "border border-transparent"
+      }`}
     >
       {/* Effet « Poké Ball » à l'arrivée d'un nouveau membre : un flash de la couleur du type qui s'étend
-          en s'effaçant, pendant que la carte grossit depuis presque rien (ressort). */}
+          en s'effaçant, pendant que le Pokémon grossit depuis presque rien (ressort). */}
       {nouveau && !animationsReduites && (
         <motion.span
           aria-hidden="true"
@@ -200,52 +211,18 @@ function EmplacementMembre({ membre, selectionne, nouveau, surSelection }: Props
         />
       )}
       <motion.div
-        className="h-full"
+        className="w-full"
         // initial={false} : pas d'animation d'entrée pour les membres déjà présents.
         initial={nouveau ? (animationsReduites ? { opacity: 0 } : { scale: 0.2, opacity: 0 }) : false}
         animate={{ scale: 1, opacity: 1 }}
         transition={animationsReduites ? { duration: 0.3 } : { type: "spring", stiffness: 260, damping: 18 }}
       >
-        <CarteInclinable angle={16} reflet>
-          {/* Lueur de la teinte : visible au survol, et en permanence sur la carte sélectionnée. */}
-          <span
-            aria-hidden="true"
-            className={`pointer-events-none absolute inset-0 rounded-3xl shadow-[0_0_0_2px_var(--teinte),0_22px_44px_-14px_var(--teinte)] transition-opacity duration-200 motion-reduce:transition-none ${
-              selectionne ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-            }`}
-          />
-
-          <div className="verre relative flex h-full flex-col gap-2 p-3 sm:p-4">
-            {/* Le titre est le surnom ; si le Pokémon a été renommé, son vrai nom est rappelé à côté du numéro. */}
-            <CorpsCartePokemon pokemon={pokemon} titre={surnom} etiquette={surnom === pokemon.nomFr ? undefined : `N° ${numero} · ${pokemon.nomFr}`} />
-          </div>
-
-          {/* Une main dans le coin haut droit, invisible au repos : elle apparaît au survol de la carte, ou quand
-              son bouton reçoit le focus clavier (group-focus-within), pour montrer que la carte est cliquable.
-              On n'anime que l'opacité. */}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-accent text-sur-accent opacity-0 shadow-lueur transition-opacity duration-200 group-focus-within:opacity-100 group-hover:opacity-100 motion-reduce:transition-none"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
-              <path d="M9 11V5a1.5 1.5 0 0 1 3 0v5m0 0V9a1.5 1.5 0 0 1 3 0v2m0 0v-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.7-2.3L4 15a1.6 1.6 0 0 1 2.5-2L9 15" />
-            </svg>
-          </span>
-
-          {/* Un vrai <button>, transparent, posé PAR-DESSUS toute la carte : activable au clic, avec Entrée
-              et avec Espace. Il est à côté du contenu (et non autour) car un bouton ne peut pas contenir
-              de titre ni de liste. aria-pressed annonce s'il est sélectionné. */}
-          <button
-            type="button"
-            onClick={surSelection}
-            aria-pressed={selectionne}
-            aria-label={`${surnom} (${pokemon.nomFr})${selectionne ? ", sélectionné" : ""}`}
-            // cursor-pointer : le curseur devient une main sur toute la carte.
-            className="absolute inset-0 cursor-pointer rounded-3xl"
-          />
-        </CarteInclinable>
+        <SocleEquipe pokemon={pokemon} decalage={index} selectionne={selectionne} />
       </motion.div>
-    </div>
+
+      <span className="w-full truncate font-titre text-xl font-semibold">{surnom}</span>
+      <span className="etiquette w-full truncate">{pokemon.nomFr}</span>
+    </button>
   );
 }
 
