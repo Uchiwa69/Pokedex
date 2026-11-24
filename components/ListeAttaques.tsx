@@ -43,7 +43,8 @@ export default async function ListeAttaques({ nom }: { nom: string }) {
                 </svg>
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <h3 className="truncate font-titre text-sm font-semibold">{attaque.nomFr}</h3>
+                {/* Le nom est l'information principale : le plus grand texte de la carte, en gras. */}
+                <h3 className="truncate font-titre text-lg font-bold leading-tight">{attaque.nomFr}</h3>
                 <p className="etiquette flex items-center gap-1">
                   {TYPES[attaque.type].libelle} ·
                   <IconeCategorie categorie={attaque.categorie} />
@@ -53,32 +54,33 @@ export default async function ListeAttaques({ nom }: { nom: string }) {
               {/* Niveau d'apprentissage, dans une petite gélule */}
               <p className="flex shrink-0 items-baseline gap-1 rounded-full border border-bordure-verre bg-fond/60 px-3 py-1">
                 <span className="etiquette">Niv.</span>
-                <span className="font-titre text-sm font-semibold tabular-nums">{niveau <= 1 ? "1" : niveau}</span>
+                <span className="font-titre text-base font-bold tabular-nums">{niveau <= 1 ? "1" : niveau}</span>
               </p>
             </div>
 
-            {/* Description toujours visible (plus besoin de survoler) : 3 lignes au maximum, le reste est coupé
-                proprement. title : le texte complet apparaît au survol s'il a été coupé. */}
+            {/* Description toujours visible (plus besoin de survoler), mais en retrait : petite, en couleur douce,
+                2 lignes au maximum. title : le texte complet apparaît au survol s'il a été coupé. */}
             {attaque.description && (
-              <p title={attaque.description} className="relative line-clamp-3 text-sm text-texte-doux">
+              <p title={attaque.description} className="relative line-clamp-2 text-xs leading-relaxed text-texte-doux">
                 {attaque.description}
               </p>
             )}
 
-            {/* dl : paires « libellé / valeur ». « — » quand la valeur n'existe pas (attaque de statut…).
+            {/* dl : paires « libellé / valeur ». Les chiffres sont grands et en gras, les libellés restent petits :
+                l'œil va d'abord aux valeurs. « — » quand la valeur n'existe pas (attaque de statut…).
                 mt-auto : les trois cases restent collées en bas, quelle que soit la longueur de la description. */}
             <dl className="relative mt-auto grid grid-cols-3 gap-2 text-center">
               <div className="rounded-2xl bg-fond/50 px-2 py-2">
                 <dt className="etiquette">Puissance</dt>
-                <dd className="font-titre text-sm font-semibold tabular-nums">{attaque.puissance ?? "—"}</dd>
+                <dd className="font-titre text-xl font-bold leading-tight tabular-nums">{attaque.puissance ?? "—"}</dd>
               </div>
               <div className="rounded-2xl bg-fond/50 px-2 py-2">
                 <dt className="etiquette">Précision</dt>
-                <dd className="font-titre text-sm font-semibold tabular-nums">{attaque.precision ?? "—"}</dd>
+                <dd className="font-titre text-xl font-bold leading-tight tabular-nums">{attaque.precision ?? "—"}</dd>
               </div>
               <div className="rounded-2xl bg-fond/50 px-2 py-2">
                 <dt className="etiquette">PP</dt>
-                <dd className="font-titre text-sm font-semibold tabular-nums">{attaque.pp}</dd>
+                <dd className="font-titre text-xl font-bold leading-tight tabular-nums">{attaque.pp}</dd>
               </div>
             </dl>
           </li>
