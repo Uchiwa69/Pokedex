@@ -35,8 +35,8 @@ export default function PageLaboIntro({ searchParams }: Props) {
 
 async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }) {
   const { v } = await searchParams;
-  // Validation : toute valeur inconnue retombe sur la Pokéball.
-  const active = v === "pokedex" ? "pokedex" : "pokeball";
+  // Validation : toute valeur inconnue retombe sur le Pokédex (la version en cours de travail).
+  const active = v === "pokeball" ? "pokeball" : "pokedex";
   const liste = await recupererListe("", null, 1);
 
   return (
@@ -62,7 +62,7 @@ async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }
       {/* -mt-6 : annule la marge haute de la page, pour que l'objet soit centré dans l'écran dès l'arrivée.
           key : changer d'onglet recrée l'introduction, qui repart du début. */}
       <div className="-mt-6" key={active}>
-        {active === "pokedex" ? <IntroPokedex total={liste.total} /> : <IntroPokeball total={liste.total} />}
+        {active === "pokedex" ? <IntroPokedex total={liste.total} apercu={liste.pokemons.slice(0, 6)} /> : <IntroPokeball total={liste.total} />}
       </div>
       <header className="flex flex-col gap-2">
         <p className="etiquette">Pokédex national</p>
