@@ -11,6 +11,8 @@ type Props = {
   // Rang du membre : décale la phase des animations pour que les Pokémon ne bougent pas tous en même temps.
   decalage?: number;
   selectionne?: boolean;
+  // true : socle plus grand sur les écrans larges (arène de combat).
+  grand?: boolean;
 };
 
 // Positions horizontales et délais des 4 particules.
@@ -23,7 +25,7 @@ const PARTICULES = [
 
 // Un Pokémon sur son socle : disque en perspective, ombre au sol, sprite qui lévite, halo et particules.
 // Toutes les animations sont en CSS (transform et opacity seulement) et coupées avec motion-reduce.
-export default function SocleEquipe({ pokemon, vue = "face", decalage = 0, selectionne = false }: Props) {
+export default function SocleEquipe({ pokemon, vue = "face", decalage = 0, selectionne = false, grand = false }: Props) {
   const [enEchec, setEnEchec] = useState(false);
 
   const sprite = vue === "dos" ? pokemon.spriteDos : pokemon.spriteFace;
@@ -35,7 +37,7 @@ export default function SocleEquipe({ pokemon, vue = "face", decalage = 0, selec
   const phase = { animationDelay: `${-decalage * 0.65}s` };
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-40" style={styleTeinte(pokemon.types[0])}>
+    <div className={`relative mx-auto aspect-square w-full ${grand ? "max-w-40 md:max-w-56" : "max-w-40"}`} style={styleTeinte(pokemon.types[0])}>
       {/* Halo qui respire, derrière le Pokémon */}
       <span
         aria-hidden="true"

@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import BadgeType from "@/components/BadgeType";
 import { DUREE_EFFET } from "@/components/EffetAttaque";
 import EtatVide from "@/components/EtatVide";
+import { LIBELLES_CATEGORIES } from "@/components/IconeCategorie";
+import Pokeball from "@/components/Pokeball";
 import SocleEquipe from "@/components/SocleEquipe";
 import { useChargementAttaques } from "@/hooks/useChargementAttaques";
 import {
@@ -18,8 +22,10 @@ import {
   type TableEfficacite,
 } from "@/lib/combat";
 import type { Attaque, Pokemon } from "@/lib/conversion";
+import { GLYPHES } from "@/lib/glyphes";
 import { choisirRecette } from "@/lib/labo/effets2d";
 import { jouerAttaque, Moteur2D, type Point } from "@/lib/labo/moteur2d";
+import { styleTeinte } from "@/lib/teinte";
 import { TYPES, type NomType } from "@/lib/types";
 import { useSacoche, useSacochePrete } from "@/stores/sacoche";
 
@@ -79,6 +85,20 @@ function attendre(ms: number): Promise<void> {
 function tirerHasard(): number {
   return Math.random();
 }
+
+// Bandeau de fin de combat : classes complètes pour chaque résultat (jamais de classe fabriquée à la volée).
+const STYLES_RESULTAT = {
+  victoire: {
+    bordure: "border-pv-haut",
+    titre: "text-pv-haut",
+    lueur: "bg-[radial-gradient(circle_at_50%_0%,var(--color-pv-haut),transparent_70%)]",
+  },
+  defaite: {
+    bordure: "border-danger",
+    titre: "text-danger",
+    lueur: "bg-[radial-gradient(circle_at_50%_0%,var(--color-danger),transparent_70%)]",
+  },
+};
 
 /* ------------------------------------------------------------------ */
 /* Composant principal                                                 */
@@ -322,7 +342,8 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
           const suivant = adversaires.findIndex((l) => l.pv > 0);
           if (suivant === -1) {
             dire("Tu as gagné le combat !");
-            publier({ resultat: "victoire", occupe: false });
+            // ko conservé : le dernier Pokémon battu reste à terre sur l'écran de fin (sinon il réapparaissait debout).
+            publier({ resultat: "victoire", occupe: false, ko: "adversaire" });
             return;
           }
           iAdversaire = suivant;
@@ -331,7 +352,7 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
           const suivant = joueurs.findIndex((l) => l.pv > 0);
           if (suivant === -1) {
             dire("Tous tes Pokémon sont K.O. Tu as perdu le combat…");
-            publier({ resultat: "defaite", occupe: false });
+            publier({ resultat: "defaite", occupe: false, ko: "joueur" });
             return;
           }
           iJoueur = suivant;
@@ -364,29 +385,77 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
     );
   }
 
-  // Avant le combat : écran de préparation.
+  // Avant le combat : écran de préparation. Mon équipe à gauche, des silhouettes « ? » à droite
+  // (l'adversaire n'est tiré au sort qu'au démarrage), et un grand « VS » entre les deux.
   if (!partie) {
     return (
-      <div className="verre flex flex-col items-center gap-6 px-6 py-8 text-center">
-        <div className="flex flex-col gap-2">
+      <div className="verre relative flex flex-col items-center gap-6 overflow-hidden px-4 py-8 text-center sm:px-6">
+        {/* Décor : deux lueurs, une par camp */}
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_60%,var(--color-accent),transparent_45%),radial-gradient(circle_at_85%_60%,var(--color-danger),transparent_45%)] opacity-15" />
+
+        <div className="relative flex flex-col gap-2">
           <h2 className="font-titre text-xl font-semibold">Prêt pour le combat ?</h2>
           <p className="max-w-md text-sm text-texte-doux">
             Ton équipe de {membres.length} Pokémon affronte {membres.length} Pokémon tirés au hasard, au niveau {NIVEAU}.
           </p>
         </div>
-        <ul className="flex flex-wrap justify-center gap-2">
-          {membres.map((m) => (
-            <li key={m.pokemon.nom} className="etiquette rounded-full border border-bordure px-3 py-1">
-              {m.surnom}
-            </li>
-          ))}
-        </ul>
+
+        {/* Trois colonnes : mon équipe, « VS », l'équipe adverse. Sur mobile, elles s'empilent. */}
+        <div className="relative grid w-full max-w-3xl items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
+          <section aria-labelledby="titre-mon-equipe" className="flex flex-col items-center gap-2">
+            <h3 id="titre-mon-equipe" className="etiquette">
+              Ton équipe
+            </h3>
+            <ul className="flex flex-wrap justify-center gap-2">
+              {membres.map((m) => (
+                <li key={m.pokemon.nom} style={styleTeinte(m.pokemon.types[0])} className="flex w-20 flex-col items-center gap-1">
+                  <span className="relative flex size-16 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--teinte)_60%,transparent)] bg-[color-mix(in_srgb,var(--teinte)_18%,transparent)]">
+                    {/* Sprite animé ; à défaut, l'illustration. alt vide : le surnom est écrit juste dessous. */}
+                    {(m.pokemon.spriteFace ?? m.pokemon.artwork) && (
+                      <Image
+                        src={(m.pokemon.spriteFace ?? m.pokemon.artwork) as string}
+                        alt=""
+                        width={48}
+                        height={48}
+                        unoptimized // un GIF optimisé par Next deviendrait une image fixe
+                        className="size-12 object-contain [image-rendering:pixelated]"
+                      />
+                    )}
+                  </span>
+                  <span className="w-full truncate text-xs font-semibold text-texte">{m.surnom}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <p aria-hidden="true" className="bg-linear-to-r from-accent to-accent-bis bg-clip-text font-titre text-4xl font-bold text-transparent sm:text-5xl">
+            VS
+          </p>
+
+          <section aria-labelledby="titre-adversaires" className="flex flex-col items-center gap-2">
+            <h3 id="titre-adversaires" className="etiquette">
+              Adversaires
+            </h3>
+            {/* Autant de silhouettes que de membres dans mon équipe. Décoratives : le texte ci-dessus dit déjà tout. */}
+            <ul aria-hidden="true" className="flex flex-wrap justify-center gap-2">
+              {membres.map((m) => (
+                <li key={m.pokemon.nom} className="flex w-20 flex-col items-center gap-1">
+                  <span className="flex size-16 items-center justify-center rounded-full border border-dashed border-bordure bg-surface font-titre text-2xl font-bold text-texte-doux">
+                    ?
+                  </span>
+                  <span className="text-xs font-semibold text-texte-doux">???</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
         {erreur && (
-          <p role="alert" className="text-sm text-danger">
+          <p role="alert" className="relative text-sm text-danger">
             Impossible de trouver un adversaire. Vérifie ta connexion et réessaie.
           </p>
         )}
-        <button type="button" onClick={demarrer} disabled={!attaquesPretes || chargement} className="bouton bouton-principal disabled:opacity-60">
+        <button type="button" onClick={demarrer} disabled={!attaquesPretes || chargement} className="bouton bouton-principal relative disabled:opacity-60">
           {!attaquesPretes ? "Préparation des attaques…" : chargement ? "Recherche d'un adversaire…" : "Commencer le combat"}
         </button>
       </div>
@@ -431,14 +500,29 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
       <div className="grid gap-6 md:grid-cols-2">
         {/* Menu des attaques, ou résultat du combat */}
         {partie.resultat ? (
-          <section aria-labelledby="titre-resultat" className="verre flex flex-col items-start gap-4 p-4 sm:p-6">
-            <p className="etiquette">Fin du combat</p>
-            <h2 id="titre-resultat" className="font-titre text-3xl font-bold">
+          // Bandeau de fin : vert pour une victoire, rouge pour une défaite (table de classes complètes ci-dessous).
+          <section
+            aria-labelledby="titre-resultat"
+            className={`verre relative flex flex-col items-center gap-4 overflow-hidden p-6 text-center sm:p-8 ${STYLES_RESULTAT[partie.resultat].bordure}`}
+          >
+            <span aria-hidden="true" className={`pointer-events-none absolute inset-0 opacity-25 ${STYLES_RESULTAT[partie.resultat].lueur}`} />
+            <p className="etiquette relative">Fin du combat</p>
+            <h2 id="titre-resultat" className={`relative animate-apparition font-titre text-4xl font-bold motion-reduce:animate-fondu sm:text-5xl ${STYLES_RESULTAT[partie.resultat].titre}`}>
               {partie.resultat === "victoire" ? "Victoire !" : "Défaite…"}
             </h2>
-            <button type="button" onClick={demarrer} disabled={chargement} className="bouton bouton-principal disabled:opacity-60">
-              {chargement ? "Recherche d'un adversaire…" : "Nouveau combat"}
-            </button>
+            <p className="relative text-sm text-texte-doux">
+              {partie.resultat === "victoire"
+                ? `${partie.joueurs.filter((l) => l.pv > 0).length} de tes Pokémon sur ${partie.joueurs.length} sont encore debout.`
+                : `Il restait ${partie.adversaires.filter((l) => l.pv > 0).length} Pokémon à l'adversaire.`}
+            </p>
+            <div className="relative flex flex-wrap justify-center gap-2">
+              <button type="button" onClick={demarrer} disabled={chargement} className="bouton bouton-principal disabled:opacity-60">
+                {chargement ? "Recherche d'un adversaire…" : "Nouveau combat"}
+              </button>
+              <Link href="/sacoche" className="bouton bouton-secondaire">
+                Modifier mon équipe
+              </Link>
+            </div>
           </section>
         ) : (
           <section aria-labelledby="titre-attaques" className="flex flex-col gap-2">
@@ -447,17 +531,31 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
             </h2>
             <ul className="grid grid-cols-2 gap-2">
               {attaquesDuJoueur.map((attaque) => (
-                <li key={attaque.id} className="min-w-0">
-                  {/* Bouton coloré par le type de l'attaque (classes complètes venues de la table TYPES). */}
+                // --teinte : couleur du type de l'attaque, pour le décor et le symbole du bouton.
+                <li key={attaque.id} className="min-w-0" style={styleTeinte(attaque.type)}>
+                  {/* Même présentation que les cartes d'attaque de la fiche : symbole du type, nom en gras,
+                      puissance bien lisible à droite. Le contour s'allume au survol. */}
                   <button
                     type="button"
                     onClick={() => jouerTour(attaque)}
                     disabled={partie.occupe}
-                    className={`flex min-h-16 w-full flex-col items-start justify-center gap-1 rounded-2xl px-4 py-2 text-left shadow-carte disabled:opacity-50 ${TYPES[attaque.type].classes}`}
+                    className="verre relative flex min-h-16 w-full items-center gap-2 overflow-hidden p-2 text-left transition-colors duration-200 hover:border-[var(--teinte)] disabled:opacity-50 sm:gap-3 sm:p-3"
                   >
-                    <span className="w-full truncate font-titre text-sm font-semibold">{attaque.nomFr}</span>
-                    <span className="w-full truncate text-[11px] font-semibold uppercase tracking-wider">
-                      {TYPES[attaque.type].libelle} · Puis. {attaque.puissance ?? "—"}
+                    <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(145deg,var(--teinte),transparent_60%)] opacity-25" />
+                    <span aria-hidden="true" className="relative hidden size-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--teinte)_22%,transparent)] sm:flex">
+                      <svg viewBox="0 0 24 24" className="size-5 fill-[var(--teinte)]">
+                        <path d={GLYPHES[attaque.type].trace} fillRule="evenodd" />
+                      </svg>
+                    </span>
+                    <span className="relative flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="truncate font-titre text-sm font-bold sm:text-base">{attaque.nomFr}</span>
+                      <span className="etiquette truncate">
+                        {TYPES[attaque.type].libelle} · {LIBELLES_CATEGORIES[attaque.categorie]}
+                      </span>
+                    </span>
+                    <span className="relative flex shrink-0 flex-col items-center">
+                      <span className="etiquette">Puis.</span>
+                      <span className="font-titre text-xl font-bold leading-tight tabular-nums">{attaque.puissance ?? "—"}</span>
                     </span>
                   </button>
                 </li>
@@ -528,7 +626,8 @@ function CoteArene({ cote, lutteur, equipe, scene, ko }: PropsCote) {
   return (
     <div className="flex flex-col gap-2">
       {/* Encadré d'informations */}
-      <div className="flex flex-col gap-1 rounded-2xl border border-bordure bg-surface p-3">
+      {/* max-w-sm : l'encadré ne s'étire plus sur toute la demi-arène, il reste au-dessus de son Pokémon. */}
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-1 rounded-2xl border border-bordure bg-surface p-3">
         <div className="flex items-center justify-between gap-2">
           <p className="min-w-0 truncate font-titre text-sm font-semibold">{lutteur.surnom}</p>
           <p className="etiquette shrink-0">Niv. {NIVEAU}</p>
@@ -555,16 +654,14 @@ function CoteArene({ cote, lutteur, equipe, scene, ko }: PropsCote) {
           PV {lutteur.pv} / {lutteur.pvMax}
         </p>
 
-        {/* Une pastille par membre de l'équipe : pleine s'il peut encore se battre */}
+        {/* Une Pokéball par membre de l'équipe (comme dans l'en-tête) : pleine s'il peut encore se battre,
+            simple contour s'il est K.O. */}
         <p className="sr-only">
           {equipe.filter((l) => l.pv > 0).length} Pokémon sur {equipe.length} encore en état de se battre
         </p>
         <div className="flex gap-1" aria-hidden="true">
           {equipe.map((l) => (
-            <span
-              key={l.pokemon.nom}
-              className={l.pv > 0 ? "h-2 w-2 rounded-full bg-accent" : "h-2 w-2 rounded-full border border-texte-doux opacity-50"}
-            />
+            <Pokeball key={l.pokemon.nom} vide={l.pv <= 0} className={l.pv > 0 ? "size-3.5" : "size-3.5 text-texte-doux opacity-50"} />
           ))}
         </div>
       </div>
@@ -579,7 +676,8 @@ function CoteArene({ cote, lutteur, equipe, scene, ko }: PropsCote) {
           animate={animation}
           transition={{ duration: duree }}
         >
-          <SocleEquipe pokemon={lutteur.pokemon} vue={cote === "joueur" ? "dos" : "face"} decalage={cote === "joueur" ? 0 : 3} />
+          {/* grand : socle plus large sur ordinateur, pour que les Pokémon ne soient pas perdus dans l'arène. */}
+          <SocleEquipe grand pokemon={lutteur.pokemon} vue={cote === "joueur" ? "dos" : "face"} decalage={cote === "joueur" ? 0 : 3} />
         </motion.div>
 
       </div>
