@@ -39,6 +39,16 @@ async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }
   const active = v === "pokeball" ? "pokeball" : "pokedex";
   const liste = await recupererListe("", null, 1);
 
+  const page = (
+    <>
+      <header className="flex flex-col gap-2">
+        <p className="etiquette">Pokédex national</p>
+        <h1 className="font-titre text-3xl font-bold">Tous les Pokémon</h1>
+      </header>
+      <GrillePokemons pokemons={liste.pokemons} />
+    </>
+  );
+
   return (
     <div className="flex flex-col gap-6">
       {/* Onglets du labo, fixés en bas à gauche pour rester accessibles pendant le défilement. */}
@@ -59,18 +69,21 @@ async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }
         ))}
       </nav>
 
-      {/* -mt-6 : annule la marge haute de la page, pour que l'objet soit centré dans l'écran dès l'arrivée.
+      {/* La vraie page (titre + grille) : pour le Pokédex, elle est confiée à l'introduction, qui la fait surgir
+          de l'écran ; pour la Pokéball, elle suit simplement l'introduction.
+          -mt-6 : annule la marge haute de la page, pour que l'objet soit centré dans l'écran dès l'arrivée.
           key : changer d'onglet recrée l'introduction, qui repart du début. */}
-      <div className="-mt-6" key={active}>
-        {active === "pokedex" ? <IntroPokedex total={liste.total} apercu={liste.pokemons.slice(0, 8)} /> : <IntroPokeball total={liste.total} />}
-      </div>
-      {/* relative z-10 : la suite de la page passe AU-DESSUS de la fin de l'introduction (voir IntroPokedex). */}
-      <header className="relative z-10 flex flex-col gap-2">
-        <p className="etiquette">Pokédex national</p>
-        <h1 className="font-titre text-3xl font-bold">Tous les Pokémon</h1>
-      </header>
-      <div className="relative z-10">
-        <GrillePokemons pokemons={liste.pokemons} />
+      <div className="-mt-6 flex flex-col gap-6" key={active}>
+        {active === "pokedex" ? (
+          <IntroPokedex total={liste.total} apercu={liste.pokemons.slice(0, 8)}>
+            {page}
+          </IntroPokedex>
+        ) : (
+          <>
+            <IntroPokeball total={liste.total} />
+            {page}
+          </>
+        )}
       </div>
     </div>
   );

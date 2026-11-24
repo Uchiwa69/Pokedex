@@ -11,7 +11,7 @@
 // Le volet tourne autour de sa charnière (rotateY) dans un espace en perspective, comme l'écran du MacBook
 // du composant d'origine (Aceternity UI) tournait autour de la sienne.
 
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import type { Pokemon } from "@/lib/conversion";
@@ -21,48 +21,63 @@ type Props = {
   total: number;
   // Les premiers Pokémon de la grille : leurs illustrations forment l'aperçu affiché sur l'écran de l'appareil.
   apercu: Pokemon[];
+  // La vraie page (titre, grille…) : elle est affichée APRÈS l'introduction, et c'est ce composant qui la fait
+  // « sortir de l'écran » à la fin de la plongée. Elle est rendue par le serveur et simplement transmise ici.
+  children: ReactNode;
 };
 
 // Tailles que le navigateur doit prévoir pour les photos (elles font au plus ~450 px de large à l'écran).
 const TAILLES = "(min-width: 640px) 450px, 45vw";
 
-export default function IntroPokedex({ total, apercu }: Props) {
+export default function IntroPokedex({ total, apercu, children }: Props) {
   const zone = useRef<HTMLDivElement>(null);
   const animationsReduites = useReducedMotion();
 
   const { scrollYProgress } = useScroll({ target: zone, offset: ["start start", "end end"] });
 
-  // Le défilement est découpé en deux temps, volontairement COURTS :
-  //   1. de 3 % à 28 % : le volet s'ouvre et l'appareil se redresse ;
-  //   2. de 30 % à 50 % : on PLONGE dans l'écran, qui grossit jusqu'à remplir toute la fenêtre.
-  // Dès 50 %, la vraie page commence à monter par-dessus (voir la marge négative de la zone, plus bas) :
-  // il n'y a donc aucun temps mort entre la fin de la plongée et l'arrivée du contenu.
+  // Le défilement est découpé en trois temps :
+  //   1. de 3 % à 26 %  : le volet s'ouvre et l'appareil se redresse ;
+  //   2. de 27 % à 50 % : on PLONGE dans l'écran, de plus en plus vite, avec des traits de vitesse ;
+  //   3. de 44 % à 58 % : on TRAVERSE la vitre (éclat de lumière) et la vraie page surgit du fond de l'écran,
+  //                       en continuant de grossir vers nous : c'est le même mouvement qui se prolonge.
 
   // Le volet pivote sur sa charnière gauche : 0° fermé, -178° rabattu à plat sur le côté.
-  const voletAngle = useTransform(scrollYProgress, [0.03, 0.28], [0, -178]);
+  const voletAngle = useTransform(scrollYProgress, [0.03, 0.26], [0, -178]);
   // Volet ouvert, l'appareil est presque deux fois plus large : on le décale à droite de 44 % de sa largeur
   // (la moitié de ce que le volet ajoute à gauche) pour garder l'ensemble centré,
   // puis on le ramène au centre pour plonger droit dans l'écran.
-  const appareilX = useTransform(scrollYProgress, [0.03, 0.28, 0.36], ["0%", "44%", "0%"]);
+  const appareilX = useTransform(scrollYProgress, [0.03, 0.26, 0.34], ["0%", "44%", "0%"]);
   // Il est d'abord vu légèrement de biais, puis il se redresse face à nous.
-  const appareilAngle = useTransform(scrollYProgress, [0, 0.28], [-16, 0]);
-  // La plongée : l'appareil grossit jusqu'à 11 fois. Son point fixe (transform-origin) est le centre de l'écran.
-  const appareilTaille = useTransform(scrollYProgress, [0, 0.28, 0.3, 0.5], [0.9, 1, 1, 11]);
+  const appareilAngle = useTransform(scrollYProgress, [0, 0.26], [-16, 0]);
+  // La plongée : l'appareil grossit jusqu'à 14 fois, lentement puis de plus en plus vite (1 → 3 → 14).
+  // Son point fixe (transform-origin) est le centre de l'écran.
+  const appareilTaille = useTransform(scrollYProgress, [0, 0.26, 0.27, 0.39, 0.5], [0.9, 1, 1, 3, 14]);
   // L'écran s'allume une fois le volet assez ouvert…
-  const ecranOpacite = useTransform(scrollYProgress, [0.18, 0.28], [0, 1]);
+  const ecranOpacite = useTransform(scrollYProgress, [0.16, 0.26], [0, 1]);
   // … et son contenu s'efface DÈS LE DÉBUT de la plongée : on ne voit jamais de grosses cartes agrandies.
-  const apercuOpacite = useTransform(scrollYProgress, [0.29, 0.34], [1, 0]);
+  const apercuOpacite = useTransform(scrollYProgress, [0.27, 0.32], [1, 0]);
+  // Traits de vitesse : ils apparaissent pendant la plongée et s'écartent du centre.
+  const traitsOpacite = useTransform(scrollYProgress, [0.3, 0.42, 0.52], [0, 0.55, 0]);
+  const traitsTaille = useTransform(scrollYProgress, [0.3, 0.52], [0.7, 2.6]);
+  // Éclat de lumière au moment où l'on traverse la vitre.
+  const eclatOpacite = useTransform(scrollYProgress, [0.42, 0.48, 0.58], [0, 0.32, 0]);
+  // La vraie page : invisible et petite au fond de l'écran, elle grossit jusqu'à sa taille normale.
+  const pageOpacite = useTransform(scrollYProgress, [0.44, 0.53], [0, 1]);
+  const pageTaille = useTransform(scrollYProgress, [0.44, 0.58], [0.7, 1]);
+  // Tant qu'elle est invisible, la page ne doit pas recevoir de clics (elle est déjà là, par-dessus l'appareil).
+  const pageClics = useTransform(scrollYProgress, (avancement) => (avancement < 0.5 ? "none" : "auto"));
   const invitationOpacite = useTransform(scrollYProgress, [0, 0.03], [1, 0]);
 
-  // Animations réduites : pas d'introduction, la page commence directement par son contenu.
-  if (animationsReduites) return null;
+  // Animations réduites : pas d'introduction, la page est affichée directement, telle quelle.
+  if (animationsReduites) return <>{children}</>;
 
   return (
-    // Zone haute de 3 écrans. -mb-[100svh] : la suite de la page REMONTE d'un écran entier par-dessus la fin de la
-    // zone. Elle entre donc à l'écran juste quand la plongée se termine, au lieu d'attendre que le bloc collé
-    // (un écran entier, vide à ce moment-là) ait fini de défiler. pointer-events-none : la zone ne bloque pas
-    // les clics sur la page qui passe par-dessus.
-    <div ref={zone} aria-hidden="true" className="pointer-events-none relative -mb-[100svh] h-[300svh]">
+    <>
+      {/* Zone haute de 3 écrans (2 écrans de défilement). -mb-[190svh] : la vraie page, placée juste après, REMONTE
+          de presque deux écrans par-dessus la zone. Elle est donc déjà en place, en haut de la fenêtre, quand la
+          plongée se termine (à 50 %) : elle n'a plus qu'à apparaître, au lieu de monter depuis le bas.
+          pointer-events-none : la zone ne bloque pas les clics sur la page qui passe par-dessus. */}
+    <div ref={zone} aria-hidden="true" className="pointer-events-none relative -mb-[190svh] h-[300svh]">
       {/* perspective : donne la profondeur aux rotations des enfants (sans elle, le volet s'aplatirait). */}
       <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden [perspective:1800px]">
         {/* L'appareil : mêmes proportions que les photos (1210 × 1834). Sa hauteur est bornée par la largeur de
@@ -112,6 +127,15 @@ export default function IntroPokedex({ total, apercu }: Props) {
           </motion.div>
         </motion.div>
 
+        {/* Traits de vitesse : de fins rayons qui partent du centre (dégradé conique répété). Un masque radial
+            les efface au centre : on ne les voit que sur le pourtour, comme un effet de tunnel. */}
+        <motion.span
+          className="absolute aspect-square w-[160vmax] bg-[repeating-conic-gradient(from_0deg,transparent_0deg_5deg,color-mix(in_srgb,var(--color-texte)_55%,transparent)_5deg_5.4deg)] [mask-image:radial-gradient(circle,transparent_18%,black_60%)]"
+          style={{ opacity: traitsOpacite, scale: traitsTaille }}
+        />
+        {/* Éclat : un voile de lumière au passage de la vitre. */}
+        <motion.span className="absolute inset-0 bg-[radial-gradient(circle,var(--color-texte),transparent_70%)]" style={{ opacity: eclatOpacite }} />
+
         <motion.p className="etiquette absolute bottom-8 flex flex-col items-center gap-2" style={{ opacity: invitationOpacite }}>
           Fais défiler
           <span className="flex h-8 w-5 justify-center rounded-full border border-texte-doux pt-1.5">
@@ -120,5 +144,12 @@ export default function IntroPokedex({ total, apercu }: Props) {
         </motion.p>
       </div>
     </div>
+
+      {/* La vraie page. relative z-10 : au-dessus de l'introduction. origin-[50%_45svh] : elle grossit à partir du
+          milieu de la fenêtre (et non du milieu de la page, qui est très longue). */}
+      <motion.div className="relative z-10 flex origin-[50%_45svh] flex-col gap-6" style={{ opacity: pageOpacite, scale: pageTaille, pointerEvents: pageClics }}>
+        {children}
+      </motion.div>
+    </>
   );
 }
