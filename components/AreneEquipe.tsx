@@ -156,15 +156,8 @@ function ContenuArene() {
         <PanneauDetail key={membreSelectionne.pokemon.nom} membre={membreSelectionne} />
       ) : (
         membres.length > 0 && (
-          // Invitation bien visible : un encadré en pointillés à la place du futur panneau de détail,
-          // avec une icône et un texte de taille normale (une simple étiquette passait inaperçue).
-          <p className="flex min-h-24 items-center justify-center gap-3 rounded-3xl border border-dashed border-bordure bg-surface p-6 text-center font-titre text-base font-semibold text-texte">
-            {/* Icône décorative : une main qui pointe */}
-            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 shrink-0 text-accent">
-              <path d="M9 11V5a1.5 1.5 0 0 1 3 0v5m0 0V9a1.5 1.5 0 0 1 3 0v2m0 0v-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.7-2.3L4 15a1.6 1.6 0 0 1 2.5-2L9 15" />
-            </svg>
-            Sélectionne un Pokémon pour voir son détail
-          </p>
+          // Invitation : un texte simple, de taille normale et de couleur claire (une étiquette grise passait inaperçue).
+          <p className="text-center font-titre text-base font-semibold text-texte">Sélectionne un Pokémon pour voir son détail</p>
         )
       )}
 
@@ -195,10 +188,22 @@ function EmplacementMembre({ membre, index, selectionne, nouveau, surSelection }
       aria-pressed={selectionne}
       aria-label={`${surnom} (${pokemon.nomFr})${selectionne ? ", sélectionné" : ""}`}
       style={styleTeinte(pokemon.types[0])}
-      className={`relative flex h-full w-full flex-col items-center gap-2 rounded-3xl p-4 text-center hover:bg-piste ${
+      // "group" : la main ci-dessous réagit au survol du bouton. cursor-pointer : le curseur devient une main.
+      className={`group relative flex h-full w-full cursor-pointer flex-col items-center gap-2 rounded-3xl p-4 text-center hover:bg-piste ${
         selectionne ? "verre" : "border border-transparent"
       }`}
     >
+      {/* Une main dans le coin haut droit, invisible au repos : elle apparaît au survol du socle, ou quand le
+          bouton reçoit le focus clavier, pour montrer que le Pokémon est cliquable. On n'anime que l'opacité. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-accent text-sur-accent opacity-0 shadow-lueur transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
+          <path d="M9 11V5a1.5 1.5 0 0 1 3 0v5m0 0V9a1.5 1.5 0 0 1 3 0v2m0 0v-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.7-2.3L4 15a1.6 1.6 0 0 1 2.5-2L9 15" />
+        </svg>
+      </span>
+
       {/* Effet « Poké Ball » à l'arrivée d'un nouveau membre : un flash de la couleur du type qui s'étend
           en s'effaçant, pendant que le Pokémon grossit depuis presque rien (ressort). */}
       {nouveau && !animationsReduites && (
