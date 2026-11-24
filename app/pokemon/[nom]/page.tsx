@@ -9,8 +9,9 @@ import BoutonCri from "@/components/BoutonCri";
 import BoutonFavori from "@/components/BoutonFavori";
 import BoutonSacoche from "@/components/BoutonSacoche";
 import OngletsFiche from "@/components/OngletsFiche";
-import SpriteAnime from "@/components/SpriteAnime";
 import SqueletteFiche from "@/components/SqueletteFiche";
+import PanneauVitrine3D from "@/components/labo/PanneauVitrine3D";
+import { BASE_MODELES, choisirForme, obtenirModele } from "@/lib/labo/modeles3d";
 import VitrineFiche from "@/components/VitrineFiche";
 import { formaterMesure } from "@/lib/conversion";
 import { recupererPokemon, recupererTousLesNoms } from "@/lib/pokeapi";
@@ -66,6 +67,10 @@ async function Fiche({ params, searchParams }: Pick<Props, "params" | "searchPar
 
   const numero = String(pokemon.id).padStart(4, "0");
 
+  // LOCAL UNIQUEMENT : modèle 3D de ce Pokémon, s'il existe et s'il est présentable (voir lib/labo/modeles3d.ts).
+  const modele = obtenirModele(pokemon.id);
+  const forme3d = modele && (modele.etat === "anime" || modele.etat === "statique") ? choisirForme(modele, "regular") : null;
+
   return (
     // --teinte : couleur du type principal, utilisée par le décor de l'illustration.
     <div className="flex flex-col gap-8" style={styleTeinte(pokemon.types[0])}>
@@ -105,8 +110,16 @@ async function Fiche({ params, searchParams }: Pick<Props, "params" | "searchPar
             </div>
           </VitrineFiche>
 
-          {/* Sprite animé (face / dos) : composant client */}
-          <SpriteAnime pokemon={pokemon} />
+          {/* LOCAL UNIQUEMENT : petite vitrine 3D, chargée seulement au clic. Absente si le modèle n'est pas présentable. */}
+          {forme3d && (
+            <PanneauVitrine3D
+              url={BASE_MODELES + forme3d.fichier}
+              nom={pokemon.nomFr}
+              roles={forme3d.roles}
+              animations={forme3d.animations}
+              ko={forme3d.ko}
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-6">
