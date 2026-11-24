@@ -49,8 +49,8 @@ export default function Pokedex3D() {
       const generateur = new THREE.PMREMGenerator(rendu);
       const environnement = modele.createStudioEnvironment(generateur);
       scene.environment = environnement;
-      // 0.4 au lieu de 0.95 : les reflets du studio sont nettement atténués (ils blanchissaient le plastique).
-      scene.environmentIntensity = 0.4;
+      // 0.28 au lieu de 0.95 : les reflets du studio sont nettement atténués (ils blanchissaient le plastique).
+      scene.environmentIntensity = 0.28;
 
       const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
       camera.position.set(-1.15, 0.1, 11.5); // assez loin pour voir tout l'appareil, volet ouvert
@@ -62,13 +62,13 @@ export default function Pokedex3D() {
       controles.maxDistance = 14;
 
       // Éclairage de studio à trois points (valeurs du fichier d'origine).
-      scene.add(new THREE.AmbientLight(0xffffff, 0.14));
-      const principale = new THREE.DirectionalLight(0xffffff, 1.5);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+      const principale = new THREE.DirectionalLight(0xffffff, 1.05);
       principale.position.set(4.5, 6.5, 6.5);
       principale.castShadow = true;
       const appoint = new THREE.DirectionalLight(0xe0ecff, 0.75);
       appoint.position.set(-6, 2, 4.5);
-      const contreJour = new THREE.DirectionalLight(0xffffff, 0.5);
+      const contreJour = new THREE.DirectionalLight(0xffffff, 0.35);
       contreJour.position.set(0, 4.5, -6);
       scene.add(principale, appoint, contreJour);
 
@@ -81,7 +81,7 @@ export default function Pokedex3D() {
       pokedex.rootGroup.traverse((objet) => {
         const materiau = (objet as import("three").Mesh).material as import("three").MeshPhysicalMaterial | undefined;
         if (!materiau || !("clearcoat" in materiau) || materiau.transmission > 0) return;
-        materiau.clearcoat = Math.min(materiau.clearcoat, 0.35);
+        materiau.clearcoat = Math.min(materiau.clearcoat, 0.25);
         materiau.clearcoatRoughness = Math.max(materiau.clearcoatRoughness, 0.3);
         materiau.roughness = Math.max(materiau.roughness, 0.38);
       });
