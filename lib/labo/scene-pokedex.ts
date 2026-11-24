@@ -48,13 +48,29 @@ export function preparerScenePokedex(THREE: Trois, modele: Modele, rendu: import
       ecran = maillage;
       return;
     }
-    if (!("clearcoat" in materiau) || materiau.transmission > 0) return;
+    if (!("clearcoat" in materiau)) return;
+    // Performance : un matériau « transmission » (le verre de la lentille) oblige three.js à dessiner TOUTE la
+    // scène une seconde fois à chaque image, pour calculer ce qu'on voit à travers. On le remplace par une
+    // simple transparence, presque identique à l'œil, et on coupe l'irisation (calcul coûteux par pixel).
+    materiau.iridescence = 0;
+    if (materiau.transmission > 0) {
+      materiau.transmission = 0;
+      materiau.transparent = true;
+      materiau.opacity = 0.35;
+      return;
+    }
     materiau.clearcoat = Math.min(materiau.clearcoat, 0.25);
     materiau.clearcoatRoughness = Math.max(materiau.clearcoatRoughness, 0.3);
     materiau.roughness = Math.max(materiau.roughness, 0.38);
   });
   const plaqueEcran = ecran as import("three").Mesh | null;
-  if (plaqueEcran) plaqueEcran.material = new THREE.MeshBasicMaterial({ color: FOND, toneMapped: false });
+  if (plaqueEcran) {
+    plaqueEcran.material = new THREE.MeshBasicMaterial({ color: FOND, toneMapped: false });
+    // Le cadre gris clair autour de l'écran est retiré (choix de l'utilisateur) : dans le groupe de l'écran, on ne
+    // garde visible que la plaque. Elle est agrandie pour occuper la place du cadre (2,16 × 1,66 → 2,42 × 1,92).
+    for (const piece of plaqueEcran.parent?.children ?? []) piece.visible = piece === plaqueEcran;
+    plaqueEcran.scale.set(2.42 / 2.16, 1.92 / 1.66, 1);
+  }
 
   // Libération de la mémoire de la carte graphique : géométries et matériaux de toutes les pièces.
   function liberer() {

@@ -236,16 +236,10 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     const p = page.current;
     const c = cadre.current;
     if (!p || !c) return;
-    // Position et taille de la page SANS ses transformations : offsetTop / offsetLeft additionnés jusqu'en haut
-    // du document, moins le défilement.
-    let haut = -window.scrollY;
-    let gauche = 0;
-    for (let element: HTMLElement | null = p; element; element = element.offsetParent as HTMLElement | null) {
-      haut += element.offsetTop;
-      gauche += element.offsetLeft;
-    }
-    const largeurPage = p.offsetWidth;
-    const hauteurPage = p.offsetHeight;
+    // Position et taille de la page SANS ses transformations (mesurées à l'avance, voir mesurer), moins le défilement.
+    const { largeurPage, hauteurPage, gauche } = mesures.current;
+    if (largeurPage === 0) return;
+    const haut = mesures.current.haut - window.scrollY;
     const zoneCadre = c.getBoundingClientRect();
 
     // La page est réduite pour avoir la largeur de l'écran ; jamais plus grande que sa taille normale.
@@ -276,6 +270,22 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     // Tant qu'elle n'a pas atteint sa taille normale, la page ne reçoit pas de clics (elle est en miniature,
     // posée par-dessus l'appareil).
     valeurs.clics.set(echelle >= 1 ? "auto" : "none");
+  }
+
+  // Mesures de la page dans le document. Les lire oblige le navigateur à recalculer la mise en page : on ne le
+  // fait donc pas à chaque image, seulement quand une taille change (voir adapter).
+  const mesures = useRef({ largeurPage: 0, hauteurPage: 0, haut: 0, gauche: 0 });
+  function mesurer() {
+    const p = page.current;
+    if (!p) return;
+    // offsetTop / offsetLeft additionnés jusqu'en haut du document : position SANS les transformations.
+    let haut = 0;
+    let gauche = 0;
+    for (let element: HTMLElement | null = p; element; element = element.offsetParent as HTMLElement | null) {
+      haut += element.offsetTop;
+      gauche += element.offsetLeft;
+    }
+    mesures.current = { largeurPage: p.offsetWidth, hauteurPage: p.offsetHeight, haut, gauche };
   }
 
   // Redessine la scène pour l'avancement du moment, puis recale la page. Tout est fait dans le même appel :
@@ -310,19 +320,22 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
         surFin(); // pas de 3D sur cet appareil : on affiche directement la page
         return;
       }
-      rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      // Densité de pixels plafonnée à 1,5 : sur un écran très dense, dessiner 4 fois plus de pixels à chaque
+      // défilement faisait saccader la plongée, pour un gain de netteté invisible en mouvement.
+      rendu.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
       conteneur.appendChild(rendu.domElement);
       rendu.domElement.style.cssText = "display:block;width:100%;height:100%";
 
       const { scene, pokedex, ecran, liberer } = preparerScenePokedex(THREE, modele, rendu);
       const camera = new THREE.PerspectiveCamera(CHAMP, 1, 0.05, 200);
       const demiChamp = Math.tan(THREE.MathUtils.degToRad(CHAMP / 2));
+      const taille = { largeur: 0, hauteur: 0 };
       const coin = new THREE.Vector3();
       const centre = new THREE.Vector3();
 
       dessiner.current = (avancement) => {
-        const largeur = conteneur.clientWidth;
-        const hauteur = conteneur.clientHeight;
+        // Taille de la zone, mémorisée par adapter (pas de lecture de mise en page à chaque image).
+        const { largeur, hauteur } = taille;
         if (!ecran || largeur === 0 || hauteur === 0) return null;
 
         // 1. Le volet s'ouvre (de 3 % à 26 %) : rotation autour de la charnière, jusqu'à 178°.
@@ -359,7 +372,10 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
 
       // Taille du canvas : au départ, puis à chaque changement de taille de la zone ou de la page.
       const adapter = () => {
-        rendu.setSize(conteneur.clientWidth, conteneur.clientHeight, false);
+        taille.largeur = conteneur.clientWidth;
+        taille.hauteur = conteneur.clientHeight;
+        rendu.setSize(taille.largeur, taille.hauteur, false);
+        mesurer();
         actualiser();
       };
       const observateur = new ResizeObserver(adapter);
