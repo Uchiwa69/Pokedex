@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import BadgeType from "@/components/BadgeType";
+import ChoixAdversaires from "@/components/ChoixAdversaires";
 import { DUREE_EFFET } from "@/components/EffetAttaque";
 import EtatVide from "@/components/EtatVide";
 import { LIBELLES_CATEGORIES } from "@/components/IconeCategorie";
@@ -114,6 +115,9 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
   const [partie, setPartie] = useState<Partie | null>(null);
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState(false);
+  // Équipe adverse : tirée au hasard, ou choisie par le joueur (les places laissées vides restent au hasard).
+  const [modeAdversaires, setModeAdversaires] = useState<"hasard" | "choix">("hasard");
+  const [adversairesChoisis, setAdversairesChoisis] = useState<Pokemon[]>([]);
   const animationsReduites = useReducedMotion();
 
   // Numéro de la prochaine ligne du journal (sert de `key`). Un ref : le changer ne refait pas de rendu.
@@ -219,7 +223,12 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
         .catch(() => {});
     }
     try {
-      const reponse = await fetch(`/api/aleatoire?nombre=${membres.length}`);
+      // Les adversaires choisis sont envoyés au serveur, qui complète au hasard (voir app/api/aleatoire/route.ts).
+      const choisis = modeAdversaires === "choix" ? adversairesChoisis.slice(0, membres.length).map((p) => p.nom) : [];
+      const adresse = `/api/aleatoire?nombre=${membres.length}${choisis.length > 0 ? `&choisis=${choisis.join(",")}` : ""}`;
+      // Promise.all : la requête et une attente minimale avancent en même temps. Le tirage dure ainsi au moins
+      // 1,4 s, le temps de voir défiler les Pokémon (pas d'attente en animations réduites).
+      const [reponse] = await Promise.all([fetch(adresse), attendre(animationsReduites ? 0 : 1400)]);
       if (!reponse.ok) throw new Error(`Réponse ${reponse.status}`);
       const equipeAdverse = (await reponse.json()) as MembreAdverse[];
       if (equipeAdverse.length === 0) throw new Error("Équipe adverse vide");
@@ -396,12 +405,12 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
         <div className="relative flex flex-col gap-2">
           <h2 className="font-titre text-xl font-semibold">Prêt pour le combat ?</h2>
           <p className="max-w-md text-sm text-texte-doux">
-            Ton équipe de {membres.length} Pokémon affronte {membres.length} Pokémon tirés au hasard, au niveau {NIVEAU}.
+            Ton équipe de {membres.length} Pokémon affronte {membres.length} adversaires, au niveau {NIVEAU}. Laisse faire le hasard ou choisis-les.
           </p>
         </div>
 
         {/* Trois colonnes : mon équipe, « VS », l'équipe adverse. Sur mobile, elles s'empilent. */}
-        <div className="relative grid w-full max-w-3xl items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
+        <div className="relative grid w-full max-w-3xl items-start gap-4 sm:grid-cols-[1fr_auto_1fr]">
           <section aria-labelledby="titre-mon-equipe" className="flex flex-col items-center gap-2">
             <h3 id="titre-mon-equipe" className="etiquette">
               Ton équipe
@@ -428,26 +437,19 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
             </ul>
           </section>
 
-          <p aria-hidden="true" className="bg-linear-to-r from-accent to-accent-bis bg-clip-text font-titre text-4xl font-bold text-transparent sm:text-5xl">
+          <p aria-hidden="true" className="bg-linear-to-r from-accent to-accent-bis bg-clip-text font-titre text-4xl font-bold text-transparent sm:mt-8 sm:text-5xl">
             VS
           </p>
 
-          <section aria-labelledby="titre-adversaires" className="flex flex-col items-center gap-2">
-            <h3 id="titre-adversaires" className="etiquette">
-              Adversaires
-            </h3>
-            {/* Autant de silhouettes que de membres dans mon équipe. Décoratives : le texte ci-dessus dit déjà tout. */}
-            <ul aria-hidden="true" className="flex flex-wrap justify-center gap-2">
-              {membres.map((m) => (
-                <li key={m.pokemon.nom} className="flex w-20 flex-col items-center gap-1">
-                  <span className="flex size-16 items-center justify-center rounded-full border border-dashed border-bordure bg-surface font-titre text-2xl font-bold text-texte-doux">
-                    ?
-                  </span>
-                  <span className="text-xs font-semibold text-texte-doux">???</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {/* Équipe adverse : au hasard ou choisie. Pendant le tirage, des Pokémon défilent dans les places libres. */}
+          <ChoixAdversaires
+            nombre={membres.length}
+            mode={modeAdversaires}
+            surMode={setModeAdversaires}
+            choisis={adversairesChoisis}
+            surChoisis={setAdversairesChoisis}
+            tirage={chargement}
+          />
         </div>
 
         {erreur && (
