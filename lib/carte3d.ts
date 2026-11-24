@@ -136,7 +136,7 @@ export function dessinerFace(toile: HTMLCanvasElement, donnees: DonneesCarte, il
   etiquette(ctx, donnees.mesures, 60, 926);
 }
 
-// Dos de la carte : motif original (anneaux, « lentille » en dégradé, nom du site).
+// Dos de la carte : anneaux, Pokéball rouge et blanche au centre, nom du site.
 export function dessinerDos(toile: HTMLCanvasElement, teinte: string, policeTitre: string, finesse: number) {
   toile.width = Math.round(LARGEUR * finesse);
   toile.height = Math.round(HAUTEUR * finesse);
@@ -154,16 +154,40 @@ export function dessinerDos(toile: HTMLCanvasElement, teinte: string, policeTitr
     ctx.stroke();
   }
 
-  // « Lentille » : le disque en dégradé de l'en-tête du site.
-  const lentille = ctx.createLinearGradient(centreX - 90, centreY - 90, centreX + 90, centreY + 90);
-  lentille.addColorStop(0, "#67e8f9");
-  lentille.addColorStop(1, "#aab6ff");
-  ctx.fillStyle = lentille;
+  // Pokéball rouge et blanche, la même que celle du logo et de la sacoche (components/Pokeball.tsx).
+  // Un canvas ne lit pas les classes Tailwind : les couleurs sont recopiées des jetons de globals.css
+  // (--color-encre, --color-balle-haut, --color-balle-bas).
+  const rayon = 90;
+  const encre = "#0b1020";
+  // Disque foncé : il forme le contour et la ceinture, les deux moitiés sont dessinées par-dessus.
+  ctx.fillStyle = encre;
   ctx.beginPath();
-  ctx.arc(centreX, centreY, 90, 0, Math.PI * 2);
+  ctx.arc(centreX, centreY, rayon, 0, Math.PI * 2);
   ctx.fill();
+  // Calotte rouge : demi-disque du haut (l'angle va de π à 2π), remonté un peu pour laisser voir la ceinture.
+  ctx.fillStyle = "#ef4444";
+  ctx.beginPath();
+  ctx.arc(centreX, centreY - 7.5, 75, Math.PI, Math.PI * 2);
+  ctx.fill();
+  // Base blanche : demi-disque du bas (de 0 à π), descendu d'autant.
+  ctx.fillStyle = "#f8fafc";
+  ctx.beginPath();
+  ctx.arc(centreX, centreY + 7.5, 75, 0, Math.PI);
+  ctx.fill();
+  // Bouton central : anneau foncé puis pastille blanche.
+  ctx.fillStyle = encre;
+  ctx.beginPath();
+  ctx.arc(centreX, centreY, 34, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#f8fafc";
+  ctx.beginPath();
+  ctx.arc(centreX, centreY, 19, 0, Math.PI * 2);
+  ctx.fill();
+  // Fin liseré clair autour de la balle, pour la détacher du fond sombre.
   ctx.strokeStyle = "rgba(255,255,255,0.85)";
-  ctx.lineWidth = 8;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(centreX, centreY, rayon + 2, 0, Math.PI * 2);
   ctx.stroke();
 
   ctx.font = `700 64px ${policeTitre}`;
