@@ -62,6 +62,23 @@
   --animate-particule: particule 2.6s ease-out infinite;
   --animate-rotation-lente: rotation-lente 9s linear infinite;
 
+  /* Pokéball qui arrive dans la sacoche de l'en-tête : elle grossit, dépasse, puis se stabilise */
+  --animate-rebond: rebond 450ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  @keyframes rebond {
+    0% {
+      transform: scale(0.4);
+    }
+    50% {
+      transform: scale(1.6);
+    }
+    75% {
+      transform: scale(0.85);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
   /* L'ombre rétrécit quand le Pokémon est en haut de sa lévitation */
   @keyframes ombre-sol {
     0%,

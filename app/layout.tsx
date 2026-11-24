@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Chakra_Petch, Inter } from "next/font/google";
 import EnTete from "@/components/EnTete";
 import Fournisseurs from "@/components/Fournisseurs";
+import EnvolPokeball from "@/components/EnvolPokeball";
 import HydratationStores from "@/components/HydratationStores";
 import PiedDePage from "@/components/PiedDePage";
 import Prechargeur3D from "@/components/labo/Prechargeur3D";
@@ -38,6 +39,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Fournisseurs>
           {/* Relit favoris et sacoche dans le localStorage, après l'hydratation. */}
           <HydratationStores />
+          {/* La Pokéball qui vole vers la sacoche quand on ajoute un Pokémon (invisible le reste du temps). */}
+          <EnvolPokeball />
           {/* LOCAL UNIQUEMENT : précharge les modèles 3D des Pokémon de la sacoche. */}
           <Prechargeur3D />
           {/* Lien d'évitement : visible seulement au focus clavier. */}
