@@ -112,6 +112,8 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   on plonge dans son écran, où s'affiche LA VRAIE PAGE, réduite et découpée au format de l'écran. Pas de boucle
   d'animation : une image est dessinée à chaque changement de défilement, et l'écran est retrouvé en projetant ses
   coins par la caméra (`calerPage`). Pas d'image d'attente : scène vide sous le projecteur, puis fondu. En-tête masqué au début (`data-intro-debut` + `body:has()` dans globals.css), lumière de scène (`halo-scene`, dégradés radiaux seulement : un cône laissait des bandes).
+  Pendant l'introduction la page est en `position: fixed` (elle ne défile pas : sa place ne vient que des
+  transformations, sinon elle tremblait dans le cadre) ; la plongée se termine quand elle atteint sa taille normale.
   Jouée une fois par visite (sessionStorage `pokedex-intro-vue`), jamais en animations réduites.
   Deux composants : `IntroPokedex` (décide, porte la page) et `ScenePokedex` (l'appareil, présent seulement pendant
   l'introduction). Fin de plongée → la scène est RETIRÉE et le défilement compensé : le haut de la page redevient le

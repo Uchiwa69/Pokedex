@@ -141,8 +141,11 @@ export default function IntroPokedex({ children }: Props) {
   // pour qu'elle reste exactement au même endroit de la fenêtre.
   // useLayoutEffect : s'exécute après la mise à jour de la page mais AVANT que le navigateur la dessine.
   const positionAvant = useRef<number | null>(null);
+  // Défilement auquel la plongée s'est terminée : c'est là qu'on revient si l'introduction est rouverte.
+  const defilementFin = useRef<number | null>(null);
   function changerEtat(suivant: "page" | "intro") {
     positionAvant.current = page.current?.getBoundingClientRect().top ?? null;
+    if (suivant === "page") defilementFin.current = window.scrollY;
     setEtat(suivant);
   }
   useLayoutEffect(() => {
@@ -156,7 +159,24 @@ export default function IntroPokedex({ children }: Props) {
       clics.set("auto");
     }
     if (positionAvant.current !== null && page.current) {
-      window.scrollBy(0, page.current.getBoundingClientRect().top - positionAvant.current);
+      if (introAffichee) {
+        // Réouverture : la page devient fixe (voir plus bas). On la garde à l'endroit où elle était, et on place
+        // le défilement à la fin de la plongée : remonter la fera alors rentrer dans l'écran de l'appareil.
+        // (Sans fin connue — introduction déjà vue lors d'une visite précédente —, on vise un point situé
+        // après la fin de la plongée : la page y est de toute façon à sa place.)
+        x.set(0);
+        y.set(positionAvant.current);
+        window.scrollTo(0, defilementFin.current ?? window.innerHeight * 1.4);
+      } else {
+        // Fermeture : la page revient dans le flux. Sa place est calculée SANS ses transformations (offsetTop
+        // additionnés, moins le défilement) : les motion values viennent d'être remises à zéro, mais le
+        // navigateur ne l'a pas encore appliqué, et getBoundingClientRect() verrait l'ancien décalage.
+        let haut = -window.scrollY;
+        for (let element: HTMLElement | null = page.current; element; element = element.offsetParent as HTMLElement | null) {
+          haut += element.offsetTop;
+        }
+        window.scrollBy(0, haut - positionAvant.current);
+      }
       positionAvant.current = null;
     }
   }, [introAffichee, opacite, taille, x, y, decoupe, clics]);
@@ -219,11 +239,15 @@ export default function IntroPokedex({ children }: Props) {
       )}
 
       {/* La vraie page. Elle reste TOUJOURS le même élément, que l'introduction soit affichée ou non : son contenu
-          (champ de recherche, filtres, grille) n'est donc jamais recréé. relative z-10 : au-dessus de l'appareil.
-          origin-top : pendant la plongée, elle grossit à partir de son bord haut, posé sur le haut de la dalle. */}
+          (champ de recherche, filtres, grille) n'est donc jamais recréé. z-10 : au-dessus de l'appareil.
+          origin-top : pendant la plongée, elle grossit à partir de son bord haut, posé sur le haut de l'écran.
+          Pendant l'introduction elle est FIXE (position: fixed) : collée à la fenêtre, elle ne défile pas, et sa
+          place ne dépend que des transformations calculées par la scène. Avant, elle défilait avec le navigateur
+          et le code la « rattrapait » avec une image de retard : elle tremblait dans le cadre de l'appareil.
+          inset-x-0 mx-auto w-full max-w-7xl px-4 : mêmes largeur et marges que <main>, donc même mise en page. */}
       <motion.div
         ref={page}
-        className="relative z-10 flex origin-top flex-col gap-6"
+        className={`z-10 flex origin-top flex-col gap-6 ${introAffichee ? "fixed inset-x-0 top-0 mx-auto w-full max-w-7xl px-4" : "relative"}`}
         style={{ opacity: opacite, scale: taille, x, y, clipPath: decoupe, pointerEvents: clics }}
       >
         {children}
@@ -275,10 +299,10 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     const p = page.current;
     const c = cadre.current;
     if (!p || !c) return;
-    // Position et taille de la page SANS ses transformations (mesurées à l'avance, voir mesurer), moins le défilement.
-    const { largeurPage, hauteurPage, gauche } = mesures.current;
+    // Position et taille de la page SANS ses transformations (mesurées à l'avance, voir mesurer). La page est
+    // fixe : sa position ne dépend pas du défilement.
+    const { largeurPage, hauteurPage, gauche, haut } = mesures.current;
     if (largeurPage === 0) return;
-    const haut = mesures.current.haut - window.scrollY;
     const zoneCadre = c.getBoundingClientRect();
 
     // La page est réduite pour avoir la largeur de l'écran ; jamais plus grande que sa taille normale.
@@ -331,17 +355,14 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
   function mesurer() {
     const p = page.current;
     if (!p) return;
-    // offsetTop / offsetLeft additionnés jusqu'en haut du document : position SANS les transformations.
-    let haut = 0;
-    let gauche = 0;
-    for (let element: HTMLElement | null = p; element; element = element.offsetParent as HTMLElement | null) {
-      haut += element.offsetTop;
-      gauche += element.offsetLeft;
-    }
+    // La page est fixe : offsetTop et offsetLeft donnent sa place dans la fenêtre, SANS les transformations.
+    const haut = p.offsetTop;
+    const gauche = p.offsetLeft;
     // Place du haut de la page dans le site, une fois l'introduction refermée et le défilement tout en haut :
     // le haut de <main> (juste sous l'en-tête) plus sa marge intérieure haute.
     const principal = p.parentElement;
-    const hautDansLeSite = principal ? principal.offsetTop + parseFloat(getComputedStyle(principal).paddingTop) : 0;
+    const marges = principal ? getComputedStyle(principal) : null;
+    const hautDansLeSite = principal && marges ? principal.offsetTop + parseFloat(marges.paddingTop) : 0;
     mesures.current = { largeurPage: p.offsetWidth, hauteurPage: p.offsetHeight, haut, gauche, hautDansLeSite };
   }
 
@@ -498,7 +519,10 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
   }, []);
 
   // À chaque défilement : on redessine, et on surveille la fin de la plongée.
-  const avancementPrecedent = useRef(0);
+  // null tant qu'aucun défilement n'a été vu : le premier ne sert qu'à prendre un point de départ. (Quand
+  // l'introduction est ROUVERTE, on arrive directement en fin de plongée : sans cela, le premier geste, même
+  // vers le haut, passait pour une descente et la refermait aussitôt.)
+  const avancementPrecedent = useRef<number | null>(null);
   useMotionValueEvent(scrollYProgress, "change", (avancement) => {
     actualiser();
     setDebut(avancement < SEUIL_ENTETE);
@@ -507,6 +531,7 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     const enPlace = pageEnPlace.current;
     const vientDArriver = enPlace && !enPlacePrecedent.current;
     enPlacePrecedent.current = enPlace;
+    if (precedent === null) return;
     // Fin de la plongée : la page vient d'atteindre sa taille normale, à sa place. On ne referme l'introduction
     // qu'en DESCENDANT (pas en remontant). SEUIL_FIN reste en secours, si l'écran n'a pas pu être mesuré.
     if (avancement > precedent && (vientDArriver || (avancement >= SEUIL_FIN && precedent < SEUIL_FIN))) {
@@ -520,17 +545,15 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
   });
 
   return (
-    // Zone haute de 3,6 écrans (2,6 écrans de défilement : 30 % de plus qu'au départ, pour un déroulé un peu
-    // plus lent, à la demande de l'utilisateur). -mb-[217svh] : la vraie page, placée juste après, REMONTE
-    // de plus de deux écrans par-dessus la zone. Elle est donc déjà en haut de la fenêtre quand la plongée se
-    // termine : elle n'a plus qu'à finir de grossir. pointer-events-none : la zone ne bloque pas les clics.
-    // -mt-6 : annule la marge haute de la page, pour que l'appareil soit centré dans la fenêtre dès l'arrivée.
+    // Zone haute de 3,6 écrans (2,6 écrans de défilement). Elle ne sert qu'à donner de la hauteur à faire
+    // défiler : la page, fixe pendant l'introduction, n'est pas dans le flux. pointer-events-none : la zone ne
+    // bloque pas les clics. -mt-6 : annule la marge haute de <main>, pour centrer l'appareil dès l'arrivée.
     // data-intro-debut : lu par une règle de globals.css (body:has(…)) qui masque l'en-tête du site.
     <div
       ref={zone}
       aria-hidden="true"
       data-intro-debut={debut ? "oui" : "non"}
-      className="pointer-events-none relative -mb-[217svh] -mt-6 h-[360svh]"
+      className="pointer-events-none relative -mt-6 h-[360svh]"
     >
       {/* sticky top-0 : ce bloc reste collé en haut de l'écran tant qu'on défile dans la zone. */}
       <div ref={cadre} className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
