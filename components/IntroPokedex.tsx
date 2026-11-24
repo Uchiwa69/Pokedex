@@ -1,24 +1,20 @@
 "use client";
 
-// Introduction de la page d'accueil — un Pokédex géant, fermé à l'arrivée : en défilant, son volet s'ouvre,
-// puis on plonge dans son écran, qui devient la page du site.
-// L'appareil est fait de PHOTOS (images générées par l'utilisateur, détourées, dans public/pokedex) :
-//   - ouvert.webp    : le corps de l'appareil, écran noir et vide ;
-//   - ferme.webp     : le volet vu de l'extérieur ;
-//   - volet-dedans.webp : la face intérieure du volet (la même plaque en miroir, un peu assombrie — choix de l'utilisateur,
-//                      préférée à une image d'intérieur nervuré essayée ensuite) ;
-// Les trois ont exactement le même cadrage : on peut donc les superposer au pixel près.
+// Introduction de la page d'accueil — un Pokédex géant EN 3D, fermé à l'arrivée : en défilant, son volet
+// s'ouvre, puis on plonge dans son écran, qui devient la page du site.
 //
-// Épaisseur : le volet n'est plus une feuille. Sa face extérieure est avancée de --ep vers nous (translateZ),
-// sa face intérieure reste au niveau du corps, et une bande perpendiculaire (rotateY de 90°) ferme le bord
-// libre. C'est la même construction qu'un cube en CSS, en très plat. L'épaisseur est volontairement fine.
+// L'appareil est un vrai modèle en volume (three.js) : lib/labo/pokedex3d.ts le construit pièce par pièce,
+// lib/labo/scene-pokedex.ts règle ses lumières. three.js est chargé à la demande (import dynamique) ; en
+// attendant, une photo de l'appareil fermé est affichée à sa place.
 //
-// Technique : useScroll donne l'avancement du défilement (0 → 1) et useTransform le convertit en mouvement.
-// Le volet tourne autour de sa charnière (rotateY) dans un espace en perspective, comme l'écran du MacBook
-// du composant d'origine (Aceternity UI) tournait autour de la sienne.
+// Le défilement pilote tout : useScroll donne l'avancement (0 → 1), et à chaque changement on règle l'angle
+// du volet, l'orientation de l'appareil et la distance de la caméra, puis on redessine UNE image. Il n'y a pas
+// de boucle d'animation permanente : quand on ne défile pas, la carte graphique ne travaille pas.
 //
-// L'idée forte : ce que l'on voit dans l'écran de l'appareil est LA VRAIE PAGE du site, réduite à la taille de
-// la dalle. Quand on plonge, elle grossit exactement comme l'écran, jusqu'à sa taille normale.
+// L'idée forte : ce que l'on voit dans l'écran de l'appareil est LA VRAIE PAGE du site. À chaque image, on
+// calcule où l'écran du modèle tombe dans la fenêtre (projection de ses quatre coins par la caméra), et on
+// réduit et découpe la vraie page pour qu'elle l'occupe exactement. Quand la caméra plonge, l'écran grandit,
+// donc la page aussi, jusqu'à sa taille normale.
 //
 // Deux composants dans ce fichier :
 //   - IntroPokedex (le parent) décide si l'introduction est affichée, et porte la vraie page ;
@@ -33,22 +29,17 @@ type Props = {
   children: ReactNode;
 };
 
-// Position de la dalle (l'écran noir) dans la photo, en parts de la largeur et de la hauteur de l'image.
-// Valeurs mesurées sur ouvert.webp.
-const DALLE = { gauche: 0.1733, haut: 0.2999, largeur: 0.6933, hauteur: 0.3614 };
-// Centre de la dalle : c'est le point fixe de la plongée (transform-origin de l'appareil).
-const CENTRE = { x: DALLE.gauche + DALLE.largeur / 2, y: DALLE.haut + DALLE.hauteur / 2 };
+// La plongée : à tel avancement du défilement (1re liste), la caméra est tant de fois plus proche (2e liste).
+// Lente au début, puis de plus en plus rapide (1 → 3 → 14).
+const COURBE_ZOOM = { avancement: [0, 0.24, 0.3, 0.41, 0.52], valeur: [0.9, 1, 1, 3, 14] };
+// Champ de vision vertical de la caméra, en degrés.
+const CHAMP = 38;
+// Largeur de l'appareil volet ouvert (en unités du modèle), avec un peu de marge : sert à reculer la caméra
+// sur les écrans étroits pour qu'il tienne en entier.
+const LARGEUR_OUVERT = 7.4;
 
-// Les deux courbes dont dépend le calage de la page dans l'écran, écrites une seule fois :
-// à tel avancement du défilement (1re liste) correspond telle valeur (2e liste).
-// - décalage de l'appareil vers la droite, en part de sa largeur (volet ouvert, il est deux fois plus large) ;
-// - grossissement de l'appareil : la plongée, lente puis de plus en plus rapide (1 → 3 → 14).
-const COURBE_DECALAGE = { avancement: [0.03, 0.2, 0.28], valeur: [0, 0.44, 0] };
-const COURBE_TAILLE = { avancement: [0, 0.24, 0.3, 0.41, 0.52], valeur: [0.9, 1, 1, 3, 14] };
-
-// Bord de l'appareil : une bande de plastique dans l'ombre (plus sombre que les faces, pour qu'on lise le volume),
-// éclaircie au milieu, aux bouts arrondis.
-const TRANCHE = "absolute rounded-full bg-linear-to-b from-coque-sombre via-coque to-coque-sombre";
+// Rectangle de l'écran du modèle dans la zone d'affichage, en pixels.
+type Rectangle = { gauche: number; haut: number; largeur: number; hauteur: number };
 
 // Clé du sessionStorage : retient, le temps de la visite, que l'introduction a déjà été vue.
 // (sessionStorage est vidé à la fermeture de l'onglet : à la visite suivante, elle rejoue.)
@@ -224,123 +215,181 @@ type PropsScene = {
 // (re)créé, ses hooks de défilement repartent de zéro sur le bon élément.
 function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
   const zone = useRef<HTMLDivElement>(null);
-  const appareil = useRef<HTMLDivElement>(null);
-
-  // Dimensions lues dans la page (en pixels), nécessaires aux calculs. Rangées dans un ref : les mettre à jour
-  // ne provoque pas de nouveau rendu.
-  const mesures = useRef({ largeurAppareil: 0, hauteurAppareil: 0, hauteurFenetre: 0, largeurPage: 1, hauteurPage: 0, hautPage: 0 });
+  const cadre = useRef<HTMLDivElement>(null); // le bloc collé en haut de l'écran, qui contient le canvas
+  const toile = useRef<HTMLDivElement>(null);
+  // La scène 3D, une fois chargée : une fonction qui la dessine pour un avancement donné et renvoie le
+  // rectangle de l'écran de l'appareil. Rangée dans un ref : elle ne déclenche pas de rendu React.
+  const dessiner = useRef<((avancement: number) => Rectangle | null) | null>(null);
+  const [pret, setPret] = useState(false);
 
   const { scrollYProgress } = useScroll({ target: zone, offset: ["start start", "end end"] });
 
-  // Le défilement est découpé en deux temps :
-  //   1. de 3 % à 28 %  : le volet s'ouvre, l'appareil se redresse et se recentre ; l'écran s'allume ;
-  //   2. de 30 % à 52 % : on PLONGE dans l'écran, de plus en plus vite, avec des traits de vitesse.
-
-  // Le volet pivote sur sa charnière gauche : 0° fermé, -178° rabattu à plat sur le côté.
-  const voletAngle = useTransform(scrollYProgress, [0.03, 0.24], [0, -178]);
-  // Volet ouvert, l'appareil est presque deux fois plus large : on le décale à droite de 44 % de sa largeur
-  // pour garder l'ensemble centré, puis on le ramène au centre AVANT la plongée.
-  // (decalage est une part de la largeur de l'appareil ; appareilX en fait un pourcentage pour le style.)
-  const decalage = useTransform(scrollYProgress, COURBE_DECALAGE.avancement, COURBE_DECALAGE.valeur);
-  const appareilX = useTransform(decalage, (part) => `${part * 100}%`);
-  // Il est d'abord vu légèrement de biais, puis il se redresse face à nous.
-  const appareilAngle = useTransform(scrollYProgress, [0, 0.24], [-16, 0]);
-  // La plongée : l'appareil grossit jusqu'à 14 fois, lentement puis de plus en plus vite (1 → 3 → 14).
-  const appareilTaille = useTransform(scrollYProgress, COURBE_TAILLE.avancement, COURBE_TAILLE.valeur);
   // Traits de vitesse : ils apparaissent pendant la plongée et s'écartent du centre.
   const traitsOpacite = useTransform(scrollYProgress, [0.32, 0.43, 0.54], [0, 0.55, 0]);
   const traitsTaille = useTransform(scrollYProgress, [0.32, 0.54], [0.7, 2.6]);
   const invitationOpacite = useTransform(scrollYProgress, [0, 0.03], [1, 0]);
 
   // ---- La page calée dans l'écran ----
-  // Pour l'avancement du moment, place la vraie page pour qu'elle occupe exactement la dalle : sa taille
-  // (échelle), ses décalages, et la « fenêtre » qui la découpe au format de l'écran.
-  function calerPage() {
-    const m = mesures.current;
-    if (m.largeurAppareil === 0) return; // pas encore mesuré
-    const avancement = scrollYProgress.get();
-    // On recalcule ici le grossissement et le décalage à partir de l'avancement (transform = la même
-    // interpolation que useTransform, en fonction simple). Lire appareilTaille.get() ne suffisait pas : ces valeurs
-    // dérivées ne sont mises à jour qu'à l'image suivante, donc la page était calée sur la position PRÉCÉDENTE de
-    // l'appareil et restait décalée quand le défilement s'arrêtait.
-    const grossissement = transform(avancement, COURBE_TAILLE.avancement, COURBE_TAILLE.valeur);
-    const partDecalage = transform(avancement, COURBE_DECALAGE.avancement, COURBE_DECALAGE.valeur);
-    // Taille de la dalle à l'écran, en pixels.
-    const largeurDalle = DALLE.largeur * m.largeurAppareil * grossissement;
-    const hauteurDalle = DALLE.hauteur * m.hauteurAppareil * grossissement;
-    // La page est réduite pour avoir la largeur de la dalle ; jamais plus grande que sa taille normale.
-    const echelle = Math.min(1, largeurDalle / m.largeurPage);
+  // Place la vraie page pour qu'elle occupe exactement l'écran de l'appareil : sa taille (échelle), ses
+  // décalages, et la « fenêtre » qui la découpe au format de l'écran.
+  function calerPage(avancement: number, ecran: Rectangle) {
+    const p = page.current;
+    const c = cadre.current;
+    if (!p || !c) return;
+    // Position et taille de la page SANS ses transformations : offsetTop / offsetLeft additionnés jusqu'en haut
+    // du document, moins le défilement.
+    let haut = -window.scrollY;
+    let gauche = 0;
+    for (let element: HTMLElement | null = p; element; element = element.offsetParent as HTMLElement | null) {
+      haut += element.offsetTop;
+      gauche += element.offsetLeft;
+    }
+    const largeurPage = p.offsetWidth;
+    const hauteurPage = p.offsetHeight;
+    const zoneCadre = c.getBoundingClientRect();
+
+    // La page est réduite pour avoir la largeur de l'écran ; jamais plus grande que sa taille normale.
+    const echelle = Math.min(1, ecran.largeur / largeurPage);
     // « fini » passe de 0 à 1 quand la page approche de sa taille normale : on relâche alors le calage,
     // et la page retrouve en douceur sa place naturelle dans le site.
     // (echelle >= 1 est testé à part : le calcul (1 - 0,8) / 0,2 donne 0,9999999999999998 et non 1, à cause des
     // arrondis des nombres à virgule. La page gardait alors une transformation et une découpe résiduelles.)
     const fini = echelle >= 1 ? 1 : entre0et1((echelle - 0.8) / 0.2);
 
-    // Centre de la dalle dans la fenêtre : l'appareil est centré dans un bloc haut d'un écran.
-    const centreY = m.hauteurFenetre / 2 + (CENTRE.y - 0.5) * m.hauteurAppareil;
-    // Écart horizontal entre le milieu de la dalle et le milieu de la fenêtre : la dalle n'est pas tout à fait au
-    // milieu de la photo, et l'appareil est encore décalé tant qu'il n'est pas revenu au centre.
-    const decalageX = (CENTRE.x - 0.5 + partDecalage) * m.largeurAppareil;
-    const hautDalle = centreY - hauteurDalle / 2;
-    // Position du haut de la page dans la fenêtre, à cause du défilement (sans transformation).
-    const hautPage = m.hautPage - window.scrollY;
+    // Décalages pour poser le milieu de la page sur celui de l'écran, et son haut sur le haut de l'écran.
+    const milieuEcran = zoneCadre.left + ecran.gauche + ecran.largeur / 2;
+    const hautEcran = zoneCadre.top + ecran.haut;
+    valeurs.taille.set(echelle);
+    valeurs.x.set((milieuEcran - (gauche + largeurPage / 2)) * (1 - fini));
+    valeurs.y.set((hautEcran - haut) * (1 - fini));
 
     // Fenêtre de découpe (clip-path), exprimée dans le repère de la page AVANT mise à l'échelle :
-    // on garde une bande centrée de la largeur de la dalle, et la hauteur de la dalle depuis le haut.
-    const cote = Math.max(0, (m.largeurPage - largeurDalle / echelle) / 2);
-    const bas = Math.max(0, m.hauteurPage - hauteurDalle / echelle);
-
-    valeurs.taille.set(echelle);
-    // Décalages pour poser le haut de la page sur le haut de la dalle, et son milieu sur celui de la dalle.
-    valeurs.x.set(decalageX * (1 - fini));
-    valeurs.y.set((hautDalle - hautPage) * (1 - fini));
+    // on garde une bande centrée de la largeur de l'écran, et la hauteur de l'écran depuis le haut.
+    const cote = Math.max(0, (largeurPage - ecran.largeur / echelle) / 2);
+    const bas = Math.max(0, hauteurPage - ecran.hauteur / echelle);
     // Plongée finie : plus aucune découpe, la page est une page normale.
     // Exception assumée à la règle « n'animer que transform et opacity » : clip-path est indispensable pour que
     // la page ne dépasse pas de l'écran de l'appareil. Elle ne sert que pendant la plongée.
-    valeurs.decoupe.set(fini >= 1 ? "none" : `inset(0px ${cote}px ${bas}px ${cote}px round ${12 / echelle}px)`);
-    // La page apparaît dans l'écran une fois l'appareil redressé (entre 24 % et 29 % du défilement).
-    valeurs.opacite.set(entre0et1((avancement - 0.24) / 0.05));
+    valeurs.decoupe.set(fini >= 1 ? "none" : `inset(0px ${cote}px ${bas}px ${cote}px round ${6 / echelle}px)`);
+    // La page apparaît dans l'écran une fois l'appareil redressé face à nous (entre 20 % et 26 %).
+    valeurs.opacite.set(entre0et1((avancement - 0.2) / 0.06));
     // Tant qu'elle n'a pas atteint sa taille normale, la page ne reçoit pas de clics (elle est en miniature,
     // posée par-dessus l'appareil).
     valeurs.clics.set(echelle >= 1 ? "auto" : "none");
   }
 
-  // Mesures : au départ, puis à chaque changement de taille de la fenêtre ou de la page.
+  // Redessine la scène pour l'avancement du moment, puis recale la page. Tout est fait dans le même appel :
+  // la page n'a jamais une image de retard sur l'appareil.
+  function actualiser() {
+    const avancement = scrollYProgress.get();
+    const ecran = dessiner.current?.(avancement);
+    if (ecran) calerPage(avancement, ecran);
+  }
+
+  // Création de la scène 3D (une seule fois). three.js et le modèle sont importés ici : ils ne sont
+  // téléchargés que si l'introduction est affichée.
   useEffect(() => {
-    function mesurer() {
-      const a = appareil.current;
-      const p = page.current;
-      if (!a || !p) return;
-      // offsetTop additionnés jusqu'en haut du document : position de la page SANS tenir compte de ses transformations.
-      let haut = 0;
-      for (let element: HTMLElement | null = p; element; element = element.offsetParent as HTMLElement | null) haut += element.offsetTop;
-      mesures.current = {
-        largeurAppareil: a.offsetWidth,
-        hauteurAppareil: a.offsetHeight,
-        hauteurFenetre: window.innerHeight,
-        largeurPage: p.offsetWidth,
-        hauteurPage: p.offsetHeight,
-        hautPage: haut,
+    const conteneur = toile.current;
+    if (!conteneur) return;
+    let annule = false;
+    let nettoyer = () => {};
+
+    (async () => {
+      const [THREE, modele, { preparerScenePokedex }] = await Promise.all([
+        import("three"),
+        import("@/lib/labo/pokedex3d"),
+        import("@/lib/labo/scene-pokedex"),
+      ]);
+      if (annule) return;
+
+      let rendu: import("three").WebGLRenderer;
+      try {
+        // alpha: true → fond transparent : on voit le fond du site derrière l'appareil.
+        rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      } catch {
+        surFin(); // pas de 3D sur cet appareil : on affiche directement la page
+        return;
+      }
+      rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      conteneur.appendChild(rendu.domElement);
+      rendu.domElement.style.cssText = "display:block;width:100%;height:100%";
+
+      const { scene, pokedex, ecran, liberer } = preparerScenePokedex(THREE, modele, rendu);
+      const camera = new THREE.PerspectiveCamera(CHAMP, 1, 0.05, 200);
+      const demiChamp = Math.tan(THREE.MathUtils.degToRad(CHAMP / 2));
+      const coin = new THREE.Vector3();
+      const centre = new THREE.Vector3();
+
+      dessiner.current = (avancement) => {
+        const largeur = conteneur.clientWidth;
+        const hauteur = conteneur.clientHeight;
+        if (!ecran || largeur === 0 || hauteur === 0) return null;
+
+        // 1. Le volet s'ouvre (de 3 % à 26 %) : rotation autour de la charnière, jusqu'à 178°.
+        pokedex.lidPivotGroup.rotation.y = -THREE.MathUtils.degToRad(transform(avancement, [0.03, 0.26], [0, 178]));
+        // 2. L'appareil, d'abord vu de biais, se redresse face à nous (de 0 à 20 %).
+        pokedex.rootGroup.rotation.y = transform(avancement, [0, 0.2], [-0.42, 0]);
+        // 3. Volet ouvert, l'appareil est deux fois plus large : on le décale à droite pour garder l'ensemble
+        //    centré, puis on le ramène pour plonger droit dans l'écran.
+        pokedex.rootGroup.position.x = transform(avancement, [0.03, 0.2, 0.34], [0, 1.55, 0]);
+        pokedex.rootGroup.updateMatrixWorld(true);
+
+        // 4. La caméra. Distance de départ : assez loin pour voir l'appareil ouvert en entier, même sur un
+        //    écran étroit. Puis elle avance (distance divisée par le zoom) en visant le centre de l'écran.
+        const depart = Math.max(11, LARGEUR_OUVERT / (2 * demiChamp * (largeur / hauteur)));
+        const distance = depart / transform(avancement, COURBE_ZOOM.avancement, COURBE_ZOOM.valeur);
+        const visee = transform(avancement, [0.26, 0.36], [0, 1]); // 0 = centre de la scène, 1 = centre de l'écran
+        ecran.getWorldPosition(centre);
+        camera.aspect = largeur / hauteur;
+        camera.position.set(centre.x * visee, centre.y * visee, centre.z + distance);
+        camera.updateProjectionMatrix();
+        camera.updateMatrixWorld(true);
+
+        rendu.render(scene, camera);
+
+        // 5. Où l'écran tombe-t-il dans la zone ? On projette deux coins opposés de sa plaque : project()
+        //    donne des coordonnées de -1 à 1, que l'on convertit en pixels.
+        const { width, height } = (ecran.geometry as import("three").PlaneGeometry).parameters;
+        coin.set(-width / 2, height / 2, 0).applyMatrix4(ecran.matrixWorld).project(camera);
+        const gauche = ((coin.x + 1) / 2) * largeur;
+        const haut = ((1 - coin.y) / 2) * hauteur;
+        coin.set(width / 2, -height / 2, 0).applyMatrix4(ecran.matrixWorld).project(camera);
+        return { gauche, haut, largeur: ((coin.x + 1) / 2) * largeur - gauche, hauteur: ((1 - coin.y) / 2) * hauteur - haut };
       };
-      calerPage();
-    }
-    mesurer();
-    // ResizeObserver : on remesure si la page change de taille (images chargées, résultats d'une recherche…).
-    const observateur = new ResizeObserver(mesurer);
-    if (page.current) observateur.observe(page.current);
-    window.addEventListener("resize", mesurer);
+
+      // Taille du canvas : au départ, puis à chaque changement de taille de la zone ou de la page.
+      const adapter = () => {
+        rendu.setSize(conteneur.clientWidth, conteneur.clientHeight, false);
+        actualiser();
+      };
+      const observateur = new ResizeObserver(adapter);
+      observateur.observe(conteneur);
+      if (page.current) observateur.observe(page.current);
+      adapter();
+      setPret(true);
+
+      nettoyer = () => {
+        observateur.disconnect();
+        dessiner.current = null;
+        liberer();
+        rendu.dispose();
+        rendu.domElement.remove();
+      };
+      if (annule) nettoyer();
+    })();
+
     return () => {
-      observateur.disconnect();
-      window.removeEventListener("resize", mesurer);
+      annule = true;
+      nettoyer();
     };
-    // Effet joué une seule fois, à la création de la scène : calerPage lit toujours les valeurs du moment.
+    // Effet joué une seule fois, à la création de la scène : actualiser lit toujours les valeurs du moment.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // À chaque défilement : on recale la page, et on surveille la fin de la plongée.
+  // À chaque défilement : on redessine, et on surveille la fin de la plongée.
   const avancementPrecedent = useRef(0);
   useMotionValueEvent(scrollYProgress, "change", (avancement) => {
-    calerPage();
+    actualiser();
     const precedent = avancementPrecedent.current;
     avancementPrecedent.current = avancement;
     // On ne referme l'introduction qu'en DESCENDANT au-delà du seuil (pas en le retraversant vers le haut).
@@ -360,62 +409,13 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     // termine : elle n'a plus qu'à finir de grossir. pointer-events-none : la zone ne bloque pas les clics.
     // -mt-6 : annule la marge haute de la page, pour que l'appareil soit centré dans la fenêtre dès l'arrivée.
     <div ref={zone} aria-hidden="true" className="pointer-events-none relative -mb-[190svh] -mt-6 h-[300svh]">
-      {/* perspective : donne la profondeur aux rotations des enfants (sans elle, le volet s'aplatirait). */}
-      <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden [perspective:1800px]">
-        {/* L'appareil : mêmes proportions que les photos (1210 × 1834). Sa hauteur est bornée par la largeur de
-            l'écran (62vw) : volet ouvert, il est deux fois plus large et doit encore tenir sur un téléphone.
-            transformOrigin : le centre de la dalle, point qui reste immobile pendant la plongée.
-            preserve-3d : ses enfants (le volet) tournent dans le même espace 3D que lui. */}
-        <motion.div
-          ref={appareil}
-          // --ep : l'épaisseur du volet et du corps (2,8 % de la hauteur de l'appareil : fine, comme un boîtier réel).
-          className="relative aspect-[1210/1834] h-[min(70svh,62vw)] [--ep:calc(min(70svh,62vw)*0.028)] [transform-style:preserve-3d]"
-          style={{ x: appareilX, rotateY: appareilAngle, scale: appareilTaille, transformOrigin: `${CENTRE.x * 100}% ${CENTRE.y * 100}%` }}
-        >
-          {/* Ombre portée au sol */}
-          <span className="absolute -bottom-[5%] left-[10%] h-[5%] w-[84%] rounded-[100%] bg-encre opacity-90 blur-xl" />
+      {/* sticky top-0 : ce bloc reste collé en haut de l'écran tant qu'on défile dans la zone. */}
+      <div ref={cadre} className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
+        {/* En attendant la 3D : la photo de l'appareil fermé, à peu près à la même place. */}
+        {!pret && <Image src="/pokedex/ferme.webp" alt="" width={1210} height={1834} priority className="h-[58svh] w-auto" />}
 
-          {/* Tranche du corps, côté charnière : une bande qui part vers l'arrière (rotateY 90°). On la voit tant
-              que l'appareil est de biais, au début. */}
-          <span className={`${TRANCHE} bottom-[3.5%] left-[5.6%] top-[3.5%] w-(--ep) origin-left [transform:rotateY(90deg)]`} />
-
-          {/* ---- Le corps : la photo de l'appareil ouvert. sizes="100vw" : on demande la grande version de
-              l'image, car elle est très agrandie pendant la plongée. ---- */}
-          <Image src="/pokedex/ouvert.webp" alt="" fill sizes="100vw" priority className="object-contain" />
-
-          {/* La dalle : un calque posé exactement sur l'écran noir de la photo. Il a la couleur de fond du site
-              (bg-fond) : la vraie page, affichée par-dessus, a ainsi le même fond qu'en vrai. */}
-          <span
-            className="absolute rounded-[1.5%] bg-fond"
-            style={{ left: `${DALLE.gauche * 100}%`, top: `${DALLE.haut * 100}%`, width: `${DALLE.largeur * 100}%`, height: `${DALLE.hauteur * 100}%` }}
-          />
-
-          {/* ---- Le volet : la photo de l'appareil fermé, posée sur le corps ----
-              origin-[5.6%_50%] : il tourne autour de la charnière (à 5,6 % du bord gauche de l'image). */}
-          <motion.div className="absolute inset-0 origin-[5.6%_50%] [transform-style:preserve-3d]" style={{ rotateY: voletAngle }}>
-            {/* Face extérieure, avancée de l'épaisseur du volet. backface-visibility: hidden → elle disparaît dès
-                qu'on la voit de dos. */}
-            <Image
-              src="/pokedex/ferme.webp"
-              alt=""
-              fill
-              sizes="(min-width: 640px) 450px, 45vw"
-              priority
-              className="object-contain [backface-visibility:hidden] [transform:translateZ(var(--ep))]"
-            />
-            {/* Face intérieure : visible seulement de dos (rotateY 180°). */}
-            <Image
-              src="/pokedex/volet-dedans.webp"
-              alt=""
-              fill
-              sizes="(min-width: 640px) 450px, 45vw"
-              className="object-contain [backface-visibility:hidden] [transform:rotateY(180deg)]"
-            />
-            {/* Le bord libre du volet : une bande large de --ep, couchée à 90° pour relier les deux faces.
-                Elle est plus courte que le volet (ses angles sont arrondis) et ses bouts sont arrondis aussi. */}
-            <span className={`${TRANCHE} bottom-[3.5%] left-[99.5%] top-[3.5%] w-(--ep) origin-left [transform:rotateY(-90deg)]`} />
-          </motion.div>
-        </motion.div>
+        {/* Le canvas de la scène 3D : il occupe tout le bloc, et apparaît en fondu quand il est prêt. */}
+        <div ref={toile} className={`absolute inset-0 transition-opacity duration-300 ${pret ? "opacity-100" : "opacity-0"}`} />
 
         {/* Traits de vitesse : de fins rayons qui partent du centre (dégradé conique répété). Un masque radial
             les efface au centre : on ne les voit que sur le pourtour, comme un effet de tunnel. */}

@@ -106,17 +106,21 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Fiche : `VitrineFiche` remplace l'illustration par `Carte3D` (three.js, importé dans un useEffect, démarré une fois
   la page chargée et le navigateur inoccupé). L'illustration reste l'affichage d'attente et le repli sans WebGL.
   `lib/carte3d.ts` dessine les deux faces dans des canvas 2D. `PanneauCarte3D` (carte au clic) est conservé, inutilisé.
-- Accueil : introduction `IntroPokedex` (client, `components/`) autour de toute la page. Un Pokédex géant en photos
-  (`public/pokedex/` : ouvert, ferme, volet-dos, même cadrage) s'ouvre au défilement (`useScroll` + `useTransform`
-  de motion), puis on plonge dans son écran, où s'affiche LA VRAIE PAGE, réduite et découpée au format de la dalle
-  (`calerPage`). Jouée une fois par visite (sessionStorage `pokedex-intro-vue`), jamais en animations réduites.
+- Accueil : introduction `IntroPokedex` (client, `components/`) autour de toute la page. Un Pokédex géant EN 3D
+  (three.js, chargé à la demande : `lib/labo/pokedex3d.ts` = modèle repris d'un fichier fourni, `@ts-nocheck`, exclu
+  d'ESLint ; `lib/labo/scene-pokedex.ts` = lumières et reflets validés par l'utilisateur) s'ouvre au défilement, puis
+  on plonge dans son écran, où s'affiche LA VRAIE PAGE, réduite et découpée au format de l'écran. Pas de boucle
+  d'animation : une image est dessinée à chaque changement de défilement, et l'écran est retrouvé en projetant ses
+  coins par la caméra (`calerPage`). Photo `public/pokedex/ferme.webp` en attente pendant le chargement.
+  Jouée une fois par visite (sessionStorage `pokedex-intro-vue`), jamais en animations réduites.
   Deux composants : `IntroPokedex` (décide, porte la page) et `ScenePokedex` (l'appareil, présent seulement pendant
   l'introduction). Fin de plongée → la scène est RETIRÉE et le défilement compensé : le haut de la page redevient le
   haut du site (sinon pagination, logo et « Tous » ramenaient au Pokédex fermé). Pour la revoir à l'envers, insister à
   la molette tout en haut (`EFFORT_POUR_ROUVRIR`). Animations réduites lues par `useSyncExternalStore` (pas
   `useReducedMotion`, qui provoquait une erreur d'hydratation ici).
   Exception assumée à « transform et opacity seulement » : `clip-path` pendant la plongée.
-  Copies de sauvegarde et variante Pokéball dans le dossier local `effets/` (hors dépôt) ; essai dans `/labo/intro`.
+  Version précédente en photos et variante Pokéball : dossier local `effets/` (hors dépôt) ; essais dans `/labo/intro`
+  et `/labo/pokedex-3d`.
 - Accueil : `FiltreTypes` (client) = tuiles avec symbole (`lib/glyphes.ts`), type actif optimiste (`useOptimistic` +
   `useTransition`), `<Link prefetch>` seulement au survol/focus, clics en rafale regroupés. `EffetType` joue la
   recette du type (mouvement, fond, anneaux) en CSS seul ; classes `effet-*` dans globals.css, toujours via une table
