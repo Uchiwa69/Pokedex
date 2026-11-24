@@ -39,7 +39,7 @@ export default function Pokedex3D() {
       rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       // Rendu « cinéma » : compresse les fortes lumières comme un appareil photo (reflets moins brûlés).
       rendu.toneMapping = THREE.ACESFilmicToneMapping;
-      rendu.toneMappingExposure = 1.08;
+      rendu.toneMappingExposure = 0.95;
       rendu.shadowMap.enabled = true;
       zone.appendChild(rendu.domElement);
       rendu.domElement.style.cssText = "display:block;width:100%;height:100%";
@@ -49,7 +49,8 @@ export default function Pokedex3D() {
       const generateur = new THREE.PMREMGenerator(rendu);
       const environnement = modele.createStudioEnvironment(generateur);
       scene.environment = environnement;
-      scene.environmentIntensity = 0.95;
+      // 0.4 au lieu de 0.95 : les reflets du studio sont nettement atténués (ils blanchissaient le plastique).
+      scene.environmentIntensity = 0.4;
 
       const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
       camera.position.set(-1.15, 0.1, 11.5); // assez loin pour voir tout l'appareil, volet ouvert
@@ -62,17 +63,28 @@ export default function Pokedex3D() {
 
       // Éclairage de studio à trois points (valeurs du fichier d'origine).
       scene.add(new THREE.AmbientLight(0xffffff, 0.14));
-      const principale = new THREE.DirectionalLight(0xffffff, 2.0);
+      const principale = new THREE.DirectionalLight(0xffffff, 1.5);
       principale.position.set(4.5, 6.5, 6.5);
       principale.castShadow = true;
       const appoint = new THREE.DirectionalLight(0xe0ecff, 0.75);
       appoint.position.set(-6, 2, 4.5);
-      const contreJour = new THREE.DirectionalLight(0xffffff, 1.45);
+      const contreJour = new THREE.DirectionalLight(0xffffff, 0.5);
       contreJour.position.set(0, 4.5, -6);
       scene.add(principale, appoint, contreJour);
 
       const pokedex = modele.buildPokedexAssembly();
       scene.add(pokedex.rootGroup);
+
+      // Reflets adoucis : le fichier d'origine donne aux plastiques un vernis miroir (clearcoat à 1, rugosité
+      // très faible). On réduit le vernis et on augmente la rugosité : la surface reste brillante, mais les
+      // reflets sont plus larges et moins éclatants. On ne touche qu'aux matériaux « physiques » (plastiques, verre).
+      pokedex.rootGroup.traverse((objet) => {
+        const materiau = (objet as import("three").Mesh).material as import("three").MeshPhysicalMaterial | undefined;
+        if (!materiau || !("clearcoat" in materiau) || materiau.transmission > 0) return;
+        materiau.clearcoat = Math.min(materiau.clearcoat, 0.35);
+        materiau.clearcoatRoughness = Math.max(materiau.clearcoatRoughness, 0.3);
+        materiau.roughness = Math.max(materiau.roughness, 0.38);
+      });
 
       // Angle demandé pour le volet : la boucle de rendu le rejoint en douceur.
       let angleCible = -THREE.MathUtils.degToRad(145);
