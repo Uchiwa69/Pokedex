@@ -23,7 +23,7 @@ type Props = {
 type Commandes = { retourner: () => void; recentrer: () => void; tourner: (degres: number) => void };
 
 // Programme exécuté par la carte graphique pour chaque pixel du reflet (langage GLSL).
-// Le reflet est calculé comme un VRAI reflet : une lumière fixe dans la scène, dont l'éclat apparaît
+// Le reflet est calculé comme un VRAI reflet : une lumière placée près de l'œil, dont l'éclat apparaît
 // là où la surface la renvoie vers l'œil. La carte est traitée comme très légèrement bombée (comme une
 // vraie carte) : l'éclat forme donc un trait fin, qui glisse sur elle dès qu'elle bouge, au repos
 // comme quand on la fait tourner.
@@ -57,7 +57,11 @@ const PIXELS = `
     float penche = (vUv.x - 0.5) + (vUv.y - 0.5) * 0.35;
     vec3 normale = normalize(vNormale + vAxeX * penche * 0.7 + vAxeY * (vUv.y - 0.5) * 0.1);
     vec3 regard = normalize(cameraPosition - vPosition);   // du point vers l'œil
-    vec3 lumiere = normalize(vec3(-0.45, 0.06, 1.0));      // vers la source, fixe dans la scène
+    // La lumière accompagne le regard : elle est donnée par rapport à la CAMÉRA (un peu à gauche, vers l'œil),
+    // puis convertie en direction de la scène (vecteur × matrice = rotation inverse de la caméra).
+    // Fixe dans la scène, elle n'éclairait que la face avant : le dos n'avait aucun reflet quand on
+    // faisait tourner la carte à la souris.
+    vec3 lumiere = normalize(vec3(-0.45, 0.06, 1.0) * mat3(viewMatrix));
     // Le reflet est maximal quand la surface fait face à la direction à mi-chemin entre la lumière
     // et le regard (modèle de Blinn-Phong). Plus l'exposant est grand, plus le trait est fin.
     float alignement = max(dot(normale, normalize(lumiere + regard)), 0.0);
