@@ -76,16 +76,31 @@ const PIXELS = `
 // réagir à un clic ou à un défilement : la préparation de la carte ne bloque plus la page d'un seul bloc.
 const souffler = () => new Promise<void>((resoudre) => setTimeout(resoudre, 0));
 
-// Attend que la page ait fini de se charger ET que le navigateur soit inoccupé : la carte 3D est un
-// plus, elle ne doit pas ralentir l'affichage du contenu principal de la fiche.
-function attendreRepos() {
+// Attend que la page ait fini de se charger : la carte 3D est un plus, ses téléchargements ne doivent
+// pas ralentir l'affichage du contenu principal de la fiche.
+function attendreChargement() {
   return new Promise<void>((resoudre) => {
-    const quandInoccupe = () => {
-      if ("requestIdleCallback" in window) requestIdleCallback(() => resoudre(), { timeout: 2000 });
-      else setTimeout(resoudre, 300); // Safari ne connaît pas requestIdleCallback
-    };
-    if (document.readyState === "complete") quandInoccupe();
-    else window.addEventListener("load", quandInoccupe, { once: true });
+    if (document.readyState === "complete") resoudre();
+    else window.addEventListener("load", () => resoudre(), { once: true });
+  });
+}
+
+// Attend que le navigateur soit inoccupé, avant un travail lourd pour le processeur.
+function attendreInoccupe() {
+  return new Promise<void>((resoudre) => {
+    if ("requestIdleCallback" in window) requestIdleCallback(() => resoudre(), { timeout: 1000 });
+    else setTimeout(resoudre, 200); // Safari ne connaît pas requestIdleCallback
+  });
+}
+
+// Charge l'illustration comme une image ordinaire (null si elle est absente ou en erreur).
+function chargerImage(adresse: string | null) {
+  return new Promise<HTMLImageElement | null>((resoudre) => {
+    if (!adresse) return resoudre(null);
+    const element = new Image();
+    element.onload = () => resoudre(element);
+    element.onerror = () => resoudre(null);
+    element.src = adresse;
   });
 }
 
@@ -114,28 +129,29 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
     let nettoyer = () => {};
 
     (async () => {
-      await attendreRepos();
-      if (annule) return;
-      const THREE = await import("three");
-      const { OrbitControls } = await import("three/examples/jsm/controls/OrbitControls.js");
+      await attendreChargement();
       if (annule) return;
 
       // Couleur du type et police des titres, lues dans les variables CSS du site.
       const styles = getComputedStyle(document.documentElement);
       const teinte = styles.getPropertyValue(`--color-type-${typePrincipal}`).trim() || "#aab6ff";
       const policeTitre = getComputedStyle(document.body).getPropertyValue("--font-chakra").trim() || "system-ui";
-      await document.fonts.load(`700 64px ${policeTitre}`).catch(() => {});
 
-      // L'illustration est chargée comme une image ordinaire. crossOrigin : nécessaire pour
-      // pouvoir la recopier dans un canvas puis s'en servir comme texture.
-      const image = await new Promise<HTMLImageElement | null>((resoudre) => {
-        if (!illustration) return resoudre(null);
-        const element = new Image();
-        element.crossOrigin = "anonymous";
-        element.onload = () => resoudre(element);
-        element.onerror = () => resoudre(null);
-        element.src = illustration;
-      });
+      // L'illustration passe par l'optimiseur d'images de Next (/_next/image) : elle vient alors de NOTRE
+      // site (pas besoin d'autorisation spéciale pour la recopier dans un canvas), dans un format plus léger,
+      // et c'est souvent le fichier déjà téléchargé pour l'illustration d'attente (donc déjà en cache).
+      const adresseImage = illustration ? `/_next/image?url=${encodeURIComponent(illustration)}&w=640&q=75` : null;
+
+      // Tout ce qu'il faut télécharger part EN MÊME TEMPS (Promise.all) : three.js, ses contrôles,
+      // l'image et la police. Avant, chaque téléchargement attendait la fin du précédent.
+      const [THREE, { OrbitControls }, image] = await Promise.all([
+        import("three"),
+        import("three/examples/jsm/controls/OrbitControls.js"),
+        chargerImage(adresseImage),
+        document.fonts.load(`700 64px ${policeTitre}`).catch(() => {}),
+      ]);
+      // Créer la scène est un travail lourd : on attend un moment calme pour ne pas gêner un clic ou un défilement.
+      await attendreInoccupe();
       if (annule) return;
 
       let rendu: import("three").WebGLRenderer;
