@@ -1,6 +1,5 @@
-import { Suspense, ViewTransition } from "react";
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BadgeType from "@/components/BadgeType";
@@ -8,6 +7,7 @@ import BarreStat from "@/components/BarreStat";
 import BoutonCri from "@/components/BoutonCri";
 import BoutonFavori from "@/components/BoutonFavori";
 import BoutonSacoche from "@/components/BoutonSacoche";
+import CarteStatique from "@/components/CarteStatique";
 import OngletsFiche from "@/components/OngletsFiche";
 import SqueletteFiche from "@/components/SqueletteFiche";
 import VitrineFiche from "@/components/VitrineFiche";
@@ -72,38 +72,10 @@ async function Fiche({ params, searchParams }: Pick<Props, "params" | "searchPar
     <div className="flex flex-col gap-8" style={styleTeinte(pokemon.types[0])}>
       <div className="grid items-start gap-6 md:grid-cols-2">
         <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
-          {/* Vitrine : la carte holographique 3D remplace l'illustration dès qu'elle est prête.
-              L'écran d'illustration ci-dessous reste l'affichage d'attente et le repli sans 3D. */}
+          {/* Vitrine : CarteStatique (rendue par le serveur) montre tout de suite la face de la carte ;
+              la carte holographique 3D prend sa place, au même endroit, dès qu'elle est prête. */}
           <VitrineFiche pokemon={pokemon}>
-            {/* Écran de l'illustration */}
-            <div className="verre relative aspect-square w-full overflow-hidden">
-              <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(145deg,var(--teinte),transparent_65%)] opacity-35 dark:opacity-30" />
-              {/* Numéro en filigrane */}
-              <span aria-hidden="true" className="absolute right-6 top-6 font-titre text-6xl font-bold leading-none text-texte opacity-[0.07]">
-                {numero}
-              </span>
-              {/* Halo diffus + halo net au sol, de la teinte du type */}
-              <span aria-hidden="true" className="absolute inset-1/4 rounded-full bg-[var(--teinte)] opacity-35 blur-3xl dark:opacity-45" />
-              <span aria-hidden="true" className="absolute bottom-8 left-1/2 h-5 w-1/2 -translate-x-1/2 rounded-[100%] bg-[var(--teinte)] opacity-70 blur-xs dark:opacity-60" />
-              {pokemon.artwork ? (
-                // Lévitation douce (CSS), coupée si l'utilisateur a demandé moins d'animations.
-                <div className="absolute inset-8 animate-levitation motion-reduce:animate-none">
-                  {/* Même nom que sur la carte de la grille → transition partagée de l'image. */}
-                  <ViewTransition name={`artwork-${pokemon.id}`} share="morph" default="none">
-                    <Image
-                      src={pokemon.artwork}
-                      alt={`Illustration de ${pokemon.nomFr}`}
-                      fill
-                      sizes="(min-width: 768px) 320px, 80vw"
-                      loading="eager"
-                      className="object-contain drop-shadow-[0_16px_18px_rgb(15_23_42/0.3)]"
-                    />
-                  </ViewTransition>
-                </div>
-              ) : (
-                <p className="relative flex h-full items-center justify-center text-sm text-texte-doux">Pas d&apos;illustration</p>
-              )}
-            </div>
+            <CarteStatique pokemon={pokemon} />
           </VitrineFiche>
         </div>
 

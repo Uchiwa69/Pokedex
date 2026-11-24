@@ -43,6 +43,12 @@
   --color-balle-haut: #ef4444;
   --color-balle-bas: #f8fafc;
 
+  /* Copie à plat de la carte holographique (components/CarteStatique.tsx) :
+     mêmes couleurs que le dessin canvas de lib/carte3d.ts */
+  --color-carte-haut: #182056; /* coin haut gauche du fond */
+  --color-carte-ombre: #050716; /* bandeaux sombres derrière les textes */
+  --color-carte-texte: #ffffff;
+
 
   /* Une seule ombre de panneau et une seule lueur de bouton pour tout le site */
   --shadow-carte: 0 18px 40px -18px rgb(67 56 202 / 0.35), 0 2px 6px -2px rgb(30 41 100 / 0.1);
@@ -284,6 +290,23 @@ html.dark {
   &:hover {
     background-color: var(--color-piste);
   }
+}
+
+/* ---- Copie à plat de la carte holographique (components/CarteStatique.tsx) ----
+   Dans le canvas, un dégradé « teinte → transparent » fonce en même temps qu'il s'efface. En CSS, il
+   s'efface sans foncer : on ajoute donc des étapes intermédiaires (teinte mélangée à du noir, de plus
+   en plus transparente) pour obtenir le même rendu que sur la carte 3D. */
+@utility voile-carte {
+  --t75: color-mix(in srgb, color-mix(in srgb, var(--teinte) 75%, black) 75%, transparent);
+  --t50: color-mix(in srgb, color-mix(in srgb, var(--teinte) 50%, black) 50%, transparent);
+  --t25: color-mix(in srgb, color-mix(in srgb, var(--teinte) 25%, black) 25%, transparent);
+  background: linear-gradient(to bottom right, var(--teinte), var(--t75) 19%, var(--t50) 38%, var(--t25) 56%, transparent 75%);
+}
+@utility halo-carte {
+  --t75: color-mix(in srgb, color-mix(in srgb, var(--teinte) 75%, black) 75%, transparent);
+  --t50: color-mix(in srgb, color-mix(in srgb, var(--teinte) 50%, black) 50%, transparent);
+  --t25: color-mix(in srgb, color-mix(in srgb, var(--teinte) 25%, black) 25%, transparent);
+  background: radial-gradient(circle closest-side, var(--teinte) 7%, var(--t75) 30%, var(--t50) 53%, var(--t25) 77%, transparent);
 }
 
 /* ---- Filtre par type : une tuile par type (symbole + libellé) ---- */
