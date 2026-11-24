@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 80" width="64" height="80">
+  <!-- Rocher dessiné pour ce projet (remplace rock1.png de Showdown, sous licence GPL). -->
+  <polygon points="10,52 18,18 40,6 56,26 58,58 40,76 16,72" fill="#a08f74" stroke="#4a3f33" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M18 18l14 20 24-12M32 38l-2 34" stroke="#6b5c49" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M22 22l16-10" stroke="#d9ccb2" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+</svg>

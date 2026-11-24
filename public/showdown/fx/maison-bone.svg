@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29" width="29" height="29">
+  <!-- Os dessiné pour ce projet (remplace bone.png de Showdown, dont la licence n'est pas précisée). -->
+  <g transform="rotate(-45 14.5 14.5)" fill="#f3efe2" stroke="#6b6250" stroke-width="1.5" stroke-linejoin="round">
+    <rect x="6" y="12" width="17" height="5" rx="2"/>
+    <circle cx="5.5" cy="11.5" r="3.2"/><circle cx="5.5" cy="17.5" r="3.2"/>
+    <circle cx="23.5" cy="11.5" r="3.2"/><circle cx="23.5" cy="17.5" r="3.2"/>
+  </g>
+</svg>

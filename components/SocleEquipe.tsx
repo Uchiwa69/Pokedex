@@ -66,8 +66,11 @@ export default function SocleEquipe({ pokemon, vue = "face", decalage = 0, selec
         className="absolute bottom-[14%] left-1/2 h-[7%] w-2/5 -translate-x-1/2 animate-ombre-sol rounded-[100%] bg-encre opacity-35 blur-xs motion-reduce:animate-none"
       />
 
-      {/* Le Pokémon, qui lévite au-dessus du disque */}
-      <div style={phase} className="absolute bottom-[19%] left-1/2 h-3/5 w-3/5 -translate-x-1/2 animate-levitation motion-reduce:animate-none">
+      {/* Le Pokémon, qui lévite au-dessus du disque.
+          data-lutin="x" et data-lutin="y" : deux repères utilisés en combat par les animations d'attaques
+          (lib/showdown/scene.ts) pour déplacer le Pokémon : l'un horizontalement, l'autre verticalement. */}
+      <div data-lutin="x" style={phase} className="absolute bottom-[19%] left-1/2 h-3/5 w-3/5 -translate-x-1/2 animate-levitation motion-reduce:animate-none">
+        <div data-lutin="y" className="relative h-full w-full">
         {source ? (
           <Image
             src={source}
@@ -82,6 +85,7 @@ export default function SocleEquipe({ pokemon, vue = "face", decalage = 0, selec
         ) : (
           <span className="block h-full w-full rounded-full bg-piste" aria-hidden="true" />
         )}
+        </div>
       </div>
 
       {/* Particules de la couleur du type qui s'élèvent (absentes en animations réduites) */}

@@ -1,0 +1,12 @@
+Images d'effets d'attaque reprises de Pokémon Showdown
+https://github.com/smogon/pokemon-showdown-client (dossier play.pokemonshowdown.com/fx)
+
+Licence : CC0 (domaine public), d'après la note de licence du fichier battle-animations.ts du dépôt,
+sauf deux images :
+- icicle.png et lightning.png, par Clint Bellanger (OpenGameArt), sous triple licence
+  GPLv2 / GPLv3 / CC-BY-SA 3.0 — utilisées ici sous CC-BY-SA 3.0, avec ce crédit.
+  http://opengameart.org/content/icicle-spell
+  http://opengameart.org/content/lightning-shock-spell
+
+Images NON reprises (licence GPL ou non précisée) : rocks.png, rock1.png, rock2.png, bone.png.
+Elles sont remplacées par les fichiers maison-*.svg, dessinés pour ce projet.

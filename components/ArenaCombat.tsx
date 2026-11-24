@@ -103,6 +103,13 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
   const refArene = useRef<HTMLDivElement>(null);
   const refToile = useRef<HTMLCanvasElement>(null);
   const refMoteur = useRef<Moteur2D | null>(null);
+  // Animations d'attaques de Pokémon Showdown (lib/showdown) : environ 600 attaques ont leur propre mise en scène.
+  // Le module est lourd, il n'est donc téléchargé qu'au démarrage d'un combat (voir demarrer).
+  // typeof import(…) : le type de ce que renvoie l'import dynamique.
+  const refShowdown = useRef<typeof import("@/lib/showdown") | null>(null);
+  // Deux calques pour ces animations : un derrière les Pokémon (voiles de couleur), un devant (images d'effets).
+  const refCalqueFond = useRef<HTMLDivElement>(null);
+  const refCalqueEffets = useRef<HTMLDivElement>(null);
   const enCombat = partie !== null;
   useEffect(() => {
     // Le canvas n'existe que pendant un combat : le moteur est créé à ce moment-là, et arrêté à la fin.
@@ -125,6 +132,21 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
   async function jouerEffet(cote: Cote, attaque: Attaque) {
     const moteur = refMoteur.current;
     const arene = refArene.current;
+
+    // 1er choix : la mise en scène de Showdown pour CETTE attaque, si elle existe.
+    const showdown = refShowdown.current;
+    if (showdown && arene && refCalqueFond.current && refCalqueEffets.current && !animationsReduites) {
+      const jouee = await showdown.jouerAnimation({
+        nom: attaque.nom,
+        arene,
+        calqueFond: refCalqueFond.current,
+        calqueEffets: refCalqueEffets.current,
+        attaquant: cote,
+      });
+      if (jouee) return;
+    }
+
+    // 2e choix (attaque inconnue de Showdown, module pas encore chargé…) : l'effet par type du site.
     const depart = arene?.querySelector<HTMLElement>(`[data-cote="${cote}"]`);
     const arrivee = arene?.querySelector<HTMLElement>(`[data-cote="${cote === "joueur" ? "adversaire" : "joueur"}"]`);
     // Animations réduites (ou canvas indisponible) : pas de particules, on attend simplement.
@@ -167,6 +189,15 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
   async function demarrer() {
     setChargement(true);
     setErreur(false);
+    // Import dynamique : le fichier n'est téléchargé que maintenant, en parallèle du tirage de l'adversaire.
+    // S'il échoue (hors connexion…), le combat se joue avec les effets par type : on ignore donc l'erreur.
+    if (!refShowdown.current) {
+      import("@/lib/showdown")
+        .then((module) => {
+          refShowdown.current = module;
+        })
+        .catch(() => {});
+    }
     try {
       const reponse = await fetch(`/api/aleatoire?nombre=${membres.length}`);
       if (!reponse.ok) throw new Error(`Réponse ${reponse.status}`);
@@ -249,10 +280,12 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
       const defenseur = cote === "joueur" ? adversaires[iAdversaire] : joueurs[iJoueur];
       const attaque = cote === "joueur" ? attaqueJoueur : attaqueAdverse;
 
-      // 1. Annonce + élan de l'attaquant
+      // 1. Annonce + élan de l'attaquant. Si Showdown a une mise en scène pour cette attaque, c'est elle qui
+      //    déplace l'attaquant : on saute notre élan pour qu'il ne s'élance pas deux fois.
+      const miseEnScene = !animationsReduites && (refShowdown.current?.aUneAnimation(attaque.nom) ?? false);
       dire(`${attaquant.surnom} utilise ${attaque.nomFr} !`);
-      publier({ scene: { attaquant: cote, etape: "elan", type: attaque.type } });
-      await attendre(durees.elan);
+      publier({ scene: { attaquant: cote, etape: miseEnScene ? "effet" : "elan", type: attaque.type } });
+      await attendre(miseEnScene ? 150 : durees.elan);
 
       // 2. Calcul (fonction pure) : l'attaque touche-t-elle, et pour combien ?
       const resultat = resoudreAttaque(attaquant.pokemon, defenseur.pokemon, attaque, table, tirerHasard(), tirerHasard());
@@ -375,7 +408,10 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
         animate={{ x: tremble ? [0, -8, 8, -6, 6, 0] : 0 }}
         transition={{ duration: 0.35 }}
       >
-        <div className="grid grid-cols-2 items-end gap-4">
+        {/* Calque du fond pour les animations Showdown : placé AVANT les Pokémon, donc derrière eux. */}
+        <div ref={refCalqueFond} aria-hidden="true" className="pointer-events-none absolute inset-0" />
+        {/* relative : la grille des Pokémon passe au-dessus du calque du fond. */}
+        <div className="relative grid grid-cols-2 items-end gap-4">
           {/* Mon Pokémon : à gauche, de dos, un peu plus bas */}
           <div className="pt-8">
             <CoteArene cote="joueur" lutteur={joueur} equipe={partie.joueurs} scene={partie.scene} ko={partie.ko} />
@@ -388,6 +424,8 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
         {/* Calque des effets d'attaque : décoratif (aria-hidden), il ne capte pas les clics.
             Ce qui se passe est déjà écrit dans le journal de combat. */}
         <canvas ref={refToile} aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full" />
+        {/* Calque des images d'effets Showdown : placé APRÈS les Pokémon, donc devant eux. */}
+        <div ref={refCalqueEffets} aria-hidden="true" className="pointer-events-none absolute inset-0" />
       </motion.div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -468,17 +506,20 @@ function CoteArene({ cote, lutteur, equipe, scene, ko }: PropsCote) {
   const sens = cote === "joueur" ? 1 : -1;
 
   // Animation du Pokémon selon ce qui se passe. On n'anime que transform (x, y, rotate, scale) et opacity.
-  let animation: Record<string, number | number[]> = { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 };
+  // Pose de repos. Chaque animation ci-dessous REPART de cette pose complète ({ ...repos, … }) : si une valeur
+  // manquait (scale par exemple), motion la ramènerait à sa valeur d'entrée (scale: 0.5) et le Pokémon rétrécirait.
+  const repos = { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 };
+  let animation: Record<string, number | number[]> = repos;
   let duree = 0.3;
   if (ko === cote) {
     // K.O. : chute et fondu (fondu seul en animations réduites).
     animation = animationsReduites ? { opacity: 0 } : { opacity: 0, y: 50, rotate: -20 * sens };
     duree = 0.5;
   } else if (estAttaquant && scene.etape === "elan" && !animationsReduites) {
-    animation = { x: [0, 44 * sens, 0] }; // élan vers l'adversaire, puis retour
+    animation = { ...repos, x: [0, 44 * sens, 0] }; // élan vers l'adversaire, puis retour
     duree = 0.26;
   } else if (estCible && scene.etape === "impact") {
-    animation = { opacity: animationsReduites ? [1, 0.4, 1] : [1, 0.15, 1, 0.15, 1] }; // le défenseur clignote
+    animation = { ...repos, opacity: animationsReduites ? [1, 0.4, 1] : [1, 0.15, 1, 0.15, 1] }; // le défenseur clignote
     duree = 0.4;
   }
 

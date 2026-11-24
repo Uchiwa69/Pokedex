@@ -116,6 +116,12 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   sur recupererPokemon, recupererTousLesNoms, recupererNomsDuType, recupererNomsFrancais ; recupererListe reste en
   `"use cache"` pour être préchargeable.
 - Combat : effets d'attaque sur canvas (`lib/labo/moteur2d.ts`, recettes dans `lib/labo/effets2d.ts`, testées).
+- Combat : animations d'attaques de Pokémon Showdown (`lib/showdown/`). `animations-attaques.ts`, `animations-communes.ts`
+  et `effets.ts` sont REPRIS TELS QUELS (CC0, `@ts-nocheck`, exclus d'ESLint) : ne pas les réécrire. Le code du projet
+  est `scene.ts` (adaptateur : refait `showEffect`, `backgroundEffect` et le déplacement des Pokémon avec
+  `element.animate`) et `index.ts` (`jouerAnimation`, `aUneAnimation`). Chargé par `import()` au démarrage d'un combat.
+  L'effet par type sur canvas reste le repli (attaque inconnue, animations réduites). Images dans `public/showdown/fx`
+  (licences dans `public/showdown/LISEZMOI.txt`) ; crédits sur la page À propos.
 - Grille : cascade d'apparition plafonnée aux 6 premières cartes. Images : `minimumCacheTTL` de 31 jours.
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 

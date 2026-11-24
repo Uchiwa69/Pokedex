@@ -20,6 +20,20 @@ export default function PageAPropos() {
           </a>
           , une API publique en lecture seule.
         </p>
+        {/* Crédits des animations d'attaques du mode combat (code et images repris d'un autre projet). */}
+        <p>
+          Les animations d&apos;attaques du mode combat et leurs images viennent de{" "}
+          <a
+            href="https://github.com/smogon/pokemon-showdown-client"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-accent underline"
+          >
+            Pokémon Showdown
+          </a>{" "}
+          (Guangcong Luo et contributeurs), placées dans le domaine public (CC0). Les images de glaçon et d&apos;éclair
+          sont de Clint Bellanger (OpenGameArt), sous licence CC-BY-SA 3.0.
+        </p>
         <p>
           Pokémon est une marque de Nintendo / Game Freak / The Pokémon Company. Projet étudiant non commercial.
         </p>
