@@ -25,16 +25,21 @@ export default function DecorArene({ zoom = false }: Props) {
     // Bloc extérieur : -z-10 = derrière le contenu de la zone (le parent porte « isolate » pour que cela reste
     // local). Il fait presque toute la largeur de l'écran et coupe ce qui dépasse (overflow-hidden), pour que
     // le décor n'élargisse jamais la page.
-    <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -top-4 left-1/2 -z-10 w-[96vw] -translate-x-1/2 overflow-hidden sm:-top-16">
-      {/* Le stade lui-même : sa taille dépend de la HAUTEUR de la zone de combat (h-full + proportions 16/9),
-          pas de la largeur de l'écran. Le terrain tombe ainsi toujours au même endroit sous les Pokémon, sur un
-          téléphone comme sur un grand écran. Il est centré ; s'il est plus large que l'écran, ses côtés sont coupés.
-          mask-image : deux dégradés (gauche-droite et haut-bas) combinés par mask-composite → le stade est opaque
-          au centre et s'efface sur ses quatre bords, pour se fondre dans le fond de la page. */}
-      <div className="absolute left-1/2 top-0 aspect-[16/9] h-full -translate-x-1/2 [mask-composite:intersect] [mask-image:linear-gradient(to_right,transparent,black_24%,black_76%,transparent),linear-gradient(to_bottom,transparent,black_16%,black_80%,transparent)]">
-      {/* Tout le décor est dans ce bloc : c'est lui qu'on agrandit pour le zoom (transform seulement).
-          origin : le zoom vise le terrain, un peu sous le centre. */}
-      <div className={`absolute inset-0 origin-[50%_68%] ${zoom ? "animate-zoom-arene motion-reduce:animate-none" : ""}`}>
+    // mask-image : deux dégradés (gauche-droite et haut-bas) combinés par mask-composite → le décor est opaque
+    // au centre et s'efface sur ses quatre bords, pour se fondre dans le fond de la page.
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute -bottom-20 -top-4 left-1/2 -z-10 w-[96vw] -translate-x-1/2 overflow-hidden [mask-composite:intersect] [mask-image:linear-gradient(to_right,transparent,black_18%,black_82%,transparent),linear-gradient(to_bottom,transparent,black_16%,black_80%,transparent)] sm:-top-28"
+    >
+      {/* Le stade : sa taille suit la LARGEUR de l'écran (96vw, entre 56rem et 120rem), en proportions 16/9.
+          Pour que les Pokémon restent posés sur le terrain quelle que soit cette taille, le stade est accroché
+          par le BAS : la valeur « bottom » est calculée pour que le centre du terrain (à 25,3 % de la hauteur
+          du dessin en partant du bas, soit 14,23 % de sa largeur) tombe toujours sur la ligne des socles.
+          clamp(min, valeur, max) borne cette distance comme la largeur est bornée. */}
+      <div className="absolute bottom-[0.78rem] left-1/2 aspect-[16/9] w-[max(96vw,56rem)] max-w-[120rem] -translate-x-1/2 sm:bottom-[calc(10rem-clamp(7.97rem,13.66vw,17.08rem))]">
+      {/* Tout le stade est dans ce bloc : c'est lui qu'on agrandit pour le zoom (transform seulement).
+          origin : le zoom part du centre du terrain, qui ne bouge donc pas sous les Pokémon. */}
+      <div className={`absolute inset-0 origin-[50%_74.7%] ${zoom ? "animate-zoom-arene motion-reduce:animate-none" : ""}`}>
         {/* Le dessin a les mêmes proportions (1600 × 900 = 16/9) que son bloc : il le remplit exactement. */}
         <svg viewBox="0 0 1600 900" className="absolute inset-0 h-full w-full">
           <defs>
@@ -94,19 +99,22 @@ export default function DecorArene({ zoom = false }: Props) {
           <ellipse cx="800" cy="672" rx="116" ry="45" fill="none" strokeWidth="3" className="hidden stroke-accent-bis opacity-80 sm:block" />
         </svg>
 
-        {/* Halo derrière l'emblème, puis l'emblème suspendu au-dessus du terrain */}
-        <span className="absolute left-1/2 top-[8%] aspect-square h-[40%] -translate-x-1/2 rounded-full bg-accent opacity-25 blur-3xl" />
-        <EmblemeArene className="absolute left-1/2 top-[11%] h-[30%] -translate-x-1/2 opacity-50" />
-
-        {/* Deux projecteurs : des faisceaux en dégradé, accrochés en haut (origin-top), qui se balancent lentement.
-            motion-safe : immobiles si l'utilisateur a demandé moins d'animations. */}
-        <span className="absolute -top-[6%] left-[24%] h-[95%] w-[10%] origin-top bg-[linear-gradient(to_bottom,var(--color-accent-bis),transparent_80%)] opacity-25 blur-lg motion-safe:animate-projecteur" />
-        <span className="absolute -top-[6%] right-[24%] h-[95%] w-[10%] origin-top bg-[linear-gradient(to_bottom,var(--color-accent),transparent_80%)] opacity-25 blur-lg [animation-direction:reverse] motion-safe:animate-projecteur" />
-
         {/* Lueur au-dessus du terrain */}
         <span className="absolute inset-x-[20%] top-[58%] h-[22%] bg-[radial-gradient(ellipse_at_center,var(--color-accent),transparent_70%)] opacity-20 blur-2xl" />
       </div>
       </div>
+
+      {/* L'emblème et son halo sont placés par rapport à la ZONE de combat (et non au stade) : ils restent
+          en haut, bien visibles, à toutes les tailles d'écran. Ils avancent aussi au début du combat. */}
+      <div className={`absolute inset-0 origin-top ${zoom ? "animate-zoom-arene motion-reduce:animate-none" : ""}`}>
+        <span className="absolute left-1/2 top-[6%] aspect-square h-[36%] -translate-x-1/2 rounded-full bg-accent opacity-25 blur-3xl" />
+        <EmblemeArene className="absolute left-1/2 top-[9%] h-[27%] -translate-x-1/2 opacity-50" />
+      </div>
+
+      {/* Deux projecteurs : des faisceaux en dégradé, accrochés en haut (origin-top), qui se balancent lentement.
+          motion-safe : immobiles si l'utilisateur a demandé moins d'animations. */}
+      <span className="absolute -top-[6%] left-[26%] h-[95%] w-[9%] origin-top bg-[linear-gradient(to_bottom,var(--color-accent-bis),transparent_80%)] opacity-25 blur-lg motion-safe:animate-projecteur" />
+      <span className="absolute -top-[6%] right-[26%] h-[95%] w-[9%] origin-top bg-[linear-gradient(to_bottom,var(--color-accent),transparent_80%)] opacity-25 blur-lg [animation-direction:reverse] motion-safe:animate-projecteur" />
     </div>
   );
 }

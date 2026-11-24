@@ -496,7 +496,8 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
     <div className="flex flex-col gap-6">
       {/* Quitter le combat : retour à l'écran de préparation. Pendant le combat, il faut confirmer (le combat
           est perdu) ; une fois le combat terminé, un seul clic suffit. */}
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      {/* relative z-10 : le stade déborde vers le haut ; sans cela il passerait par-dessus ces boutons. */}
+      <div className="relative z-10 flex flex-wrap items-center justify-end gap-2">
         {partie.resultat ? (
           <button type="button" onClick={quitter} className={BOUTON_SUR_DECOR}>
             Retour à la préparation
