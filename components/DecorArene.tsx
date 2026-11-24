@@ -22,19 +22,21 @@ const ETAGES = [
 
 export default function DecorArene({ zoom = false }: Props) {
   return (
-    // -z-10 : derrière le contenu de la zone (le parent porte « isolate » pour que cela reste local).
-    // w-[96vw] : presque toute la largeur de l'écran, centré, bien au-delà de la colonne du site.
-    // mask-image : opaque au centre, transparent sur les bords → le stade se fond dans le fond de la page.
-    // overflow-hidden : le décor agrandi par le zoom ne doit pas élargir la page (pas de défilement horizontal).
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute -bottom-20 -top-28 left-1/2 -z-10 w-[96vw] max-w-[120rem] -translate-x-1/2 overflow-hidden [mask-image:radial-gradient(ellipse_62%_62%_at_50%_52%,black_55%,transparent_100%)]"
-    >
+    // Bloc extérieur : -z-10 = derrière le contenu de la zone (le parent porte « isolate » pour que cela reste
+    // local). Il fait presque toute la largeur de l'écran et coupe ce qui dépasse (overflow-hidden), pour que
+    // le décor n'élargisse jamais la page.
+    <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -top-4 left-1/2 -z-10 w-[96vw] -translate-x-1/2 overflow-hidden sm:-top-16">
+      {/* Le stade lui-même : sa taille dépend de la HAUTEUR de la zone de combat (h-full + proportions 16/9),
+          pas de la largeur de l'écran. Le terrain tombe ainsi toujours au même endroit sous les Pokémon, sur un
+          téléphone comme sur un grand écran. Il est centré ; s'il est plus large que l'écran, ses côtés sont coupés.
+          mask-image : deux dégradés (gauche-droite et haut-bas) combinés par mask-composite → le stade est opaque
+          au centre et s'efface sur ses quatre bords, pour se fondre dans le fond de la page. */}
+      <div className="absolute left-1/2 top-0 aspect-[16/9] h-full -translate-x-1/2 [mask-composite:intersect] [mask-image:linear-gradient(to_right,transparent,black_24%,black_76%,transparent),linear-gradient(to_bottom,transparent,black_16%,black_80%,transparent)]">
       {/* Tout le décor est dans ce bloc : c'est lui qu'on agrandit pour le zoom (transform seulement).
           origin : le zoom vise le terrain, un peu sous le centre. */}
       <div className={`absolute inset-0 origin-[50%_68%] ${zoom ? "animate-zoom-arene motion-reduce:animate-none" : ""}`}>
-        {/* preserveAspectRatio « slice » : le dessin remplit toute la zone, quitte à être rogné sur les côtés. */}
-        <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+        {/* Le dessin a les mêmes proportions (1600 × 900 = 16/9) que son bloc : il le remplit exactement. */}
+        <svg viewBox="0 0 1600 900" className="absolute inset-0 h-full w-full">
           <defs>
             {/* Le public : un motif de petits points répété. */}
             <pattern id="public-arene" width="16" height="11" patternUnits="userSpaceOnUse">
@@ -81,14 +83,15 @@ export default function DecorArene({ zoom = false }: Props) {
           </g>
           {/* Au centre du terrain : la Pokéball rouge et blanche du site, peinte au sol.
               Elle est dessinée ronde puis réduite et écrasée en hauteur (scale 0,58 × 0,223) pour être vue en perspective. */}
-          <g transform="translate(800 672) scale(0.58 0.223)" className="opacity-90">
+          {/* hidden sm:block : masquée sur téléphone, où les deux socles se touchent presque et la cacheraient. */}
+          <g transform="translate(800 672) scale(0.58 0.223)" className="hidden opacity-90 sm:block">
             <circle r="190" className="fill-encre" />
             <path d="M-172 -12a172 172 0 0 1 344 0Z" className="fill-balle-haut" />
             <path d="M-172 12a172 172 0 0 0 344 0Z" className="fill-balle-bas" />
             <circle r="66" className="fill-encre" />
             <circle r="40" className="fill-balle-bas" />
           </g>
-          <ellipse cx="800" cy="672" rx="116" ry="45" fill="none" strokeWidth="3" className="stroke-accent-bis opacity-80" />
+          <ellipse cx="800" cy="672" rx="116" ry="45" fill="none" strokeWidth="3" className="hidden stroke-accent-bis opacity-80 sm:block" />
         </svg>
 
         {/* Halo derrière l'emblème, puis l'emblème suspendu au-dessus du terrain */}
@@ -102,6 +105,7 @@ export default function DecorArene({ zoom = false }: Props) {
 
         {/* Lueur au-dessus du terrain */}
         <span className="absolute inset-x-[20%] top-[58%] h-[22%] bg-[radial-gradient(ellipse_at_center,var(--color-accent),transparent_70%)] opacity-20 blur-2xl" />
+      </div>
       </div>
     </div>
   );
