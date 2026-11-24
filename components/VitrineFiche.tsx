@@ -40,7 +40,7 @@ export default function VitrineFiche({ pokemon, children }: Props) {
       </div>
 
       {/* L'illustration d'attente, centrée dans la zone de la carte (mêmes hauteurs que dans Carte3D). */}
-      {!prete && <div className="absolute inset-x-0 top-0 flex h-[30rem] items-center sm:h-[34rem]">{children}</div>}
+      {!prete && <div className="absolute inset-x-0 top-0 flex h-[26rem] items-center sm:h-[30rem]">{children}</div>}
     </div>
   );
 }

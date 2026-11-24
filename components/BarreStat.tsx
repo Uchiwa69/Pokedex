@@ -6,11 +6,20 @@ type Props = {
   valeur: number;
   // Position dans la liste : sert à décaler le départ de l'animation (les barres se remplissent l'une après l'autre).
   index?: number;
+  // true : la barre prend la couleur du type (variable CSS --teinte posée par un parent) au lieu de l'accent du site.
+  teinte?: boolean;
+};
+
+// Table de correspondance : les classes complètes de chaque couleur de barre.
+const COULEURS = {
+  accent: "bg-linear-to-r from-accent to-accent-bis",
+  // De la teinte vers une version éclaircie de la teinte (mélangée à la couleur du texte).
+  teinte: "bg-[linear-gradient(90deg,var(--teinte),color-mix(in_srgb,var(--teinte)_55%,var(--color-texte)))]",
 };
 
 // Une ligne « libellé – valeur – barre ». La valeur est écrite en texte : la barre est donc
 // purement décorative (aria-hidden) et les lecteurs d'écran lisent « Attaque 84 ».
-export default function BarreStat({ libelle, valeur, index = 0 }: Props) {
+export default function BarreStat({ libelle, valeur, index = 0, teinte = false }: Props) {
   // Proportion entre 0 et 1, jamais plus de 1.
   const proportion = Math.min(valeur / STAT_MAX, 1);
 
@@ -24,7 +33,9 @@ export default function BarreStat({ libelle, valeur, index = 0 }: Props) {
             scaleX + origin-left : la barre s'étire depuis la gauche ; on n'anime que transform.
             animate-remplissage va de 0 à --proportion ; sans animation (motion-reduce), la barre est directement à sa taille. */}
         <span
-          className="block h-full origin-left rounded-full bg-linear-to-r from-accent to-accent-bis [transform:scaleX(var(--proportion))] animate-remplissage motion-reduce:animate-none"
+          className={`block h-full origin-left rounded-full [transform:scaleX(var(--proportion))] animate-remplissage motion-reduce:animate-none ${
+            teinte ? COULEURS.teinte : COULEURS.accent
+          }`}
           style={{ "--proportion": proportion, animationDelay: `${150 + index * 70}ms` } as CSSProperties}
         />
       </span>

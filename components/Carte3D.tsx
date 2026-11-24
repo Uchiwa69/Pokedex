@@ -104,6 +104,9 @@ function chargerImage(adresse: string | null) {
   });
 }
 
+// Petit bouton rond de la barre de commandes (44 px : assez grand pour le doigt).
+const BOUTON_ROND = "flex size-11 items-center justify-center rounded-full text-texte-doux hover:bg-piste hover:text-texte";
+
 export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, surPret, surEchec }: Props) {
   const refConteneur = useRef<HTMLDivElement>(null);
   const refCommandes = useRef<Commandes | null>(null);
@@ -342,7 +345,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative h-[30rem] overflow-hidden rounded-3xl sm:h-[34rem]">
+      <div className="relative h-[26rem] overflow-hidden rounded-3xl sm:h-[30rem]">
         {/* role="img" : la zone 3D est annoncée comme une image, avec une description. */}
         <div
           ref={refConteneur}
@@ -357,22 +360,35 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         )}
       </div>
 
-      {/* Les boutons donnent au clavier ce que la souris fait en faisant glisser la carte. */}
-      <div className="flex flex-wrap gap-2">
-        <button type="button" className="bouton bouton-principal" onClick={() => refCommandes.current?.retourner()}>
+      {/* Les boutons donnent au clavier ce que la souris fait en faisant glisser la carte.
+          Une seule barre compacte en verre, centrée sous la carte : icônes rondes + le bouton principal. */}
+      <div className="mx-auto flex w-fit items-center gap-1 rounded-full border border-bordure-verre bg-surface p-1">
+        <button type="button" className={BOUTON_ROND} onClick={() => refCommandes.current?.tourner(-30)} aria-label="Tourner vers la gauche" title="Tourner vers la gauche">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
+            <path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          className="flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-semibold text-sur-accent shadow-lueur"
+          onClick={() => refCommandes.current?.retourner()}
+        >
           Retourner
         </button>
-        <button type="button" className="bouton bouton-secondaire" onClick={() => refCommandes.current?.tourner(-30)} aria-label="Tourner vers la gauche">
-          ↺
+        <button type="button" className={BOUTON_ROND} onClick={() => refCommandes.current?.tourner(30)} aria-label="Tourner vers la droite" title="Tourner vers la droite">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
+            <path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5" />
+          </svg>
         </button>
-        <button type="button" className="bouton bouton-secondaire" onClick={() => refCommandes.current?.tourner(30)} aria-label="Tourner vers la droite">
-          ↻
-        </button>
-        <button type="button" className="bouton bouton-secondaire" onClick={() => refCommandes.current?.recentrer()}>
-          Recentrer
+        <button type="button" className={BOUTON_ROND} onClick={() => refCommandes.current?.recentrer()} aria-label="Recentrer la carte" title="Recentrer la carte">
+          {/* Une cible */}
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-5">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+          </svg>
         </button>
       </div>
-      <p className="etiquette">Fais glisser pour tourner · molette ou pincement pour zoomer</p>
+      <p className="etiquette text-center">Glisse pour tourner · molette ou pincement pour zoomer</p>
     </div>
   );
 }

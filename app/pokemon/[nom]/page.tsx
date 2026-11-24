@@ -64,9 +64,11 @@ async function Fiche({ params, searchParams }: Pick<Props, "params" | "searchPar
   if (!pokemon) notFound();
 
   const numero = String(pokemon.id).padStart(4, "0");
+  // Somme des six statistiques (reduce additionne les valeurs une à une, en partant de 0).
+  const total = LIBELLES_STATS.reduce((somme, stat) => somme + pokemon.stats[stat.cle], 0);
 
   return (
-    // --teinte : couleur du type principal, utilisée par le décor de l'illustration.
+    // --teinte : couleur du type principal, utilisée par le décor de l'illustration et par les statistiques.
     <div className="flex flex-col gap-8" style={styleTeinte(pokemon.types[0])}>
       <div className="grid items-start gap-6 md:grid-cols-2">
         <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
@@ -108,7 +110,7 @@ async function Fiche({ params, searchParams }: Pick<Props, "params" | "searchPar
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <p className="etiquette">N° {numero}</p>
-            <h1 className="font-titre text-3xl font-bold">{pokemon.nomFr}</h1>
+            <h1 className="font-titre text-3xl font-bold sm:text-4xl">{pokemon.nomFr}</h1>
             <ul className="flex flex-wrap gap-2" aria-label="Types">
               {pokemon.types.map((type) => (
                 <li key={type}>
@@ -118,31 +120,45 @@ async function Fiche({ params, searchParams }: Pick<Props, "params" | "searchPar
             </ul>
           </div>
 
+          {/* dl = liste de paires « terme / valeur ». Deux petites gélules : ces mesures sont déjà
+              écrites sur la carte, elles n'ont pas besoin de deux grands panneaux. */}
+          <dl className="flex flex-wrap gap-2">
+            <div className="flex items-baseline gap-2 rounded-full border border-bordure-verre bg-surface px-4 py-2">
+              <dt className="etiquette">Taille</dt>
+              <dd className="font-titre text-sm font-semibold">{formaterMesure(pokemon.taille, "m")}</dd>
+            </div>
+            <div className="flex items-baseline gap-2 rounded-full border border-bordure-verre bg-surface px-4 py-2">
+              <dt className="etiquette">Poids</dt>
+              <dd className="font-titre text-sm font-semibold">{formaterMesure(pokemon.poids, "kg")}</dd>
+            </div>
+          </dl>
+
           <div className="flex flex-wrap items-center gap-2">
             <BoutonSacoche pokemon={pokemon} />
             <BoutonFavori nom={pokemon.nom} nomFr={pokemon.nomFr} variante="fiche" />
             <BoutonCri url={pokemon.cri} nomFr={pokemon.nomFr} />
           </div>
 
-          {/* dl = liste de paires « terme / valeur ». */}
-          <dl className="grid grid-cols-2 gap-4">
-            <div className="verre flex flex-col gap-2 p-4">
-              <dt className="etiquette">Taille</dt>
-              <dd className="font-titre text-xl font-semibold">{formaterMesure(pokemon.taille, "m")}</dd>
-            </div>
-            <div className="verre flex flex-col gap-2 p-4">
-              <dt className="etiquette">Poids</dt>
-              <dd className="font-titre text-xl font-semibold">{formaterMesure(pokemon.poids, "kg")}</dd>
-            </div>
-          </dl>
+          {/* Panneau des statistiques, assorti à la carte : même verre teinté de la couleur du type. */}
+          <section aria-labelledby="titre-stats" className="verre relative flex flex-col gap-4 overflow-hidden p-4 sm:p-6">
+            {/* Décor (comme sur les cartes de la grille) : dégradé de la teinte, reflet en biais, liseré de lumière en haut. */}
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(145deg,var(--teinte),transparent_60%)] opacity-20" />
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--color-texte)_10%,transparent)_0%,transparent_32%)]" />
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-3xl shadow-[inset_0_1px_0_0_color-mix(in_srgb,var(--color-texte)_40%,transparent)]" />
 
-          <section aria-labelledby="titre-stats" className="verre flex flex-col gap-4 p-4 sm:p-6">
-            <h2 id="titre-stats" className="font-titre text-xl font-semibold">
-              Statistiques
-            </h2>
-            <ul className="flex flex-col gap-2">
+            <div className="relative flex items-baseline justify-between gap-4">
+              <h2 id="titre-stats" className="font-titre text-xl font-semibold">
+                Statistiques
+              </h2>
+              {/* Total des six statistiques : donne tout de suite une idée de la puissance du Pokémon. */}
+              <p className="flex items-baseline gap-2">
+                <span className="etiquette">Total</span>
+                <span className="font-titre text-xl font-semibold tabular-nums">{total}</span>
+              </p>
+            </div>
+            <ul className="relative flex flex-col gap-2">
               {LIBELLES_STATS.map((stat, index) => (
-                <BarreStat key={stat.cle} libelle={stat.libelle} valeur={pokemon.stats[stat.cle]} index={index} />
+                <BarreStat key={stat.cle} libelle={stat.libelle} valeur={pokemon.stats[stat.cle]} index={index} teinte />
               ))}
             </ul>
           </section>
