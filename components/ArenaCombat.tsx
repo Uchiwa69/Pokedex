@@ -412,9 +412,10 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
   // (l'adversaire n'est tiré au sort qu'au démarrage), et un grand « VS » entre les deux.
   if (!partie) {
     return (
-      // Grande arène en décor (DecorArene). Le contenu est posé dans le bas de l'arène, sur un panneau
-      // semi-opaque et flouté : l'emblème reste bien visible au-dessus, et le texte garde un bon contraste.
-      <div className="verre relative flex min-h-[38rem] flex-col items-center justify-end overflow-hidden p-4 pt-44 sm:min-h-[42rem] sm:p-6">
+      // Le stade en décor (DecorArene) : pas de cadre ici, il déborde et se fond dans le fond de la page.
+      // « isolate » : le décor (-z-10) reste derrière le contenu de CETTE zone, pas derrière toute la page.
+      // Le contenu est posé sur le terrain, sur un panneau semi-opaque et flouté, pour garder un bon contraste.
+      <div className="relative isolate flex min-h-[40rem] flex-col items-center justify-end p-4 pt-48 sm:min-h-[46rem] sm:p-6">
         <DecorArene />
         <div className="relative flex w-full max-w-4xl flex-col items-center gap-6 rounded-3xl border border-bordure-verre bg-fond/70 px-4 py-6 text-center backdrop-blur-md sm:px-6">
         <div className="relative flex flex-col gap-2">
@@ -514,7 +515,8 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
       {/* L'arène. Elle tremble à l'impact (transform uniquement). */}
       <motion.div
         ref={refArene}
-        className="verre relative overflow-hidden p-4 sm:p-6"
+        // Pas de cadre : le stade déborde de cette zone et se fond dans la page (voir DecorArene).
+        className="relative isolate p-4 sm:p-6"
         animate={{ x: tremble ? [0, -8, 8, -6, 6, 0] : 0 }}
         transition={{ duration: 0.35 }}
       >
@@ -522,14 +524,18 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
         <DecorArene zoom />
         {/* Entrée en combat, jouée une seule fois (ces éléments sont créés avec l'arène) : un anneau de lumière
             part du centre, et le mot « COMBAT ! » surgit puis s'efface. Rien en animations réduites. */}
-        <span aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 -ml-32 -mt-32 size-64 rounded-full border-4 border-accent-bis opacity-0 motion-safe:animate-eclat" />
-        <p aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-linear-to-r from-accent to-accent-bis bg-clip-text font-titre text-6xl font-bold tracking-widest text-transparent opacity-0 motion-safe:animate-annonce sm:text-8xl">
+        {/* overflow-hidden sur ce calque : l'anneau, qui grandit beaucoup, ne doit pas élargir la page. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+        <span className="absolute left-1/2 top-1/2 -ml-32 -mt-32 size-64 rounded-full border-4 border-accent-bis opacity-0 motion-safe:animate-eclat" />
+        <p className="absolute inset-0 flex items-center justify-center bg-linear-to-r from-accent to-accent-bis bg-clip-text font-titre text-5xl font-bold tracking-widest text-transparent opacity-0 motion-safe:animate-annonce sm:text-8xl">
           COMBAT !
         </p>
+        </div>
         {/* Calque du fond pour les animations Showdown : placé AVANT les Pokémon, donc derrière eux. */}
-        <div ref={refCalqueFond} aria-hidden="true" className="pointer-events-none absolute inset-0" />
+        {/* Sans cadre autour de l'arène, un voile de couleur aurait des bords nets : un masque en dégradé les adoucit. */}
+        <div ref={refCalqueFond} aria-hidden="true" className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_45%,transparent_100%)]" />
         {/* relative : la grille des Pokémon passe au-dessus du calque du fond. */}
-        <div className="relative grid min-h-[24rem] grid-cols-2 items-end gap-4 sm:min-h-[30rem]">
+        <div className="relative grid min-h-[26rem] grid-cols-2 items-end gap-4 sm:min-h-[34rem]">
           {/* Mon Pokémon : à gauche, de dos, un peu plus bas */}
           <div className="pt-8">
             <CoteArene cote="joueur" lutteur={joueur} equipe={partie.joueurs} scene={partie.scene} ko={partie.ko} />
