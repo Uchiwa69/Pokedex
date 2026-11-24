@@ -348,12 +348,16 @@ function PanneauDetail({ membre }: { membre: Membre }) {
       {/* LOCAL UNIQUEMENT : à gauche, un carré avec le modèle 3D du membre (préchargé à son ajout dans la sacoche)
           ou, s'il n'en a pas, son illustration mise en scène en 2D. À droite, les informations. */}
       <div className="relative grid gap-6 md:grid-cols-2">
-        {sans3d ? (
-          <Scene2D pokemon={pokemon} />
-        ) : (
-          // setSans3d est passé tel quel : VitrineMembre l'appelle s'il découvre qu'il n'y a pas de modèle.
-          <VitrineMembre numero={pokemon.id} nom={surnom} surAbsence={setSans3d} />
-        )}
+        {/* max-w-sm : le cadre du modèle est limité à 384 px de côté et centré dans sa colonne.
+            Sans cette limite, il prenait toute la demi-largeur du panneau (plus de 500 px) et écrasait le reste. */}
+        <div className="mx-auto w-full max-w-sm">
+          {sans3d ? (
+            <Scene2D pokemon={pokemon} />
+          ) : (
+            // setSans3d est passé tel quel : VitrineMembre l'appelle s'il découvre qu'il n'y a pas de modèle.
+            <VitrineMembre numero={pokemon.id} nom={surnom} surAbsence={setSans3d} />
+          )}
+        </div>
         <div className="flex flex-col gap-6">
           {blocSurnom}
           {blocStats}
