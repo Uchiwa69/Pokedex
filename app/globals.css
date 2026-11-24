@@ -62,6 +62,26 @@
   --animate-particule: particule 2.6s ease-out infinite;
   --animate-rotation-lente: rotation-lente 9s linear infinite;
 
+  /* Labo de l'accueil (/labo/accueil) : bande de Pokémon qui défile, ligne de balayage d'écran */
+  --animate-defile: defile 60s linear infinite;
+  --animate-balayage: balayage 6s linear infinite;
+
+  /* La bande contient deux fois la même liste : à -50 % elle est revenue au point de départ. */
+  @keyframes defile {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  /* La ligne (1/5 de la hauteur de l'écran) descend de au-dessus jusqu'en dessous. */
+  @keyframes balayage {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(500%);
+    }
+  }
+
   /* L'ombre rétrécit quand le Pokémon est en haut de sa lévitation */
   @keyframes ombre-sol {
     0%,
