@@ -43,6 +43,11 @@
   --color-balle-haut: #ef4444;
   --color-balle-bas: #f8fafc;
 
+  /* Coque de l'appareil (labo : cadre de Pokédex autour du site) */
+  --color-coque: #dc2626;
+  --color-coque-sombre: #991b1b; /* arêtes et creux de la coque */
+  --color-sur-coque: #ffffff; /* texte posé sur la coque */
+
 
   /* Une seule ombre de panneau et une seule lueur de bouton pour tout le site */
   --shadow-carte: 0 18px 40px -18px rgb(67 56 202 / 0.35), 0 2px 6px -2px rgb(30 41 100 / 0.1);
@@ -220,6 +225,11 @@ html.dark {
 }
 
 /* Fond du site : uni (la couleur --color-fond posée sur <body>). Tout le relief vient des panneaux en verre. */
+
+/* Labo : quand un cadre plein écran est affiché, c'est lui qui défile, pas la page derrière. */
+body:has(.labo-plein-ecran) {
+  overflow: hidden;
+}
 
 /* Focus clavier visible partout, avec la couleur d'accent du thème. */
 :focus-visible {
