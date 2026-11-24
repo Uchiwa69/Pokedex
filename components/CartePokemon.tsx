@@ -27,8 +27,9 @@ export default function CartePokemon({ pokemon, prioritaire = false }: Props) {
       className="group relative h-full transition-transform duration-200 hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       {/* Inclinaison 3D qui suit la souris (petit composant client autour du contenu de la carte). */}
-      {/* angle={16} : inclinaison bien marquée. reflet : une tache de lumière suit la souris (effet verre). */}
-      <CarteInclinable angle={16} reflet>
+      {/* angle={16} : inclinaison bien marquée. reflet : une tache de lumière suit la souris (effet verre).
+          coinCalme : la carte penche beaucoup moins près des boutons du coin haut droit. */}
+      <CarteInclinable angle={16} reflet coinCalme>
         {/* Lueur de survol : un contour et une ombre de la teinte, déjà dessinés mais invisibles.
             On n'anime que leur opacité (on n'anime jamais box-shadow directement). */}
         <span
