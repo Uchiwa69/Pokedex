@@ -43,6 +43,12 @@
   --color-balle-haut: #ef4444;
   --color-balle-bas: #f8fafc;
 
+  /* Coque du Pokédex géant (labo : introduction de l'accueil) : rouge, son reflet et son ombre */
+  --color-coque: #d42a2a;
+  --color-coque-clair: #f0605a;
+  --color-coque-sombre: #8f1818;
+  --color-sur-coque: #fff5f2; /* texte gravé sur la coque */
+
   /* Rouge soutenu des boutons « Quitter le combat » (plus marqué que --color-danger, qui est un rose pâle en thème sombre) */
   --color-alerte: #f87171;
 

@@ -1,10 +1,15 @@
-// PROTOTYPE — introduction de l'accueil : une Pokéball géante qui s'ouvre quand on fait défiler.
-// Elle n'est liée depuis aucun menu : on y accède par l'adresse /labo/intro.
+// PROTOTYPE — deux introductions pour l'accueil, jouées au défilement : une Pokéball géante qui s'ouvre,
+// ou un Pokédex géant dont le volet se relève. Elle n'est liée depuis aucun menu : adresse /labo/intro.
+// Le choix vit dans l'adresse (?v=pokeball ou ?v=pokedex), comme les onglets de la fiche.
 // Sous l'introduction, c'est la vraie grille de cartes, pour juger l'enchaînement avec le contenu.
 
+import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import GrillePokemons from "@/components/GrillePokemons";
+import SqueletteGrille from "@/components/SqueletteGrille";
 import IntroPokeball from "@/components/labo/IntroPokeball";
+import IntroPokedex from "@/components/labo/IntroPokedex";
 import { recupererListe } from "@/lib/pokeapi";
 
 export const metadata: Metadata = {
@@ -12,14 +17,52 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default async function PageLaboIntro() {
+const VARIANTES = [
+  { cle: "pokeball", libelle: "A · Pokéball" },
+  { cle: "pokedex", libelle: "B · Pokédex" },
+] as const;
+
+type Props = PageProps<"/labo/intro">;
+
+export default function PageLaboIntro({ searchParams }: Props) {
+  return (
+    // searchParams est une donnée de la requête : on la lit dans un composant sous <Suspense>.
+    <Suspense fallback={<SqueletteGrille />}>
+      <Contenu searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }) {
+  const { v } = await searchParams;
+  // Validation : toute valeur inconnue retombe sur la Pokéball.
+  const active = v === "pokedex" ? "pokedex" : "pokeball";
   const liste = await recupererListe("", null, 1);
 
   return (
     <div className="flex flex-col gap-6">
-      {/* -mt-6 : annule la marge haute de la page, pour que la balle soit centrée dans l'écran dès l'arrivée. */}
-      <div className="-mt-6">
-        <IntroPokeball total={liste.total} />
+      {/* Onglets du labo, fixés en bas à gauche pour rester accessibles pendant le défilement. */}
+      <nav aria-label="Propositions" className="fixed bottom-4 left-4 z-30 flex gap-1 rounded-full border border-dashed border-bordure bg-surface-pleine p-1">
+        {VARIANTES.map((variante) => (
+          <Link
+            key={variante.cle}
+            href={`/labo/intro?v=${variante.cle}`}
+            aria-current={active === variante.cle ? "page" : undefined}
+            className={
+              active === variante.cle
+                ? "flex min-h-9 items-center rounded-full bg-accent px-4 text-sm font-semibold text-sur-accent"
+                : "flex min-h-9 items-center rounded-full px-4 text-sm font-medium text-texte-doux hover:bg-piste hover:text-texte"
+            }
+          >
+            {variante.libelle}
+          </Link>
+        ))}
+      </nav>
+
+      {/* -mt-6 : annule la marge haute de la page, pour que l'objet soit centré dans l'écran dès l'arrivée.
+          key : changer d'onglet recrée l'introduction, qui repart du début. */}
+      <div className="-mt-6" key={active}>
+        {active === "pokedex" ? <IntroPokedex total={liste.total} /> : <IntroPokeball total={liste.total} />}
       </div>
       <header className="flex flex-col gap-2">
         <p className="etiquette">Pokédex national</p>
