@@ -7,6 +7,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { dessinerDos, dessinerFace, HAUTEUR, type DonneesCarte } from "@/lib/carte3d";
+import type { ZonesCarte } from "@/lib/effets-types";
+import { estUnType } from "@/lib/types";
 
 type Props = {
   illustration: string | null; // adresse de l'image déjà affichée sur la fiche
@@ -151,9 +153,10 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
 
       // Tout ce qu'il faut télécharger part EN MÊME TEMPS (Promise.all) : three.js, ses contrôles,
       // l'image et la police. Avant, chaque téléchargement attendait la fin du précédent.
-      const [THREE, { OrbitControls }, image] = await Promise.all([
+      const [THREE, { OrbitControls }, effets, image] = await Promise.all([
         import("three"),
         import("three/examples/jsm/controls/OrbitControls.js"),
+        import("@/lib/effets-types"), // les effets par type, chargés à la demande comme three.js
         chargerImage(adresseImage),
         document.fonts.load(`700 64px ${policeTitre}`).catch(() => {}),
       ]);
@@ -259,9 +262,38 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         depthWrite: false,
       });
 
+      /* ---------- Effet du type : une couche à part, entre la face et le reflet ---------- */
+      // Le reflet ci-dessus n'est pas modifié. L'effet (flammes, caustiques, givre…) est un second
+      // matériau additif, propre au type principal du Pokémon. Chaque face a le sien, car chacune a sa
+      // propre inclinaison face au regard et ses propres zones à laisser lisibles.
+      const couleurType = new THREE.Color(teinte);
+      // three.js range les couleurs en valeurs « linéaires » ; notre programme écrit directement à l'écran,
+      // on lui redonne donc les valeurs d'écran (sRGB), sinon la teinte serait trop sombre.
+      couleurType.convertLinearToSRGB();
+      const programme = effets.assemblerEffet(estUnType(typePrincipal) ? typePrincipal : "normal");
+      const creerEffet = (zones: ZonesCarte) =>
+        new THREE.ShaderMaterial({
+          ...programme,
+          uniforms: effets.creerUniformes([couleurType.r, couleurType.g, couleurType.b], zones),
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+      const effetFace = creerEffet(effets.ZONES_FACE);
+      const effetDos = creerEffet(effets.ZONES_DOS);
+      // Écran tactile = téléphone ou tablette : moins de détails, pour rester fluide.
+      const qualite = window.matchMedia("(pointer: coarse)").matches ? 0.5 : 1;
+      effetFace.uniforms.uQualite.value = qualite;
+      effetDos.uniforms.uQualite.value = qualite;
+
       const carte = new THREE.Group();
       const avant = new THREE.Mesh(geometrieFace, new THREE.MeshBasicMaterial({ map: textureFace }));
       avant.position.z = epaisseur / 2 + 0.001;
+      const effetAvant = new THREE.Mesh(geometrieFace, effetFace);
+      effetAvant.position.z = epaisseur / 2 + 0.002;
+      const effetArriere = new THREE.Mesh(geometrieFace, effetDos);
+      effetArriere.position.z = -epaisseur / 2 - 0.002;
+      effetArriere.rotation.y = Math.PI;
       const refletAvant = new THREE.Mesh(geometrieFace, reflet);
       refletAvant.position.z = epaisseur / 2 + 0.003;
       const arriere = new THREE.Mesh(geometrieFace, new THREE.MeshBasicMaterial({ map: textureDos }));
@@ -273,8 +305,22 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       const refletArriere = new THREE.Mesh(geometrieFace, refletDos);
       refletArriere.position.z = -epaisseur / 2 - 0.003;
       refletArriere.rotation.y = Math.PI;
-      carte.add(tranche, avant, refletAvant, arriere, refletArriere);
+      carte.add(tranche, avant, effetAvant, refletAvant, arriere, effetArriere, refletArriere);
       scene.add(carte);
+
+      // Inclinaison d'une face par rapport au regard, de -1 à 1 sur chaque axe : c'est elle qui fait glisser
+      // les reflets et la profondeur de l'effet. On exprime la direction de la caméra dans le repère de la
+      // face (rotation inverse de la face) : de face elle vaut (0, 0, 1) ; ses parts x et y grandissent
+      // quand la carte pivote ou bascule.
+      const orientationFace = new THREE.Quaternion();
+      const versCamera = new THREE.Vector3();
+      const mesurerInclinaison = (face: import("three").Mesh, materiau: import("three").ShaderMaterial) => {
+        face.getWorldQuaternion(orientationFace).invert();
+        versCamera.copy(camera.position).sub(carte.position).normalize().applyQuaternion(orientationFace);
+        const inclinaison = materiau.uniforms.uInclinaison.value as number[];
+        inclinaison[0] = THREE.MathUtils.clamp(-versCamera.x * 1.4, -1, 1);
+        inclinaison[1] = THREE.MathUtils.clamp(-versCamera.y * 1.8, -1, 1);
+      };
 
       const adapter = () => {
         rendu.setSize(conteneur.clientWidth, conteneur.clientHeight, false);
@@ -315,6 +361,12 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         carte.rotation.z = reduit ? 0 : Math.sin(temps * 0.5) * 0.025;
         carte.position.y = reduit ? 0 : Math.sin(temps * 1.3) * 0.07;
         controles.update();
+        // L'effet du type reçoit l'heure, l'inclinaison de sa face, et se fige en animations réduites.
+        for (const [face, materiau] of [[effetAvant, effetFace], [effetArriere, effetDos]] as const) {
+          materiau.uniforms.uTemps.value = temps;
+          materiau.uniforms.uCalme.value = reduit ? 1 : 0;
+          mesurerInclinaison(face, materiau);
+        }
         rendu.render(scene, camera);
       });
       setEtat("pret");
@@ -334,6 +386,8 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         (arriere.material as import("three").Material).dispose();
         reflet.dispose();
         refletDos.dispose();
+        effetFace.dispose();
+        effetDos.dispose();
         rendu.dispose();
         rendu.domElement.remove();
         refCommandes.current = null;

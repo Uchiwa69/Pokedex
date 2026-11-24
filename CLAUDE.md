@@ -106,6 +106,11 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Fiche : `VitrineFiche` remplace l'illustration par `Carte3D` (three.js, importé dans un useEffect, démarré une fois
   la page chargée et le navigateur inoccupé). L'illustration reste l'affichage d'attente et le repli sans WebGL.
   `lib/carte3d.ts` dessine les deux faces dans des canvas 2D. `PanneauCarte3D` (carte au clic) est conservé, inutilisé.
+- Carte 3D : effet holographique PAR TYPE (`lib/effets-types/` : `commun.ts` = outils GLSL, `types/` = une fonction
+  `effetType` par type, `index.ts` = table, zones calmes, assemblage). C'est une couche additive À PART, entre la face
+  et le reflet : le reflet d'origine de `Carte3D` ne doit pas être modifié (à `uForce` = 0, carte d'origine).
+  Shaders fournis par l'utilisateur (générés avec Gemini), corrigés ici : eau (voile uniforme), acier (moiré, `fwidth`).
+  Le mode « éclat » des fonctions (prévu pour les filtres de l'accueil) n'est pas branché : les filtres restent en CSS.
 - Accueil : introduction `IntroPokedex` (client, `components/`) autour de toute la page. Un Pokédex géant EN 3D
   (three.js, chargé à la demande : `lib/labo/pokedex3d.ts` = modèle repris d'un fichier fourni, `@ts-nocheck`, exclu
   d'ESLint ; `lib/labo/scene-pokedex.ts` = lumières et reflets validés par l'utilisateur) s'ouvre au défilement, puis
