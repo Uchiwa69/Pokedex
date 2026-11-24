@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
     "lib/showdown/animations-attaques.ts",
     "lib/showdown/animations-communes.ts",
     "lib/showdown/effets.ts",
+    // Modèle 3D du Pokédex repris d'un fichier fourni par l'utilisateur (prototype du labo).
+    "lib/labo/pokedex3d.ts",
   ]),
 ]);
 
