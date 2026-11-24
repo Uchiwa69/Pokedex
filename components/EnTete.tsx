@@ -9,7 +9,8 @@ import Pokeball from "@/components/Pokeball";
 export default function EnTete() {
   return (
     // Verre fumé : fond du thème à 75 % + flou de ce qui défile derrière.
-    <header className="sticky top-0 z-40 border-b border-bordure-verre bg-fond/75 backdrop-blur-xl">
+    // data-entete + transition-opacity : l'introduction de l'accueil masque l'en-tête en fondu (voir globals.css).
+    <header data-entete className="sticky top-0 z-40 border-b border-bordure-verre bg-fond/75 backdrop-blur-xl transition-opacity duration-300">
       {/* Sur mobile le menu passe sur une 2e ligne (order-last + w-full), à partir de sm tout tient sur une ligne. */}
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2">
         {/* aria-label : les lecteurs d'écran lisent « Pokédex » en entier, même si le « O » est un dessin.

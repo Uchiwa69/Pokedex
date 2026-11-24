@@ -48,6 +48,9 @@ const DISTANCE = 11;
 // Rectangle de l'écran du modèle dans la zone d'affichage, en pixels.
 type Rectangle = { gauche: number; haut: number; largeur: number; hauteur: number };
 
+// L'en-tête du site reste masqué jusqu'à cet avancement (la plongée a commencé, l'écran grossit déjà).
+const SEUIL_ENTETE = 0.36;
+
 // Clé du sessionStorage : retient, le temps de la visite, que l'introduction a déjà été vue.
 // (sessionStorage est vidé à la fermeture de l'onglet : à la visite suivante, elle rejoue.)
 const CLE_VUE = "pokedex-intro-vue";
@@ -237,6 +240,12 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
   const invitationOpacite = useTransform(scrollYProgress, [0, 0.03], [1, 0]);
   // Opacité de la scène 3D, réglée par calerPage.
   const fonduScene = useMotionValue(1);
+  // Lumière de scène derrière l'appareil : elle le suit quand il se décale, et s'éteint au moment de plonger.
+  const lumiereOpacite = useTransform(scrollYProgress, [0.24, 0.34], [1, 0]);
+  const lumiereX = useTransform(scrollYProgress, COURBE_DECALAGE.avancement, COURBE_DECALAGE.valeur.map((part) => `${part * 100}%`));
+  // « Début » de l'introduction : tant que l'appareil est seul en scène (avant la plongée), l'en-tête du site est
+  // masqué pour le mettre en valeur. C'est un état React et non une motion value : il ne change que deux fois.
+  const [debut, setDebut] = useState(true);
 
   // ---- La page calée dans l'écran ----
   // Place la vraie page pour qu'elle occupe exactement l'écran de l'appareil : sa taille (échelle), ses
@@ -429,6 +438,7 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
   const avancementPrecedent = useRef(0);
   useMotionValueEvent(scrollYProgress, "change", (avancement) => {
     actualiser();
+    setDebut(avancement < SEUIL_ENTETE);
     const precedent = avancementPrecedent.current;
     avancementPrecedent.current = avancement;
     // On ne referme l'introduction qu'en DESCENDANT au-delà du seuil (pas en le retraversant vers le haut).
@@ -447,9 +457,22 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     // de presque deux écrans par-dessus la zone. Elle est donc déjà en haut de la fenêtre quand la plongée se
     // termine : elle n'a plus qu'à finir de grossir. pointer-events-none : la zone ne bloque pas les clics.
     // -mt-6 : annule la marge haute de la page, pour que l'appareil soit centré dans la fenêtre dès l'arrivée.
-    <div ref={zone} aria-hidden="true" className="pointer-events-none relative -mb-[190svh] -mt-6 h-[300svh]">
+    // data-intro-debut : lu par une règle de globals.css (body:has(…)) qui masque l'en-tête du site.
+    <div
+      ref={zone}
+      aria-hidden="true"
+      data-intro-debut={debut ? "oui" : "non"}
+      className="pointer-events-none relative -mb-[190svh] -mt-6 h-[300svh]"
+    >
       {/* sticky top-0 : ce bloc reste collé en haut de l'écran tant qu'on défile dans la zone. */}
       <div ref={cadre} className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
+        {/* Lumière de scène. Un cadre invisible, de la taille et à la place de l'appareil, porte deux calques bien
+            plus grands que lui : le faisceau qui tombe d'en haut, puis le halo et la tache de lumière au sol. */}
+        <motion.div className="absolute aspect-[1210/1834] h-[min(70svh,62vw)]" style={{ opacity: lumiereOpacite, x: lumiereX }}>
+          <span className="faisceau-scene absolute left-1/2 top-1/2 h-[220%] w-[300%] -translate-x-1/2 -translate-y-1/2" />
+          <span className="halo-scene absolute left-1/2 top-1/2 h-[220%] w-[300%] -translate-x-1/2 -translate-y-1/2" />
+        </motion.div>
+
         {/* En attendant la 3D : la photo de l'appareil fermé, à peu près à la même place. */}
         {!pret && (
           <Image src="/pokedex/ferme.webp" alt="" width={1210} height={1834} priority className="h-[min(70svh,62vw)] w-auto scale-90" />

@@ -307,6 +307,19 @@ html.dark {
    Ils garantissent les mêmes arrondis, ombres et boutons sur toutes les pages. */
 
 /* Panneau en verre : la surface de base de toutes les cartes et de tous les encadrés. */
+/* Introduction de l'accueil — lumière de scène derrière le Pokédex 3D (components/IntroPokedex.tsx).
+   faisceau-scene : un cône de lumière qui tombe d'en haut (dégradé conique), effacé vers le bas par un masque.
+   halo-scene : une lueur de la couleur d'accent derrière l'appareil + une tache claire à ses pieds, comme au sol. */
+@utility faisceau-scene {
+  background: conic-gradient(from 160deg at 50% 0%, transparent 0deg, color-mix(in srgb, var(--color-texte) 13%, transparent) 20deg, transparent 40deg);
+  mask-image: linear-gradient(to bottom, black 30%, transparent 78%);
+}
+@utility halo-scene {
+  background:
+    radial-gradient(ellipse 24% 5% at 50% 71%, color-mix(in srgb, var(--color-texte) 22%, transparent), transparent),
+    radial-gradient(ellipse 34% 40% at 50% 50%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent);
+}
+
 @utility verre {
   border: 1px solid var(--color-bordure-verre);
   border-radius: 1.5rem;
@@ -561,4 +574,15 @@ html.dark {
   65% { transform: translate3d(var(--x), 90vh, 0) rotate(var(--r)); opacity: 1; animation-timing-function: ease-out; }
   82% { transform: translate3d(calc(var(--x) + var(--dx)), 80vh, 0) rotate(var(--r)); opacity: 0.9; animation-timing-function: ease-in; }
   100% { transform: translate3d(calc(var(--x) + var(--dx) * 2), 94vh, 0) rotate(var(--r)); opacity: 0; }
+}
+
+/* Introduction de l'accueil : tant que le Pokédex est seul en scène (data-intro-debut="oui"), l'en-tête du site
+   s'efface pour le mettre en valeur. :has() permet au <body> de réagir à un élément situé plus bas dans la page,
+   sans JavaScript. Deux garde-fous d'accessibilité : l'en-tête revient dès qu'on y entre au clavier
+   (:focus-within), et rien n'est masqué quand les animations sont réduites (l'introduction n'y joue pas). */
+@media (prefers-reduced-motion: no-preference) {
+  body:has([data-intro-debut="oui"]) header[data-entete]:not(:focus-within) {
+    opacity: 0;
+    pointer-events: none;
+  }
 }
