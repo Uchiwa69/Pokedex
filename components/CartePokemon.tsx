@@ -42,7 +42,7 @@ export default function CartePokemon({ pokemon, prioritaire = false }: Props) {
             {/* Dégradé de la teinte */}
             <span className="absolute inset-0 bg-[linear-gradient(145deg,var(--teinte),transparent_60%)] opacity-30 transition-opacity duration-200 group-hover:opacity-50 motion-reduce:transition-none dark:opacity-25 dark:group-hover:opacity-45" />
             {/* Effet verre : un reflet fixe en biais dans le coin haut gauche, comme sur une vitre… */}
-            <span className="absolute inset-0 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--color-texte)_16%,transparent)_0%,transparent_32%)]" />
+            <span className="absolute inset-0 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--color-texte)_10%,transparent)_0%,transparent_32%)]" />
             {/* … et un liseré de lumière sur l'arête du haut (ombre intérieure d'un pixel). */}
             <span className="absolute inset-0 rounded-3xl shadow-[inset_0_1px_0_0_color-mix(in_srgb,var(--color-texte)_40%,transparent),inset_0_-1px_0_0_color-mix(in_srgb,var(--color-texte)_8%,transparent)]" />
             {/* Numéro en filigrane : petit, calé à droite à l'intérieur, très discret */}

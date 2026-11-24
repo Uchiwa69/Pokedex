@@ -43,11 +43,6 @@
   --color-balle-haut: #ef4444;
   --color-balle-bas: #f8fafc;
 
-  /* Coque de l'appareil (labo : cadre de Pokédex autour du site) */
-  --color-coque: #dc2626;
-  --color-coque-sombre: #991b1b; /* arêtes et creux de la coque */
-  --color-sur-coque: #ffffff; /* texte posé sur la coque */
-
 
   /* Une seule ombre de panneau et une seule lueur de bouton pour tout le site */
   --shadow-carte: 0 18px 40px -18px rgb(67 56 202 / 0.35), 0 2px 6px -2px rgb(30 41 100 / 0.1);
@@ -66,26 +61,6 @@
   --animate-respiration: respiration 3.2s ease-in-out infinite;
   --animate-particule: particule 2.6s ease-out infinite;
   --animate-rotation-lente: rotation-lente 9s linear infinite;
-
-  /* Labo de l'accueil (/labo/accueil) : bande de Pokémon qui défile, ligne de balayage d'écran */
-  --animate-defile: defile 60s linear infinite;
-  --animate-balayage: balayage 6s linear infinite;
-
-  /* La bande contient deux fois la même liste : à -50 % elle est revenue au point de départ. */
-  @keyframes defile {
-    to {
-      transform: translateX(-50%);
-    }
-  }
-  /* La ligne (1/5 de la hauteur de l'écran) descend de au-dessus jusqu'en dessous. */
-  @keyframes balayage {
-    from {
-      transform: translateY(-100%);
-    }
-    to {
-      transform: translateY(500%);
-    }
-  }
 
   /* L'ombre rétrécit quand le Pokémon est en haut de sa lévitation */
   @keyframes ombre-sol {
@@ -225,11 +200,6 @@ html.dark {
 }
 
 /* Fond du site : uni (la couleur --color-fond posée sur <body>). Tout le relief vient des panneaux en verre. */
-
-/* Labo : quand un cadre plein écran est affiché, c'est lui qui défile, pas la page derrière. */
-body:has(.labo-plein-ecran) {
-  overflow: hidden;
-}
 
 /* Focus clavier visible partout, avec la couleur d'accent du thème. */
 :focus-visible {

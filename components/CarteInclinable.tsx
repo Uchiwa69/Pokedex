@@ -66,7 +66,7 @@ export default function CarteInclinable({ children, angle = 8, reflet = false }:
         // il est posé par-dessus le contenu mais ne gêne ni les clics ni le survol.
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
           <motion.span
-            className="absolute inset-0 bg-[radial-gradient(circle_at_center,color-mix(in_srgb,var(--color-texte)_22%,transparent),transparent_60%)]"
+            className="absolute inset-0 bg-[radial-gradient(circle_at_center,color-mix(in_srgb,var(--color-texte)_12%,transparent),transparent_60%)]"
             style={{ x: refletX, y: refletY, opacity: opaciteReflet }}
           />
         </span>
