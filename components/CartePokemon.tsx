@@ -27,7 +27,8 @@ export default function CartePokemon({ pokemon, prioritaire = false }: Props) {
       className="group relative h-full transition-transform duration-200 hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       {/* Inclinaison 3D qui suit la souris (petit composant client autour du contenu de la carte). */}
-      <CarteInclinable>
+      {/* angle={16} : inclinaison bien marquée. reflet : une tache de lumière suit la souris (effet verre). */}
+      <CarteInclinable angle={16} reflet>
         {/* Lueur de survol : un contour et une ombre de la teinte, déjà dessinés mais invisibles.
             On n'anime que leur opacité (on n'anime jamais box-shadow directement). */}
         <span
@@ -40,6 +41,10 @@ export default function CartePokemon({ pokemon, prioritaire = false }: Props) {
           <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
             {/* Dégradé de la teinte */}
             <span className="absolute inset-0 bg-[linear-gradient(145deg,var(--teinte),transparent_60%)] opacity-30 transition-opacity duration-200 group-hover:opacity-50 motion-reduce:transition-none dark:opacity-25 dark:group-hover:opacity-45" />
+            {/* Effet verre : un reflet fixe en biais dans le coin haut gauche, comme sur une vitre… */}
+            <span className="absolute inset-0 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--color-texte)_16%,transparent)_0%,transparent_32%)]" />
+            {/* … et un liseré de lumière sur l'arête du haut (ombre intérieure d'un pixel). */}
+            <span className="absolute inset-0 rounded-3xl shadow-[inset_0_1px_0_0_color-mix(in_srgb,var(--color-texte)_40%,transparent),inset_0_-1px_0_0_color-mix(in_srgb,var(--color-texte)_8%,transparent)]" />
             {/* Numéro en filigrane : petit, calé à droite à l'intérieur, très discret */}
             <span className="absolute right-3 top-12 font-titre text-4xl font-bold leading-none text-texte opacity-[0.06] sm:right-4 sm:text-5xl">
               {numero}

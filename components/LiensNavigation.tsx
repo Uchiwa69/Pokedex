@@ -1,4 +1,5 @@
 import Link from "next/link";
+import IconeNavigation from "@/components/IconeNavigation";
 import { LIENS_NAVIGATION, estLienActif } from "@/lib/navigation";
 
 // Affiche les liens du menu. Ce composant n'a ni état ni hook : il peut être rendu
@@ -15,12 +16,20 @@ export default function LiensNavigation({ cheminActif }: { cheminActif: string |
               href={lien.href}
               // aria-current annonce la page en cours aux lecteurs d'écran.
               aria-current={actif ? "page" : undefined}
-              className={
+              // Mobile : icône AU-DESSUS du libellé (flex-col), comme la barre d'une appli.
+              // À partir de sm : icône à gauche du libellé (flex-row).
+              // `group` : l'icône réagit au survol du lien entier (group-hover).
+              className={`group flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-[11px] sm:min-h-10 sm:flex-row sm:gap-2 sm:px-4 sm:text-sm ${
                 actif
-                  ? "flex min-h-9 items-center justify-center rounded-full bg-accent px-2 text-sm font-semibold text-sur-accent shadow-lueur sm:px-4"
-                  : "flex min-h-9 items-center justify-center rounded-full px-2 text-sm font-medium text-texte-doux hover:bg-piste hover:text-texte sm:px-4"
-              }
+                  ? "bg-accent font-semibold text-sur-accent shadow-lueur"
+                  : "font-medium text-texte-doux hover:bg-piste hover:text-texte"
+              }`}
             >
+              {/* L'icône grossit un peu au survol : on n'anime que transform, et pas en animations réduites. */}
+              <IconeNavigation
+                nom={lien.icone}
+                className="size-4 transition-transform duration-200 group-hover:scale-125 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              />
               {lien.libelle}
             </Link>
           </li>

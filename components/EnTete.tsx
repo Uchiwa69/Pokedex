@@ -37,6 +37,8 @@ export default function EnTete() {
 
         <IndicateurSacoche />
       </div>
+      {/* Filet lumineux sous l'en-tête : un dégradé de l'accent qui s'efface vers les bords. */}
+      <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-linear-to-r from-transparent via-accent to-transparent opacity-60" />
     </header>
   );
 }

@@ -1,16 +1,20 @@
 // Les liens du menu principal, partagés entre le serveur et le client.
 
+// Nom de l'icône affichée à côté du libellé (dessinée dans components/IconeNavigation.tsx).
+export type NomIcone = "grille" | "etoile" | "sac" | "eclair" | "question";
+
 export type LienNavigation = {
   href: string;
   libelle: string;
+  icone: NomIcone;
 };
 
 export const LIENS_NAVIGATION: LienNavigation[] = [
-  { href: "/", libelle: "Tous" },
-  { href: "/favoris", libelle: "Favoris" },
-  { href: "/sacoche", libelle: "Sacoche" },
-  { href: "/combat", libelle: "Combat" },
-  { href: "/quiz", libelle: "Quiz" },
+  { href: "/", libelle: "Tous", icone: "grille" },
+  { href: "/favoris", libelle: "Favoris", icone: "etoile" },
+  { href: "/sacoche", libelle: "Sacoche", icone: "sac" },
+  { href: "/combat", libelle: "Combat", icone: "eclair" },
+  { href: "/quiz", libelle: "Quiz", icone: "question" },
 ];
 
 // Dit si un lien correspond à la page affichée.
