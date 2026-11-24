@@ -194,6 +194,18 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
   }
 
   const monte = useRef(true);
+  // Numéro du combat en cours. Il change quand on quitte : un tour encore en train de se dérouler (il attend
+  // entre ses étapes) compare son numéro à celui-ci et arrête de mettre à jour l'état d'un combat abandonné.
+  const numeroCombat = useRef(0);
+  // Confirmation en deux clics pour « Quitter le combat » (comme « Vider la sacoche »).
+  const [confirmationQuitter, setConfirmationQuitter] = useState(false);
+
+  // Abandonne le combat et revient à l'écran de préparation.
+  function quitter() {
+    numeroCombat.current++;
+    setConfirmationQuitter(false);
+    setPartie(null);
+  }
   useEffect(() => {
     monte.current = true;
     return () => {
@@ -262,6 +274,7 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
 
   async function jouerTour(attaqueJoueur: Attaque) {
     if (!partie || partie.occupe || partie.resultat) return;
+    const combat = numeroCombat.current; // le combat auquel ce tour appartient
 
     // Copies locales : on les fait évoluer au fil du tour, et on « publie » l'état à chaque étape.
     let joueurs = partie.joueurs;
@@ -274,7 +287,7 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
       journal.push({ id: prochainId.current++, texte });
     }
     function publier(extra: Partial<Partie> = {}) {
-      if (!monte.current) return;
+      if (!monte.current || combat !== numeroCombat.current) return; // page quittée ou combat abandonné
       setPartie({
         joueurs,
         adversaires,
@@ -472,6 +485,29 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Quitter le combat : retour à l'écran de préparation. Pendant le combat, il faut confirmer (le combat
+          est perdu) ; une fois le combat terminé, un seul clic suffit. */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {partie.resultat ? (
+          <button type="button" onClick={quitter} className="bouton bouton-secondaire">
+            Retour à la préparation
+          </button>
+        ) : confirmationQuitter ? (
+          <>
+            <button type="button" onClick={quitter} className="bouton bouton-secondaire text-danger">
+              Confirmer : abandonner
+            </button>
+            <button type="button" onClick={() => setConfirmationQuitter(false)} className="bouton bouton-secondaire">
+              Continuer le combat
+            </button>
+          </>
+        ) : (
+          <button type="button" onClick={() => setConfirmationQuitter(true)} className="bouton bouton-secondaire">
+            Quitter le combat
+          </button>
+        )}
+      </div>
+
       {/* L'arène. Elle tremble à l'impact (transform uniquement). */}
       <motion.div
         ref={refArene}
