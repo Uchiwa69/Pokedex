@@ -51,10 +51,9 @@ export default async function ListeAttaques({ nom }: { nom: string }) {
                   {LIBELLES_CATEGORIES[attaque.categorie]}
                 </p>
               </div>
-              {/* Niveau d'apprentissage : une gélule PLEINE de la couleur du type de l'attaque, pour qu'on la repère
-                  tout de suite. TYPES[...].classes donne le fond ET la bonne couleur de texte (foncé sur les types
-                  clairs, blanc sur les types sombres), comme pour les badges de type. */}
-              <p className={`flex shrink-0 items-baseline gap-1 rounded-full px-3 py-1 ${TYPES[attaque.type].classes}`}>
+              {/* Niveau d'apprentissage : une gélule de la couleur du type de l'attaque, en version adoucie
+                  (fond teinté à 28 %, bordure à 60 %). Le texte reste clair : lisible sur les 18 types. */}
+              <p className="flex shrink-0 items-baseline gap-1 rounded-full border border-[color-mix(in_srgb,var(--teinte)_60%,transparent)] bg-[color-mix(in_srgb,var(--teinte)_28%,transparent)] px-3 py-1 text-texte">
                 <span className="text-[11px] font-semibold uppercase tracking-widest">Niv.</span>
                 <span className="font-titre text-base font-bold tabular-nums">{niveau <= 1 ? "1" : niveau}</span>
               </p>
