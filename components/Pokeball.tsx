@@ -1,4 +1,4 @@
-// Petite Pokéball dessinée en SVG : elle remplace le « O » du logo dans l'en-tête.
+// Petite Pokéball dessinée en SVG : le « O » du logo et les places occupées de la sacoche dans l'en-tête.
 // Composant serveur (aucune interaction). Les couleurs viennent des jetons de globals.css
 // (fill-balle-haut, fill-balle-bas, fill-encre) : aucune couleur en dur ici.
 type Props = {
