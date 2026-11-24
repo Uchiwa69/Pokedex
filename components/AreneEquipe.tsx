@@ -164,16 +164,11 @@ function ContenuArene() {
         ))}
       </ul>
 
-      {membreSelectionne ? (
-        // key : quand on change de membre, React recrée le panneau → son animation d'entrée
-        // et celle des barres de stats rejouent.
-        <PanneauDetail key={membreSelectionne.pokemon.nom} membre={membreSelectionne} />
-      ) : (
-        membres.length > 0 && (
-          // Invitation : un texte simple, de taille normale et de couleur claire (une étiquette grise passait inaperçue).
-          <p className="text-center font-titre text-base font-semibold text-texte">Sélectionne un Pokémon pour voir son détail</p>
-        )
-      )}
+      {/* Le détail n'apparaît QUE si un membre est sélectionné. Sinon rien ne s'affiche ici : on passe
+          directement de l'équipe à l'ordre de l'équipe (la main au survol suffit à montrer que c'est cliquable).
+          key : quand on change de membre, React recrée le panneau → son animation d'entrée
+          et celle des barres de stats rejouent. */}
+      {membreSelectionne && <PanneauDetail key={membreSelectionne.pokemon.nom} membre={membreSelectionne} />}
 
       {membres.length > 1 && <OrdreEquipe membres={membres} />}
     </div>
