@@ -321,7 +321,7 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={`verre relative overflow-hidden ${compacte ? "h-72" : "h-[26rem] sm:h-[30rem]"}`}>
+      <div className={`verre relative overflow-hidden ${compacte ? "h-[26rem]" : "h-[26rem] sm:h-[30rem]"}`}>
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_70%,var(--teinte,var(--color-accent)),transparent_62%)] opacity-25" />
         {/* role="img" + libellé : la zone 3D est annoncée comme une image par les lecteurs d'écran. */}
         <div ref={refConteneur} role="img" aria-label={`Modèle 3D de ${nom}, orientable à la souris ou avec les boutons ci-dessous`} className="absolute inset-0 touch-none" />
@@ -342,6 +342,8 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
       </div>
 
       {/* Mesures en direct : utiles pour juger les performances sur l'appareil utilisé. */}
+      {compacte && <p className="etiquette">Fais glisser pour tourner autour · molette ou pincement pour zoomer</p>}
+
       {!compacte && (
         <p className="etiquette">
           {chargement.etat === "pret"

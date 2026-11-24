@@ -12,7 +12,7 @@ import type { RolesAnimation } from "@/lib/labo/modeles3d";
 const Visionneuse3D = dynamic(() => import("@/components/labo/Visionneuse3D"), {
   ssr: false,
   loading: () => (
-    <p role="status" className="etiquette flex h-72 items-center justify-center">
+    <p role="status" className="etiquette flex h-[26rem] items-center justify-center">
       Chargement de la vitrine…
     </p>
   ),
