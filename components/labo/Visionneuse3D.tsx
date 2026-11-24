@@ -54,14 +54,13 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
   const [mesures, setMesures] = useState({ ips: 0, triangles: 0 });
   const [clipActif, setClipActif] = useState<string | null>(null);
   const [rotationAuto, setRotationAuto] = useState(false);
-  const [generique, setGenerique] = useState(true);
   const [pause, setPause] = useState(false);
 
   // Les réglages sont lus par la boucle de rendu à travers des refs : les changer ne recrée pas la scène.
-  const refReglages = useRef({ rotationAuto, generique, pause, animationsReduites, roles });
+  const refReglages = useRef({ rotationAuto, pause, animationsReduites, roles });
   useEffect(() => {
-    refReglages.current = { rotationAuto, generique, pause, animationsReduites, roles };
-  }, [rotationAuto, generique, pause, animationsReduites, roles]);
+    refReglages.current = { rotationAuto, pause, animationsReduites, roles };
+  }, [rotationAuto, pause, animationsReduites, roles]);
 
   useEffect(() => {
     const conteneur = refConteneur.current;
@@ -297,7 +296,8 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
 
         // Animation générique pour un modèle sans animation d'origine : il flotte, respire et oscille
         // légèrement. On bouge le modèle entier (aucun os), donc cela marche avec n'importe quel modèle.
-        const generiqueActive = reglages.generique && !reglages.animationsReduites && !reglages.pause && action === null;
+        // Elle est TOUJOURS jouée dans ce cas (plus de bouton pour la couper) : c'est la seule animation disponible.
+        const generiqueActive = !reglages.animationsReduites && !reglages.pause && action === null;
         if (generiqueActive) {
           temps += dt;
           socle.position.y = Math.sin(temps * 1.6) * 0.03 + 0.03;
@@ -393,13 +393,11 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
         <button type="button" className="bouton bouton-secondaire" aria-pressed={rotationAuto} onClick={() => setRotationAuto((v) => !v)}>
           Rotation auto : {rotationAuto ? "oui" : "non"}
         </button>
-        {animations.length > 0 ? (
+        {/* Pause : seulement pour un modèle qui a ses propres animations. Un modèle sans animation
+            reçoit d'office l'animation générique, sans bouton. */}
+        {animations.length > 0 && (
           <button type="button" className="bouton bouton-secondaire" aria-pressed={pause} onClick={() => setPause((v) => !v)}>
             {pause ? "Reprendre" : "Pause"}
-          </button>
-        ) : (
-          <button type="button" className="bouton bouton-secondaire" aria-pressed={generique} onClick={() => setGenerique((v) => !v)}>
-            Animation générique : {generique ? "oui" : "non"}
           </button>
         )}
       </div>
