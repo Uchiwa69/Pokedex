@@ -80,15 +80,15 @@ export default function DecorArene({ zoom = false }: Props) {
             <path d="M240 672h370M990 672h370" className="opacity-60" />
           </g>
           {/* Au centre du terrain : la Pokéball rouge et blanche du site, peinte au sol.
-              Elle est dessinée ronde puis écrasée en hauteur (scale 1 × 0,385) pour être vue en perspective. */}
-          <g transform="translate(800 672) scale(1 0.385)" className="opacity-90">
+              Elle est dessinée ronde puis réduite et écrasée en hauteur (scale 0,58 × 0,223) pour être vue en perspective. */}
+          <g transform="translate(800 672) scale(0.58 0.223)" className="opacity-90">
             <circle r="190" className="fill-encre" />
             <path d="M-172 -12a172 172 0 0 1 344 0Z" className="fill-balle-haut" />
             <path d="M-172 12a172 172 0 0 0 344 0Z" className="fill-balle-bas" />
             <circle r="66" className="fill-encre" />
             <circle r="40" className="fill-balle-bas" />
           </g>
-          <ellipse cx="800" cy="672" rx="196" ry="76" fill="none" strokeWidth="4" className="stroke-accent-bis opacity-80" />
+          <ellipse cx="800" cy="672" rx="116" ry="45" fill="none" strokeWidth="3" className="stroke-accent-bis opacity-80" />
         </svg>
 
         {/* Halo derrière l'emblème, puis l'emblème suspendu au-dessus du terrain */}
