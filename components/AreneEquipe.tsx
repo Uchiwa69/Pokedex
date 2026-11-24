@@ -156,7 +156,15 @@ function ContenuArene() {
         <PanneauDetail key={membreSelectionne.pokemon.nom} membre={membreSelectionne} />
       ) : (
         membres.length > 0 && (
-          <p className="etiquette text-center">Sélectionne un Pokémon pour voir son détail</p>
+          // Invitation bien visible : un encadré en pointillés à la place du futur panneau de détail,
+          // avec une icône et un texte de taille normale (une simple étiquette passait inaperçue).
+          <p className="flex min-h-24 items-center justify-center gap-3 rounded-3xl border border-dashed border-bordure bg-surface p-6 text-center font-titre text-base font-semibold text-texte">
+            {/* Icône décorative : une main qui pointe */}
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 shrink-0 text-accent">
+              <path d="M9 11V5a1.5 1.5 0 0 1 3 0v5m0 0V9a1.5 1.5 0 0 1 3 0v2m0 0v-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.7-2.3L4 15a1.6 1.6 0 0 1 2.5-2L9 15" />
+            </svg>
+            Sélectionne un Pokémon pour voir son détail
+          </p>
         )
       )}
 
@@ -363,9 +371,16 @@ function OrdreEquipe({ membres }: { membres: Membre[] }) {
           <Reorder.Item
             key={pokemon.nom}
             value={pokemon.nom}
+            // --teinte : couleur du type principal du Pokémon, utilisée par la pastille du numéro.
+            style={styleTeinte(pokemon.types[0])}
             className="verre flex cursor-grab items-center gap-4 px-4 py-2 active:cursor-grabbing"
           >
-            <span className="etiquette w-6" aria-hidden="true">
+            {/* Numéro d'ordre : une pastille teintée, grand chiffre en gras, pour qu'on lise l'ordre d'un coup d'œil.
+                aria-hidden : la liste est un <ol>, les lecteurs d'écran annoncent déjà le rang. */}
+            <span
+              aria-hidden="true"
+              className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--teinte)_60%,transparent)] bg-[color-mix(in_srgb,var(--teinte)_28%,transparent)] font-titre text-lg font-bold tabular-nums text-texte"
+            >
               {index + 1}
             </span>
             <span className="min-w-0 flex-1 truncate font-titre text-sm font-semibold">
