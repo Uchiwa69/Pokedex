@@ -30,10 +30,11 @@ const API = "https://pokeapi.co/api/v2";
 
 // Le Pokédex national s'arrête au n° 1025 (au-delà, l'API liste des formes spéciales).
 export const TOTAL_POKEMONS = 1025;
-export const PAR_PAGE = 24;
+// 20 par page : divisible par 2, 4 et 5, les trois nombres de colonnes de la grille (voir GrillePokemons).
+export const PAR_PAGE = 20;
 
 // ---- Appels à l'API : relancés en cas d'échec passager ----
-// Une page de la liste demande 24 Pokémon d'un coup. Si UN seul de ces appels échouait (connexion
+// Une page de la liste demande 20 Pokémon d'un coup. Si UN seul de ces appels échouait (connexion
 // refusée, délai dépassé), toute la page tombait sur l'écran d'erreur. Un appel qui échoue pour une
 // raison passagère est donc retenté, jusqu'à 3 essais.
 // (Pas de file d'attente partagée entre les visites : si un rendu est interrompu en cours de route,
@@ -186,7 +187,7 @@ export async function recupererListe(q: string, type: NomType | null, page: numb
   const debut = (pageReelle - 1) * PAR_PAGE;
   const nomsDeLaPage = trouves.slice(debut, debut + PAR_PAGE);
 
-  // 4. Promise.all : les 24 requêtes partent EN PARALLÈLE (au lieu de l'une après l'autre).
+  // 4. Promise.all : les 20 requêtes partent EN PARALLÈLE (au lieu de l'une après l'autre).
   const pokemons = await Promise.all(nomsDeLaPage.map((nom) => recupererPokemon(nom)));
 
   return {

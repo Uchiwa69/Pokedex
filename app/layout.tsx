@@ -51,7 +51,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             Aller au contenu
           </a>
           <EnTete />
-          <main id="contenu" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
+          {/* max-w-7xl : le contenu occupe toute la largeur jusqu'à 1280 px, puis reste centré.
+              Le cours propose max-w-6xl (1152 px) et autorise à élargir si on le justifie : le site est surtout
+              une grille d'images, 1280 px permet d'afficher 5 cartes par rangée au lieu de 4 sur un écran
+              d'ordinateur, sans allonger les lignes de texte de façon gênante. */}
+          <main id="contenu" className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
             {children}
           </main>
           <PiedDePage />

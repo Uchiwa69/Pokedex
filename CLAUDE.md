@@ -33,7 +33,10 @@ Code simple, lisible, commenté en français quand une notion du cours est appli
 ## Conventions
 ```
 app/
-  layout.tsx (lang="fr", next/font, EnTete, PiedDePage, HydratationStores, contenu dans mx-auto max-w-6xl px-4 py-6)
+  layout.tsx (lang="fr", next/font, EnTete, PiedDePage, HydratationStores, contenu dans mx-auto max-w-7xl px-4 py-6 : 1280 px au plus, élargi
+  depuis max-w-6xl à la demande de l'utilisateur ; grille en 2 / md:4 / xl:5 colonnes, 20 Pokémon par page pour que la
+  dernière rangée soit toujours complète ; ne pas utiliser de seuil en pixels du type min-[1480px]: avec sm/md/lg,
+  Tailwind le range avant eux et il est écrasé)
   page.tsx (liste) · loading.tsx · error.tsx (client, bouton Réessayer) · not-found.tsx
   pokemon/[nom]/page.tsx (fiche) · favoris/ · sacoche/ · combat/ · a-propos/
   api/aleatoire/route.ts (await connection(), Pokémon au hasard)
