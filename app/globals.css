@@ -311,13 +311,17 @@ html.dark {
    faisceau-scene : un cône de lumière qui tombe d'en haut (dégradé conique), effacé vers le bas par un masque.
    halo-scene : une lueur de la couleur d'accent derrière l'appareil + une tache claire à ses pieds, comme au sol. */
 @utility faisceau-scene {
-  background: conic-gradient(from 160deg at 50% 0%, transparent 0deg, color-mix(in srgb, var(--color-texte) 13%, transparent) 20deg, transparent 40deg);
-  mask-image: linear-gradient(to bottom, black 30%, transparent 78%);
+  /* Cône large aux bords très doux, dont la pointe est au-dessus du calque. */
+  background: conic-gradient(from 150deg at 50% -10%, transparent 0deg, color-mix(in srgb, var(--color-texte) 11%, transparent) 30deg, transparent 60deg);
+  /* Le masque efface le haut ET le bas : le faisceau naît et meurt en fondu, il n'est jamais coupé net par le
+     bord de la zone (on ne voit pas la source, seulement la lumière qui tombe). */
+  mask-image: linear-gradient(to bottom, transparent 20%, black 44%, black 52%, transparent 80%);
 }
 @utility halo-scene {
+  /* Rayons choisis pour que les deux lueurs soient éteintes avant d'atteindre les bords de la zone. */
   background:
     radial-gradient(ellipse 24% 5% at 50% 71%, color-mix(in srgb, var(--color-texte) 22%, transparent), transparent),
-    radial-gradient(ellipse 34% 40% at 50% 50%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent);
+    radial-gradient(ellipse 30% 28% at 50% 50%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent);
 }
 
 @utility verre {

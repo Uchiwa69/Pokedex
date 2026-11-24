@@ -5,7 +5,8 @@
 //
 // L'appareil est un vrai modèle en volume (three.js) : lib/labo/pokedex3d.ts le construit pièce par pièce,
 // lib/labo/scene-pokedex.ts règle ses lumières. three.js est chargé à la demande (import dynamique) ; en
-// attendant, une photo de l'appareil fermé est affichée à sa place.
+// attendant, la scène est vide sous son projecteur, puis l'appareil y apparaît en fondu (pas d'image
+// d'attente : on voyait l'ancien visuel une fraction de seconde avant le modèle 3D).
 //
 // Le défilement pilote tout : useScroll donne l'avancement (0 → 1), et à chaque changement on règle l'angle
 // du volet, l'orientation de l'appareil et le zoom de la caméra, puis on redessine UNE image. Il n'y a pas
@@ -21,7 +22,6 @@
 //   - ScenePokedex (l'enfant) dessine l'appareil et pilote l'animation tant que l'introduction est affichée.
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
-import Image from "next/image";
 import { motion, transform, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
 
 type Props = {
@@ -240,9 +240,9 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
   const invitationOpacite = useTransform(scrollYProgress, [0, 0.03], [1, 0]);
   // Opacité de la scène 3D, réglée par calerPage.
   const fonduScene = useMotionValue(1);
-  // Lumière de scène derrière l'appareil : elle le suit quand il se décale, et s'éteint au moment de plonger.
+  // Lumière de scène derrière l'appareil : elle s'éteint au moment de plonger. Elle reste au centre de la
+  // fenêtre : fermé, l'appareil y est ; ouvert, il se décale justement pour que l'ensemble volet + corps y soit.
   const lumiereOpacite = useTransform(scrollYProgress, [0.24, 0.34], [1, 0]);
-  const lumiereX = useTransform(scrollYProgress, COURBE_DECALAGE.avancement, COURBE_DECALAGE.valeur.map((part) => `${part * 100}%`));
   // « Début » de l'introduction : tant que l'appareil est seul en scène (avant la plongée), l'en-tête du site est
   // masqué pour le mettre en valeur. C'est un état React et non une motion value : il ne change que deux fois.
   const [debut, setDebut] = useState(true);
@@ -468,18 +468,13 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
       <div ref={cadre} className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
         {/* Lumière de scène. Un cadre invisible, de la taille et à la place de l'appareil, porte deux calques bien
             plus grands que lui : le faisceau qui tombe d'en haut, puis le halo et la tache de lumière au sol. */}
-        <motion.div className="absolute aspect-[1210/1834] h-[min(70svh,62vw)]" style={{ opacity: lumiereOpacite, x: lumiereX }}>
+        <motion.div className="absolute aspect-[1210/1834] h-[min(70svh,62vw)]" style={{ opacity: lumiereOpacite }}>
           <span className="faisceau-scene absolute left-1/2 top-1/2 h-[220%] w-[300%] -translate-x-1/2 -translate-y-1/2" />
           <span className="halo-scene absolute left-1/2 top-1/2 h-[220%] w-[300%] -translate-x-1/2 -translate-y-1/2" />
         </motion.div>
 
-        {/* En attendant la 3D : la photo de l'appareil fermé, à peu près à la même place. */}
-        {!pret && (
-          <Image src="/pokedex/ferme.webp" alt="" width={1210} height={1834} priority className="h-[min(70svh,62vw)] w-auto scale-90" />
-        )}
-
-        {/* Le canvas de la scène 3D : il occupe tout le bloc, et apparaît en fondu quand il est prêt. */}
-        <div className={`absolute inset-0 transition-opacity duration-300 ${pret ? "opacity-100" : "opacity-0"}`}>
+        {/* Le canvas de la scène 3D : il occupe tout le bloc, et apparaît en fondu (0,5 s) quand il est prêt. */}
+        <div className={`absolute inset-0 transition-opacity duration-500 ${pret ? "opacity-100" : "opacity-0"}`}>
           <motion.div ref={toile} className="absolute inset-0" style={{ opacity: fonduScene }} />
         </div>
 
