@@ -75,7 +75,7 @@ async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }
           key : changer d'onglet recrée l'introduction, qui repart du début. */}
       <div className="-mt-6 flex flex-col gap-6" key={active}>
         {active === "pokedex" ? (
-          <IntroPokedex total={liste.total} apercu={liste.pokemons.slice(0, 8)}>
+          <IntroPokedex>
             {page}
           </IntroPokedex>
         ) : (
