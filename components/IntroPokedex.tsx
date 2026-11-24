@@ -348,8 +348,18 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
       conteneur.appendChild(rendu.domElement);
       rendu.domElement.style.cssText = "display:block;width:100%;height:100%";
 
-      const { scene, pokedex, ecran, liberer } = preparerScenePokedex(THREE, modele, rendu);
+      const { scene, pokedex, ecran, liberer } = await preparerScenePokedex(THREE, modele, rendu);
       const camera = new THREE.PerspectiveCamera(CHAMP, 1, 0.05, 200);
+      // Les shaders (les programmes de la carte graphique) sont compilés EN ARRIÈRE-PLAN avant le premier dessin.
+      // Sans cela, le premier render() les compilait d'un coup et figeait la page (150 ms et plus mesurées).
+      await rendu.compileAsync(scene, camera);
+      if (annule) {
+        // Le composant a été retiré pendant la préparation : on libère tout de suite.
+        liberer();
+        rendu.dispose();
+        rendu.domElement.remove();
+        return;
+      }
       const demiChamp = Math.tan(THREE.MathUtils.degToRad(CHAMP / 2));
       const taille = { largeur: 0, hauteur: 0 };
       const coin = new THREE.Vector3();

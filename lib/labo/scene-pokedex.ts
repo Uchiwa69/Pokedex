@@ -10,7 +10,11 @@ type Modele = typeof import("@/lib/labo/pokedex3d");
 // a ainsi le même fond qu'en vrai.
 const FOND = 0x070a1c;
 
-export function preparerScenePokedex(THREE: Trois, modele: Modele, rendu: import("three").WebGLRenderer) {
+// Rend la main au navigateur un instant : la préparation est découpée en étapes pour ne pas figer la page
+// d'un seul bloc (il peut dessiner et répondre au visiteur entre deux étapes).
+const ceder = () => new Promise<void>((suite) => setTimeout(suite, 0));
+
+export async function preparerScenePokedex(THREE: Trois, modele: Modele, rendu: import("three").WebGLRenderer) {
   // Rendu « cinéma » : compresse les fortes lumières comme un appareil photo (reflets moins brûlés).
   rendu.toneMapping = THREE.ACESFilmicToneMapping;
   rendu.toneMappingExposure = 0.95;
@@ -21,6 +25,8 @@ export function preparerScenePokedex(THREE: Trois, modele: Modele, rendu: import
   const environnement = modele.createStudioEnvironment(generateur);
   scene.environment = environnement;
   scene.environmentIntensity = 0.28;
+
+  await ceder();
 
   // Éclairage de studio à trois points, plus une lumière d'ambiance.
   scene.add(new THREE.AmbientLight(0xffffff, 0.3));
@@ -34,11 +40,12 @@ export function preparerScenePokedex(THREE: Trois, modele: Modele, rendu: import
 
   const pokedex = modele.buildPokedexAssembly();
   scene.add(pokedex.rootGroup);
+  await ceder();
 
   // L'écran : on retrouve la plaque qui porte le matériau de l'écran, et on lui donne un aplat de la couleur
   // du site (MeshBasicMaterial = aucune lumière, aucun reflet ; toneMapped: false = couleur exacte).
   let ecran: import("three").Mesh | null = null;
-  // Reflets adoucis : le fichier d'origine donne aux plastiques un vernis miroir. On réduit le vernis et on
+  // Reflets adoucis : le fichier d'origine donne aux plastiques un vernis miroir. On retire le vernis et on
   // augmente la rugosité : la surface reste brillante, mais les reflets sont plus larges et moins éclatants.
   pokedex.rootGroup.traverse((objet: import("three").Object3D) => {
     const maillage = objet as import("three").Mesh;
@@ -59,9 +66,11 @@ export function preparerScenePokedex(THREE: Trois, modele: Modele, rendu: import
       materiau.opacity = 0.35;
       return;
     }
-    materiau.clearcoat = Math.min(materiau.clearcoat, 0.25);
-    materiau.clearcoatRoughness = Math.max(materiau.clearcoatRoughness, 0.3);
-    materiau.roughness = Math.max(materiau.roughness, 0.38);
+    // Performance : le vernis (clearcoat) est coupé. Il faisait calculer un second reflet pour CHAQUE pixel de
+    // plastique, à chaque image du défilement ; à 0, three.js fabrique un shader bien plus léger. La rugosité
+    // est un peu baissée en échange, pour garder un plastique brillant.
+    materiau.clearcoat = 0;
+    materiau.roughness = Math.max(materiau.roughness, 0.32);
   });
   const plaqueEcran = ecran as import("three").Mesh | null;
   if (plaqueEcran) {
