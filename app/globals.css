@@ -68,6 +68,58 @@
   --animate-particule: particule 2.6s ease-out infinite;
   --animate-rotation-lente: rotation-lente 9s linear infinite;
 
+  /* ---- Page Combat : décor d'arène et entrée en combat (transform et opacity seulement) ---- */
+  --animate-zoom-arene: zoom-arene 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-projecteur: projecteur 7s ease-in-out infinite;
+  --animate-eclat: eclat 800ms ease-out both;
+  --animate-annonce: annonce 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* Le décor avance vers la caméra quand le combat commence, et reste agrandi ("both") */
+  @keyframes zoom-arene {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.28);
+    }
+  }
+  /* Un projecteur se balance autour de son point d'accroche */
+  @keyframes projecteur {
+    0%,
+    100% {
+      transform: rotate(14deg);
+    }
+    50% {
+      transform: rotate(-14deg);
+    }
+  }
+  /* Anneau de lumière qui part du centre et s'efface en grandissant */
+  @keyframes eclat {
+    from {
+      opacity: 0.9;
+      transform: scale(0.1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(3.2);
+    }
+  }
+  /* Le mot « COMBAT ! » : il surgit, tient un instant, puis s'efface en grossissant */
+  @keyframes annonce {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    25%,
+    65% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.6);
+    }
+  }
+
   /* Pokéball qui arrive dans la sacoche de l'en-tête : elle grossit, dépasse, puis se stabilise */
   --animate-rebond: rebond 450ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   @keyframes rebond {

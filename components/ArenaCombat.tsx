@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import BadgeType from "@/components/BadgeType";
 import ChoixAdversaires from "@/components/ChoixAdversaires";
+import DecorArene from "@/components/DecorArene";
 import { DUREE_EFFET } from "@/components/EffetAttaque";
 import EtatVide from "@/components/EtatVide";
 import { LIBELLES_CATEGORIES } from "@/components/IconeCategorie";
@@ -411,10 +412,11 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
   // (l'adversaire n'est tiré au sort qu'au démarrage), et un grand « VS » entre les deux.
   if (!partie) {
     return (
-      <div className="verre relative flex flex-col items-center gap-6 overflow-hidden px-4 py-8 text-center sm:px-6">
-        {/* Décor : deux lueurs, une par camp */}
-        <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_60%,var(--color-accent),transparent_45%),radial-gradient(circle_at_85%_60%,var(--color-danger),transparent_45%)] opacity-15" />
-
+      // Grande arène en décor (DecorArene). Le contenu est posé dans le bas de l'arène, sur un panneau
+      // semi-opaque et flouté : l'emblème reste bien visible au-dessus, et le texte garde un bon contraste.
+      <div className="verre relative flex min-h-[38rem] flex-col items-center justify-end overflow-hidden p-4 pt-44 sm:min-h-[42rem] sm:p-6">
+        <DecorArene />
+        <div className="relative flex w-full max-w-4xl flex-col items-center gap-6 rounded-3xl border border-bordure-verre bg-fond/70 px-4 py-6 text-center backdrop-blur-md sm:px-6">
         <div className="relative flex flex-col gap-2">
           <h2 className="font-titre text-xl font-semibold">Prêt pour le combat ?</h2>
           <p className="max-w-md text-sm text-texte-doux">
@@ -473,6 +475,7 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
         <button type="button" onClick={demarrer} disabled={!attaquesPretes || chargement} className="bouton bouton-principal relative disabled:opacity-60">
           {!attaquesPretes ? "Préparation des attaques…" : chargement ? "Recherche d'un adversaire…" : "Commencer le combat"}
         </button>
+        </div>
       </div>
     );
   }
@@ -515,10 +518,18 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
         animate={{ x: tremble ? [0, -8, 8, -6, 6, 0] : 0 }}
         transition={{ duration: 0.35 }}
       >
+        {/* Le même décor que sur l'écran de préparation, mais avec zoom : il « avance » quand le combat commence. */}
+        <DecorArene zoom />
+        {/* Entrée en combat, jouée une seule fois (ces éléments sont créés avec l'arène) : un anneau de lumière
+            part du centre, et le mot « COMBAT ! » surgit puis s'efface. Rien en animations réduites. */}
+        <span aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 -ml-32 -mt-32 size-64 rounded-full border-4 border-accent-bis opacity-0 motion-safe:animate-eclat" />
+        <p aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-linear-to-r from-accent to-accent-bis bg-clip-text font-titre text-6xl font-bold tracking-widest text-transparent opacity-0 motion-safe:animate-annonce sm:text-8xl">
+          COMBAT !
+        </p>
         {/* Calque du fond pour les animations Showdown : placé AVANT les Pokémon, donc derrière eux. */}
         <div ref={refCalqueFond} aria-hidden="true" className="pointer-events-none absolute inset-0" />
         {/* relative : la grille des Pokémon passe au-dessus du calque du fond. */}
-        <div className="relative grid grid-cols-2 items-end gap-4">
+        <div className="relative grid min-h-[24rem] grid-cols-2 items-end gap-4 sm:min-h-[30rem]">
           {/* Mon Pokémon : à gauche, de dos, un peu plus bas */}
           <div className="pt-8">
             <CoteArene cote="joueur" lutteur={joueur} equipe={partie.joueurs} scene={partie.scene} ko={partie.ko} />
