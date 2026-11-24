@@ -111,7 +111,7 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   d'ESLint ; `lib/labo/scene-pokedex.ts` = lumières et reflets validés par l'utilisateur) s'ouvre au défilement, puis
   on plonge dans son écran, où s'affiche LA VRAIE PAGE, réduite et découpée au format de l'écran. Pas de boucle
   d'animation : une image est dessinée à chaque changement de défilement, et l'écran est retrouvé en projetant ses
-  coins par la caméra (`calerPage`). Pas d'image d'attente : scène vide sous le projecteur, puis fondu. En-tête masqué au début (`data-intro-debut` + `body:has()` dans globals.css), lumière de scène (`faisceau-scene`, `halo-scene`).
+  coins par la caméra (`calerPage`). Pas d'image d'attente : scène vide sous le projecteur, puis fondu. En-tête masqué au début (`data-intro-debut` + `body:has()` dans globals.css), lumière de scène (`halo-scene`, dégradés radiaux seulement : un cône laissait des bandes).
   Jouée une fois par visite (sessionStorage `pokedex-intro-vue`), jamais en animations réduites.
   Deux composants : `IntroPokedex` (décide, porte la page) et `ScenePokedex` (l'appareil, présent seulement pendant
   l'introduction). Fin de plongée → la scène est RETIRÉE et le défilement compensé : le haut de la page redevient le

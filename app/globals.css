@@ -307,16 +307,9 @@ html.dark {
    Ils garantissent les mêmes arrondis, ombres et boutons sur toutes les pages. */
 
 /* Panneau en verre : la surface de base de toutes les cartes et de tous les encadrés. */
-/* Introduction de l'accueil — lumière de scène derrière le Pokédex 3D (components/IntroPokedex.tsx).
-   faisceau-scene : un cône de lumière qui tombe d'en haut (dégradé conique), effacé vers le bas par un masque.
-   halo-scene : une lueur de la couleur d'accent derrière l'appareil + une tache claire à ses pieds, comme au sol. */
-@utility faisceau-scene {
-  /* Cône large aux bords très doux, dont la pointe est au-dessus du calque. */
-  background: conic-gradient(from 150deg at 50% -10%, transparent 0deg, color-mix(in srgb, var(--color-texte) 11%, transparent) 30deg, transparent 60deg);
-  /* Le masque efface le haut ET le bas : le faisceau naît et meurt en fondu, il n'est jamais coupé net par le
-     bord de la zone (on ne voit pas la source, seulement la lumière qui tombe). */
-  mask-image: linear-gradient(to bottom, transparent 20%, black 44%, black 52%, transparent 80%);
-}
+/* Introduction de l'accueil — lumière de scène derrière le Pokédex 3D (components/IntroPokedex.tsx) :
+   une lueur de la couleur d'accent derrière l'appareil + une tache claire à ses pieds, comme au sol.
+   Uniquement des dégradés radiaux : ils s'éteignent en douceur dans toutes les directions, sans bord visible. */
 @utility halo-scene {
   /* Rayons choisis pour que les deux lueurs soient éteintes avant d'atteindre les bords de la zone. */
   background:

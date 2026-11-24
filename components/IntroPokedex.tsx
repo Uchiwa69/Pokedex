@@ -463,8 +463,9 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
   });
 
   return (
-    // Zone haute de 3 écrans (2 écrans de défilement). -mb-[190svh] : la vraie page, placée juste après, REMONTE
-    // de presque deux écrans par-dessus la zone. Elle est donc déjà en haut de la fenêtre quand la plongée se
+    // Zone haute de 3,6 écrans (2,6 écrans de défilement : 30 % de plus qu'au départ, pour un déroulé un peu
+    // plus lent, à la demande de l'utilisateur). -mb-[217svh] : la vraie page, placée juste après, REMONTE
+    // de plus de deux écrans par-dessus la zone. Elle est donc déjà en haut de la fenêtre quand la plongée se
     // termine : elle n'a plus qu'à finir de grossir. pointer-events-none : la zone ne bloque pas les clics.
     // -mt-6 : annule la marge haute de la page, pour que l'appareil soit centré dans la fenêtre dès l'arrivée.
     // data-intro-debut : lu par une règle de globals.css (body:has(…)) qui masque l'en-tête du site.
@@ -472,14 +473,14 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
       ref={zone}
       aria-hidden="true"
       data-intro-debut={debut ? "oui" : "non"}
-      className="pointer-events-none relative -mb-[190svh] -mt-6 h-[300svh]"
+      className="pointer-events-none relative -mb-[217svh] -mt-6 h-[360svh]"
     >
       {/* sticky top-0 : ce bloc reste collé en haut de l'écran tant qu'on défile dans la zone. */}
       <div ref={cadre} className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
-        {/* Lumière de scène. Un cadre invisible, de la taille et à la place de l'appareil, porte deux calques bien
-            plus grands que lui : le faisceau qui tombe d'en haut, puis le halo et la tache de lumière au sol. */}
+        {/* Lumière de scène. Un cadre invisible, de la taille et à la place de l'appareil, porte un calque bien
+            plus grand que lui : une lueur derrière l'appareil et une tache de lumière au sol. (Un faisceau en cône a
+            été essayé puis retiré : ses bords dessinaient deux bandes obliques de chaque côté.) */}
         <motion.div className="absolute aspect-[1210/1834] h-[min(70svh,62vw)]" style={{ opacity: lumiereOpacite }}>
-          <span className="faisceau-scene absolute left-1/2 top-1/2 h-[220%] w-[300%] -translate-x-1/2 -translate-y-1/2" />
           <span className="halo-scene absolute left-1/2 top-1/2 h-[220%] w-[300%] -translate-x-1/2 -translate-y-1/2" />
         </motion.div>
 
