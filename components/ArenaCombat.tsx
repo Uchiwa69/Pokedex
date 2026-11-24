@@ -88,6 +88,11 @@ function tirerHasard(): number {
   return Math.random();
 }
 
+// Boutons posés directement sur le décor du stade : le verre translucide des boutons secondaires s'y fondait.
+// Fond OPAQUE, bordure épaisse et ombre pour qu'ils se détachent ; le bouton « Quitter » est en rouge.
+const BOUTON_SUR_DECOR = "bouton border-2 border-accent bg-surface-pleine text-texte shadow-carte hover:bg-piste";
+const BOUTON_QUITTER = "bouton border-2 border-danger bg-surface-pleine text-danger shadow-carte hover:bg-piste";
+
 // Bandeau de fin de combat : classes complètes pour chaque résultat (jamais de classe fabriquée à la volée).
 const STYLES_RESULTAT = {
   victoire: {
@@ -493,20 +498,24 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
           est perdu) ; une fois le combat terminé, un seul clic suffit. */}
       <div className="flex flex-wrap items-center justify-end gap-2">
         {partie.resultat ? (
-          <button type="button" onClick={quitter} className="bouton bouton-secondaire">
+          <button type="button" onClick={quitter} className={BOUTON_SUR_DECOR}>
             Retour à la préparation
           </button>
         ) : confirmationQuitter ? (
           <>
-            <button type="button" onClick={quitter} className="bouton bouton-secondaire text-danger">
+            <button type="button" onClick={quitter} className={BOUTON_QUITTER}>
               Confirmer : abandonner
             </button>
-            <button type="button" onClick={() => setConfirmationQuitter(false)} className="bouton bouton-secondaire">
+            <button type="button" onClick={() => setConfirmationQuitter(false)} className="bouton bouton-principal">
               Continuer le combat
             </button>
           </>
         ) : (
-          <button type="button" onClick={() => setConfirmationQuitter(true)} className="bouton bouton-secondaire">
+          <button type="button" onClick={() => setConfirmationQuitter(true)} className={BOUTON_QUITTER}>
+            {/* Icône décorative : une porte de sortie */}
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
+              <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9" />
+            </svg>
             Quitter le combat
           </button>
         )}

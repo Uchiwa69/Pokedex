@@ -3,7 +3,7 @@
 // et ses bords s'effacent en dégradé (mask-image) pour se fondre dans le fond du site, sans cadre.
 // De l'arrière vers l'avant : trois étages de gradins en arc de cercle avec leur public (points lumineux)
 // et leurs rampes de lumière, le mur du terrain, le terrain ovale avec son motif de Pokéball,
-// l'emblème de l'arène suspendu au-dessus, et deux projecteurs qui balaient.
+// la Pokéball du site peinte au centre, l'emblème de l'arène suspendu au-dessus, et deux projecteurs qui balaient.
 // Composant sans état ni hook, purement décoratif (aria-hidden). Les couleurs viennent des jetons du thème.
 // L'emblème est un dessin ORIGINAL (un écusson ailé autour de la Pokéball du site), pas un logo officiel.
 
@@ -78,9 +78,17 @@ export default function DecorArene({ zoom = false }: Props) {
             <ellipse cx="800" cy="672" rx="620" ry="238" className="opacity-70" />
             <ellipse cx="800" cy="672" rx="560" ry="212" className="opacity-30" />
             <path d="M240 672h370M990 672h370" className="opacity-60" />
-            <ellipse cx="800" cy="672" rx="190" ry="73" className="opacity-80" />
-            <ellipse cx="800" cy="672" rx="70" ry="27" className="opacity-80" />
           </g>
+          {/* Au centre du terrain : la Pokéball rouge et blanche du site, peinte au sol.
+              Elle est dessinée ronde puis écrasée en hauteur (scale 1 × 0,385) pour être vue en perspective. */}
+          <g transform="translate(800 672) scale(1 0.385)" className="opacity-90">
+            <circle r="190" className="fill-encre" />
+            <path d="M-172 -12a172 172 0 0 1 344 0Z" className="fill-balle-haut" />
+            <path d="M-172 12a172 172 0 0 0 344 0Z" className="fill-balle-bas" />
+            <circle r="66" className="fill-encre" />
+            <circle r="40" className="fill-balle-bas" />
+          </g>
+          <ellipse cx="800" cy="672" rx="196" ry="76" fill="none" strokeWidth="4" className="stroke-accent-bis opacity-80" />
         </svg>
 
         {/* Halo derrière l'emblème, puis l'emblème suspendu au-dessus du terrain */}
