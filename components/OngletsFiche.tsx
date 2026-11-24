@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import ChaineEvolution from "@/components/ChaineEvolution";
+import LiensOnglets from "@/components/LiensOnglets";
 import ListeAttaques, { SqueletteAttaques } from "@/components/ListeAttaques";
 import type { Pokemon } from "@/lib/conversion";
 
@@ -25,28 +25,16 @@ export default async function OngletsFiche({ pokemon, searchParams }: Props) {
 
   return (
     <section aria-label="Évolutions et attaques" className="flex flex-col gap-4">
-      <nav aria-label="Onglets de la fiche">
-        <ul className="flex w-fit gap-1 rounded-full border border-bordure-verre bg-surface p-1">
-          {ONGLETS.map((element) => (
-            <li key={element.cle}>
-              <Link
-                // Le premier onglet est l'adresse sans paramètre.
-                href={element.cle === "evolutions" ? `/pokemon/${pokemon.nom}` : `/pokemon/${pokemon.nom}?onglet=${element.cle}`}
-                // scroll={false} : on reste au même endroit de la page en changeant d'onglet.
-                scroll={false}
-                aria-current={actif === element.cle ? "page" : undefined}
-                className={
-                  actif === element.cle
-                    ? "flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-semibold text-sur-accent shadow-lueur"
-                    : "flex min-h-11 items-center rounded-full px-5 text-sm font-medium text-texte-doux hover:bg-piste hover:text-texte"
-                }
-              >
-                {element.libelle}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      {/* Les liens sont dans un petit composant client (préchargement au survol) ; tout le reste est serveur. */}
+      <LiensOnglets
+        actif={actif}
+        onglets={ONGLETS.map((element) => ({
+          cle: element.cle,
+          libelle: element.libelle,
+          // Le premier onglet est l'adresse sans paramètre.
+          href: element.cle === "evolutions" ? `/pokemon/${pokemon.nom}` : `/pokemon/${pokemon.nom}?onglet=${element.cle}`,
+        }))}
+      />
 
       {actif === "attaques" ? (
         <>

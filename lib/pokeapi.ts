@@ -239,8 +239,20 @@ export type AttaqueApprise = {
 };
 
 // Les mêmes attaques, complètes (nom FR, type, puissance…), triées par niveau.
+// "use cache" ordinaire : c'est ce qui permet à Next de PRÉCHARGER l'onglet Attaques avant le clic
+// (voir components/LiensOnglets.tsx). Le vrai travail est fait par chargerAttaquesParNiveau.
 export async function recupererAttaquesParNiveau(nom: string): Promise<AttaqueApprise[]> {
   "use cache";
+  cacheLife("days");
+
+  return chargerAttaquesParNiveau(nom);
+}
+
+// "use cache: remote" : la liste complète d'un Pokémon est rangée dans le cache PARTAGÉ et durable de
+// l'hébergeur (voir recupererPokemon). Sans cela, sur Vercel, chaque nouvelle fonction relançait une
+// requête à la PokéAPI par attaque (une vingtaine) à la première ouverture de l'onglet.
+async function chargerAttaquesParNiveau(nom: string): Promise<AttaqueApprise[]> {
+  "use cache: remote";
   cacheLife("days");
 
   const apprentissages = await recupererApprentissages(nom);
