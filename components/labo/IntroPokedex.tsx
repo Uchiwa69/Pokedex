@@ -25,35 +25,40 @@ export default function IntroPokedex({ total, apercu }: Props) {
 
   const { scrollYProgress } = useScroll({ target: zone, offset: ["start start", "end end"] });
 
-  // Le défilement est découpé en deux temps :
-  //   1. de 5 % à 45 % : le volet s'ouvre et l'appareil se redresse ;
-  //   2. de 50 % à 92 % : on PLONGE dans l'écran, qui grossit jusqu'à remplir toute la fenêtre.
-  // À la fin, l'écran de l'appareil EST le fond du site : la vraie page prend le relais juste dessous.
+  // Le défilement est découpé en deux temps, volontairement COURTS :
+  //   1. de 3 % à 28 % : le volet s'ouvre et l'appareil se redresse ;
+  //   2. de 30 % à 50 % : on PLONGE dans l'écran, qui grossit jusqu'à remplir toute la fenêtre.
+  // Dès 50 %, la vraie page commence à monter par-dessus (voir la marge négative de la zone, plus bas) :
+  // il n'y a donc aucun temps mort entre la fin de la plongée et l'arrivée du contenu.
   // (C'est le principe du MacBook d'origine, dont l'écran grandissait pour devenir l'image de la page.)
 
   // Le volet pivote sur sa charnière gauche : 0° fermé, -178° rabattu à plat sur le côté.
-  const voletAngle = useTransform(scrollYProgress, [0.05, 0.45], [0, -178]);
+  const voletAngle = useTransform(scrollYProgress, [0.03, 0.28], [0, -178]);
   // Volet ouvert, l'appareil est deux fois plus large : on le décale à droite pour le garder centré,
   // puis on le ramène au centre pour plonger droit dans l'écran.
-  const appareilX = useTransform(scrollYProgress, [0.05, 0.45, 0.7], ["0%", "24%", "0%"]);
+  const appareilX = useTransform(scrollYProgress, [0.03, 0.28, 0.42], ["0%", "24%", "0%"]);
   // Il est d'abord vu légèrement de biais, puis il se redresse face à nous.
-  const appareilAngle = useTransform(scrollYProgress, [0, 0.45], [-18, 0]);
+  const appareilAngle = useTransform(scrollYProgress, [0, 0.28], [-18, 0]);
   // La plongée : l'appareil grossit jusqu'à 8 fois. Son point fixe (transform-origin) est le centre de l'écran.
-  const appareilTaille = useTransform(scrollYProgress, [0, 0.45, 0.5, 0.92], [0.9, 1, 1, 8]);
+  const appareilTaille = useTransform(scrollYProgress, [0, 0.28, 0.3, 0.5], [0.9, 1, 1, 8]);
   // L'écran s'allume une fois le volet assez ouvert…
-  const ecranOpacite = useTransform(scrollYProgress, [0.3, 0.45], [0, 1]);
-  // … et son contenu s'efface pendant la plongée, pour laisser place à la vraie page.
-  const apercuOpacite = useTransform(scrollYProgress, [0.62, 0.82], [1, 0]);
+  const ecranOpacite = useTransform(scrollYProgress, [0.18, 0.28], [0, 1]);
+  // … et son contenu s'efface DÈS LE DÉBUT de la plongée : on ne voit jamais de grosses cartes agrandies,
+  // on traverse simplement un écran sombre.
+  const apercuOpacite = useTransform(scrollYProgress, [0.3, 0.37], [1, 0]);
   // Le reflet de la vitre et l'ombre intérieure de la dalle s'effacent aussi : il ne reste que le fond uni du site.
-  const vitreOpacite = useTransform(scrollYProgress, [0.5, 0.7], [1, 0]);
-  const invitationOpacite = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
+  const vitreOpacite = useTransform(scrollYProgress, [0.3, 0.42], [1, 0]);
+  const invitationOpacite = useTransform(scrollYProgress, [0, 0.03], [1, 0]);
 
   // Animations réduites : pas d'introduction, la page commence directement par son contenu.
   if (animationsReduites) return null;
 
   return (
-    // Zone haute de 3 écrans : 2 écrans de défilement pour jouer toute la séquence.
-    <div ref={zone} aria-hidden="true" className="relative h-[300svh]">
+    // Zone haute de 3 écrans. -mb-[100svh] : la suite de la page REMONTE d'un écran entier par-dessus la fin de la
+    // zone. Elle entre donc à l'écran juste quand la plongée se termine, au lieu d'attendre que le bloc collé
+    // (un écran entier, vide à ce moment-là) ait fini de défiler. pointer-events-none : la zone ne bloque pas
+    // les clics sur la page qui passe par-dessus.
+    <div ref={zone} aria-hidden="true" className="pointer-events-none relative -mb-[100svh] h-[300svh]">
       {/* perspective : donne la profondeur aux rotations des enfants (sans elle, le volet s'aplatirait). */}
       <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden [perspective:1600px]">
         {/* L'appareil. Sa hauteur est bornée par la largeur de l'écran (62vw) : volet ouvert, il est deux fois

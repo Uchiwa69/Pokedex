@@ -64,11 +64,14 @@ async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }
       <div className="-mt-6" key={active}>
         {active === "pokedex" ? <IntroPokedex total={liste.total} apercu={liste.pokemons.slice(0, 6)} /> : <IntroPokeball total={liste.total} />}
       </div>
-      <header className="flex flex-col gap-2">
+      {/* relative z-10 : la suite de la page passe AU-DESSUS de la fin de l'introduction (voir IntroPokedex). */}
+      <header className="relative z-10 flex flex-col gap-2">
         <p className="etiquette">Pokédex national</p>
         <h1 className="font-titre text-3xl font-bold">Tous les Pokémon</h1>
       </header>
-      <GrillePokemons pokemons={liste.pokemons} />
+      <div className="relative z-10">
+        <GrillePokemons pokemons={liste.pokemons} />
+      </div>
     </div>
   );
 }
