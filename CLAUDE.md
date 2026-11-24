@@ -106,6 +106,12 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Fiche : `VitrineFiche` remplace l'illustration par `Carte3D` (three.js, importé dans un useEffect, démarré une fois
   la page chargée et le navigateur inoccupé). L'illustration reste l'affichage d'attente et le repli sans WebGL.
   `lib/carte3d.ts` dessine les deux faces dans des canvas 2D. `PanneauCarte3D` (carte au clic) est conservé, inutilisé.
+- Accueil : introduction `IntroPokedex` (client, `components/`) autour de toute la page. Un Pokédex géant en photos
+  (`public/pokedex/` : ouvert, ferme, volet-dos, même cadrage) s'ouvre au défilement (`useScroll` + `useTransform`
+  de motion), puis on plonge dans son écran, où s'affiche LA VRAIE PAGE, réduite et découpée au format de la dalle
+  (`calerPage`). Jouée une fois par visite (sessionStorage `pokedex-intro-vue`), jamais en animations réduites.
+  Exception assumée à « transform et opacity seulement » : `clip-path` pendant la plongée.
+  Copies de sauvegarde et variante Pokéball dans le dossier local `effets/` (hors dépôt) ; essai dans `/labo/intro`.
 - Accueil : `FiltreTypes` (client) = tuiles avec symbole (`lib/glyphes.ts`), type actif optimiste (`useOptimistic` +
   `useTransition`), `<Link prefetch>` seulement au survol/focus, clics en rafale regroupés. `EffetType` joue la
   recette du type (mouvement, fond, anneaux) en CSS seul ; classes `effet-*` dans globals.css, toujours via une table

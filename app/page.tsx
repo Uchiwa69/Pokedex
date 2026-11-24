@@ -3,6 +3,7 @@ import BarreRecherche from "@/components/BarreRecherche";
 import EtatVide from "@/components/EtatVide";
 import FiltreTypes from "@/components/FiltreTypes";
 import GrillePokemons from "@/components/GrillePokemons";
+import IntroPokedex from "@/components/IntroPokedex";
 import Pagination from "@/components/Pagination";
 import SqueletteGrille from "@/components/SqueletteGrille";
 import { recupererListe } from "@/lib/pokeapi";
@@ -15,7 +16,10 @@ type Props = PageProps<"/">;
 
 export default function PageAccueil({ searchParams }: Props) {
   return (
-    <div className="flex flex-col gap-6">
+    // IntroPokedex (composant client) reçoit toute la page en « children » : les composants ci-dessous restent
+    // des composants serveur, rendus normalement. À la première arrivée, il les affiche dans l'écran d'un
+    // Pokédex géant, puis on plonge dedans ; ensuite, il les affiche simplement, en colonne.
+    <IntroPokedex>
       <header className="flex flex-col gap-2">
         <p className="etiquette">Pokédex national</p>
         <h1 className="font-titre text-3xl font-bold">Tous les Pokémon</h1>
@@ -36,7 +40,7 @@ export default function PageAccueil({ searchParams }: Props) {
       <Suspense fallback={<SqueletteGrille />}>
         <Resultats searchParams={searchParams} />
       </Suspense>
-    </div>
+    </IntroPokedex>
   );
 }
 

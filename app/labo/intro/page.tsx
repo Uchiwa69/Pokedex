@@ -9,7 +9,7 @@ import Link from "next/link";
 import GrillePokemons from "@/components/GrillePokemons";
 import SqueletteGrille from "@/components/SqueletteGrille";
 import IntroPokeball from "@/components/labo/IntroPokeball";
-import IntroPokedex from "@/components/labo/IntroPokedex";
+import IntroPokedex from "@/components/IntroPokedex";
 import { recupererListe } from "@/lib/pokeapi";
 
 export const metadata: Metadata = {
@@ -73,14 +73,16 @@ async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }
           de l'écran ; pour la Pokéball, elle suit simplement l'introduction.
           -mt-6 : annule la marge haute de la page, pour que l'objet soit centré dans l'écran dès l'arrivée.
           key : changer d'onglet recrée l'introduction, qui repart du début. */}
-      <div className="-mt-6 flex flex-col gap-6" key={active}>
+      <div className="flex flex-col gap-6" key={active}>
         {active === "pokedex" ? (
           <IntroPokedex>
             {page}
           </IntroPokedex>
         ) : (
           <>
-            <IntroPokeball total={liste.total} />
+            <div className="-mt-6">
+              <IntroPokeball total={liste.total} />
+            </div>
             {page}
           </>
         )}

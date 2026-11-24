@@ -1,6 +1,6 @@
 "use client";
 
-// PROTOTYPE (/labo/intro) — un Pokédex géant, fermé à l'arrivée : en défilant, son volet s'ouvre,
+// Introduction de la page d'accueil — un Pokédex géant, fermé à l'arrivée : en défilant, son volet s'ouvre,
 // puis on plonge dans son écran, qui devient la page du site.
 // L'appareil est fait de PHOTOS (images générées par l'utilisateur, détourées, dans public/pokedex) :
 //   - ouvert.webp    : le corps de l'appareil, écran noir et vide ;
@@ -16,9 +16,9 @@
 // la dalle. Quand on plonge, elle grossit exactement comme l'écran, jusqu'à sa taille normale : on n'entre pas
 // dans une image, on entre dans le site.
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "motion/react";
 
 type Props = {
   // La vraie page (titre, grille…), rendue par le serveur et transmise ici : c'est elle qu'on affiche dans l'écran.
@@ -31,6 +31,12 @@ const DALLE = { gauche: 0.1733, haut: 0.2999, largeur: 0.6933, hauteur: 0.3614 }
 // Centre de la dalle : c'est le point fixe de la plongée (transform-origin de l'appareil).
 const CENTRE = { x: DALLE.gauche + DALLE.largeur / 2, y: DALLE.haut + DALLE.hauteur / 2 };
 
+// Clé du sessionStorage : retient, le temps de la visite, que l'introduction a déjà été vue.
+// (sessionStorage est vidé à la fermeture de l'onglet : à la visite suivante, elle rejoue.)
+const CLE_VUE = "pokedex-intro-vue";
+// Rien à écouter : la valeur n'est lue qu'une fois, à l'arrivée sur la page.
+const sansAbonnement = () => () => {};
+
 // Borne une valeur entre 0 et 1.
 const entre0et1 = (valeur: number) => Math.min(1, Math.max(0, valeur));
 
@@ -39,6 +45,28 @@ export default function IntroPokedex({ children }: Props) {
   const appareil = useRef<HTMLDivElement>(null);
   const page = useRef<HTMLDivElement>(null);
   const animationsReduites = useReducedMotion();
+
+  // L'introduction ne joue qu'UNE fois par visite. Revenir sur l'accueil (depuis une fiche, par exemple) affiche
+  // directement la page : il serait pénible de retraverser le Pokédex à chaque fois.
+  // useSyncExternalStore (comme pour les stores du site) : le serveur ne connaît pas le sessionStorage, il répond
+  // donc toujours « pas encore vue » ; le navigateur lit la vraie valeur juste après, sans erreur d'hydratation.
+  // La valeur lue est gardée dans un ref : elle ne change plus tant que cette page reste affichée, même quand
+  // on la marque comme vue un peu plus bas (sinon l'introduction disparaîtrait sous les yeux du visiteur).
+  const lueAuDepart = useRef<boolean | null>(null);
+  const dejaVue = useSyncExternalStore(
+    sansAbonnement,
+    () => {
+      if (lueAuDepart.current === null) {
+        try {
+          lueAuDepart.current = sessionStorage.getItem(CLE_VUE) === "1";
+        } catch {
+          lueAuDepart.current = false; // sessionStorage indisponible (navigation privée stricte…)
+        }
+      }
+      return lueAuDepart.current;
+    },
+    () => false,
+  );
 
   // Dimensions lues dans la page (en pixels), nécessaires aux calculs. Rangées dans un ref : les mettre à jour
   // ne provoque pas de nouveau rendu.
@@ -73,6 +101,16 @@ export default function IntroPokedex({ children }: Props) {
 
   const { scrollYProgress } = useScroll({ target: zone, offset: ["start start", "end end"] });
 
+  // Une fois la plongée terminée (60 % du défilement), on note que l'introduction a été vue.
+  useMotionValueEvent(scrollYProgress, "change", (avancement) => {
+    if (avancement < 0.6) return;
+    try {
+      sessionStorage.setItem(CLE_VUE, "1");
+    } catch {
+      // sessionStorage indisponible : tant pis, l'introduction rejouera.
+    }
+  });
+
   // Le défilement est découpé en deux temps :
   //   1. de 3 % à 28 %  : le volet s'ouvre, l'appareil se redresse et se recentre ; l'écran s'allume ;
   //   2. de 30 % à 52 % : on PLONGE dans l'écran, de plus en plus vite, avec des traits de vitesse.
@@ -94,8 +132,6 @@ export default function IntroPokedex({ children }: Props) {
   const invitationOpacite = useTransform(scrollYProgress, [0, 0.03], [1, 0]);
   // La vraie page apparaît dans l'écran une fois l'appareil redressé et recentré.
   const pageOpacite = useTransform(scrollYProgress, [0.24, 0.29], [0, 1]);
-  // Tant que la plongée n'est pas finie, la page ne reçoit pas de clics (elle est posée par-dessus l'appareil).
-  const pageClics = useTransform(scrollYProgress, (avancement) => (avancement < 0.5 ? "none" : "auto"));
 
   // ---- La page calée dans l'écran ----
   // Pour un avancement donné, calcule comment placer la vraie page pour qu'elle occupe exactement la dalle :
@@ -112,7 +148,9 @@ export default function IntroPokedex({ children }: Props) {
     const echelle = Math.min(1, largeurDalle / m.largeurPage);
     // « fini » passe de 0 à 1 quand la page approche de sa taille normale : on relâche alors le calage,
     // et la page retrouve en douceur sa place naturelle dans le site.
-    const fini = entre0et1((echelle - 0.8) / 0.2);
+    // (echelle >= 1 est testé à part : le calcul (1 - 0,8) / 0,2 donne 0,9999999999999998 et non 1, à cause des
+    // arrondis des nombres à virgule. La page gardait alors une transformation et une découpe résiduelles.)
+    const fini = echelle >= 1 ? 1 : entre0et1((echelle - 0.8) / 0.2);
 
     // Centre de la dalle dans la fenêtre : l'appareil est centré dans un bloc haut d'un écran.
     const centreY = m.hauteurFenetre / 2 + (CENTRE.y - 0.5) * m.hauteurAppareil;
@@ -143,16 +181,22 @@ export default function IntroPokedex({ children }: Props) {
   // Exception assumée à la règle « n'animer que transform et opacity » : clip-path est indispensable pour que la
   // page ne dépasse pas de l'écran de l'appareil. Elle ne sert que pendant la plongée.
   const pageDecoupe = useTransform(() => (scrollYProgress.get(), calerPage().decoupe));
+  // Tant que la page n'a pas atteint sa taille normale, elle ne reçoit pas de clics (elle est posée par-dessus
+  // l'appareil, en miniature). Dès qu'elle est à sa taille, tout redevient cliquable — y compris quand on remonte
+  // en haut de la page pour utiliser la recherche et les filtres.
+  const pageClics = useTransform(() => (scrollYProgress.get(), calerPage().echelle >= 1 ? "auto" : "none"));
 
-  // Animations réduites : pas d'introduction, la page est affichée directement, telle quelle.
-  if (animationsReduites) return <>{children}</>;
+  // Animations réduites, ou introduction déjà vue pendant cette visite : la page est affichée directement.
+  // (Même mise en page que le bloc animé du bas : une colonne avec des espaces de 6.)
+  if (animationsReduites || dejaVue) return <div className="flex flex-col gap-6">{children}</div>;
 
   return (
     <>
       {/* Zone haute de 3 écrans (2 écrans de défilement). -mb-[190svh] : la vraie page, placée juste après, REMONTE
           de presque deux écrans par-dessus la zone. Elle est donc déjà en haut de la fenêtre quand la plongée se
-          termine : elle n'a plus qu'à finir de grossir. pointer-events-none : la zone ne bloque pas les clics. */}
-      <div ref={zone} aria-hidden="true" className="pointer-events-none relative -mb-[190svh] h-[300svh]">
+          termine : elle n'a plus qu'à finir de grossir. pointer-events-none : la zone ne bloque pas les clics.
+          -mt-6 : annule la marge haute de la page, pour que l'appareil soit centré dans la fenêtre dès l'arrivée. */}
+      <div ref={zone} aria-hidden="true" className="pointer-events-none relative -mb-[190svh] -mt-6 h-[300svh]">
         {/* perspective : donne la profondeur aux rotations des enfants (sans elle, le volet s'aplatirait). */}
         <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden [perspective:1800px]">
           {/* L'appareil : mêmes proportions que les photos (1210 × 1834). Sa hauteur est bornée par la largeur de
