@@ -5,14 +5,13 @@
 // L'appareil est fait de PHOTOS (images générées par l'utilisateur, détourées, dans public/pokedex) :
 //   - ouvert.webp    : le corps de l'appareil, écran noir et vide ;
 //   - ferme.webp     : le volet vu de l'extérieur ;
-//   - volet-dos.webp : la face intérieure du volet (la même plaque en miroir, assombrie — choix de l'utilisateur,
+//   - volet-dedans.webp : la face intérieure du volet (la même plaque en miroir, un peu assombrie — choix de l'utilisateur,
 //                      préférée à une image d'intérieur nervuré essayée ensuite) ;
-//   - tranche.webp   : le plastique vu de profil, plaqué sur les bords pour donner de l'ÉPAISSEUR.
-// Les trois premières ont exactement le même cadrage : on peut donc les superposer au pixel près.
+// Les trois ont exactement le même cadrage : on peut donc les superposer au pixel près.
 //
 // Épaisseur : le volet n'est plus une feuille. Sa face extérieure est avancée de --ep vers nous (translateZ),
-// sa face intérieure reste au niveau du corps, et trois bandes perpendiculaires (rotateX / rotateY de 90°)
-// ferment les bords. C'est la même construction qu'un cube en CSS, en très plat.
+// sa face intérieure reste au niveau du corps, et une bande perpendiculaire (rotateY de 90°) ferme le bord
+// libre. C'est la même construction qu'un cube en CSS, en très plat. L'épaisseur est volontairement fine.
 //
 // Technique : useScroll donne l'avancement du défilement (0 → 1) et useTransform le convertit en mouvement.
 // Le volet tourne autour de sa charnière (rotateY) dans un espace en perspective, comme l'écran du MacBook
@@ -47,10 +46,9 @@ const CENTRE = { x: DALLE.gauche + DALLE.largeur / 2, y: DALLE.haut + DALLE.haut
 const COURBE_DECALAGE = { avancement: [0.03, 0.2, 0.28], valeur: [0, 0.44, 0] };
 const COURBE_TAILLE = { avancement: [0, 0.24, 0.3, 0.41, 0.52], valeur: [0.9, 1, 1, 3, 14] };
 
-// Bords de l'appareil : la photo du plastique vu de profil, étirée sur toute la bande (bords verticaux),
-// ou un simple dégradé de rouges (bords du haut et du bas, trop courts pour la photo).
-const TRANCHE = "absolute bg-[url(/pokedex/tranche.webp)] bg-[length:100%_100%]";
-const TRANCHE_PLATE = "absolute bg-linear-to-r from-coque-sombre via-coque to-coque-clair";
+// Bord de l'appareil : une bande de plastique dans l'ombre (plus sombre que les faces, pour qu'on lise le volume),
+// éclaircie au milieu, aux bouts arrondis.
+const TRANCHE = "absolute rounded-full bg-linear-to-b from-coque-sombre via-coque to-coque-sombre";
 
 // Clé du sessionStorage : retient, le temps de la visite, que l'introduction a déjà été vue.
 // (sessionStorage est vidé à la fermeture de l'onglet : à la visite suivante, elle rejoue.)
@@ -370,8 +368,8 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
             preserve-3d : ses enfants (le volet) tournent dans le même espace 3D que lui. */}
         <motion.div
           ref={appareil}
-          // --ep : l'épaisseur du volet et du corps (6,6 % de la hauteur de l'appareil, mesurée sur la vue de profil).
-          className="relative aspect-[1210/1834] h-[min(70svh,62vw)] [--ep:calc(min(70svh,62vw)*0.066)] [transform-style:preserve-3d]"
+          // --ep : l'épaisseur du volet et du corps (2,8 % de la hauteur de l'appareil : fine, comme un boîtier réel).
+          className="relative aspect-[1210/1834] h-[min(70svh,62vw)] [--ep:calc(min(70svh,62vw)*0.028)] [transform-style:preserve-3d]"
           style={{ x: appareilX, rotateY: appareilAngle, scale: appareilTaille, transformOrigin: `${CENTRE.x * 100}% ${CENTRE.y * 100}%` }}
         >
           {/* Ombre portée au sol */}
@@ -379,7 +377,7 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
 
           {/* Tranche du corps, côté charnière : une bande qui part vers l'arrière (rotateY 90°). On la voit tant
               que l'appareil est de biais, au début. */}
-          <span className={`${TRANCHE} bottom-[2%] left-[5.6%] top-[2%] w-(--ep) origin-left [transform:rotateY(90deg)]`} />
+          <span className={`${TRANCHE} bottom-[3.5%] left-[5.6%] top-[3.5%] w-(--ep) origin-left [transform:rotateY(90deg)]`} />
 
           {/* ---- Le corps : la photo de l'appareil ouvert. sizes="100vw" : on demande la grande version de
               l'image, car elle est très agrandie pendant la plongée. ---- */}
@@ -407,18 +405,15 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
             />
             {/* Face intérieure : visible seulement de dos (rotateY 180°). */}
             <Image
-              src="/pokedex/volet-dos.webp"
+              src="/pokedex/volet-dedans.webp"
               alt=""
               fill
               sizes="(min-width: 640px) 450px, 45vw"
               className="object-contain [backface-visibility:hidden] [transform:rotateY(180deg)]"
             />
-            {/* Les bords du volet : trois bandes larges de --ep, couchées à 90° pour relier les deux faces.
-                Bord libre (à droite), puis haut et bas. Elles sont un peu plus courtes que le volet, à cause
-                de ses angles arrondis. */}
-            <span className={`${TRANCHE} bottom-[2%] left-[99.5%] top-[2%] w-(--ep) origin-left [transform:rotateY(-90deg)]`} />
-            <span className={`${TRANCHE_PLATE} left-[8%] right-[3%] top-[0.4%] h-(--ep) origin-top [transform:rotateX(90deg)]`} />
-            <span className={`${TRANCHE_PLATE} left-[8%] right-[3%] top-full h-(--ep) origin-top [transform:rotateX(90deg)]`} />
+            {/* Le bord libre du volet : une bande large de --ep, couchée à 90° pour relier les deux faces.
+                Elle est plus courte que le volet (ses angles sont arrondis) et ses bouts sont arrondis aussi. */}
+            <span className={`${TRANCHE} bottom-[3.5%] left-[99.5%] top-[3.5%] w-(--ep) origin-left [transform:rotateY(-90deg)]`} />
           </motion.div>
         </motion.div>
 
