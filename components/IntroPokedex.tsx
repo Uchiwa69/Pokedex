@@ -5,7 +5,8 @@
 // L'appareil est fait de PHOTOS (images générées par l'utilisateur, détourées, dans public/pokedex) :
 //   - ouvert.webp    : le corps de l'appareil, écran noir et vide ;
 //   - ferme.webp     : le volet vu de l'extérieur ;
-//   - volet-interieur.webp : la face intérieure du volet (nervures, plots de vis, joint), recalée sur sa silhouette ;
+//   - volet-dos.webp : la face intérieure du volet (la même plaque en miroir, assombrie — choix de l'utilisateur,
+//                      préférée à une image d'intérieur nervuré essayée ensuite) ;
 //   - tranche.webp   : le plastique vu de profil, plaqué sur les bords pour donner de l'ÉPAISSEUR.
 // Les trois premières ont exactement le même cadrage : on peut donc les superposer au pixel près.
 //
@@ -406,7 +407,7 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
             />
             {/* Face intérieure : visible seulement de dos (rotateY 180°). */}
             <Image
-              src="/pokedex/volet-interieur.webp"
+              src="/pokedex/volet-dos.webp"
               alt=""
               fill
               sizes="(min-width: 640px) 450px, 45vw"
