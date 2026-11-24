@@ -91,7 +91,7 @@ function tirerHasard(): number {
 // Boutons posés directement sur le décor du stade : le verre translucide des boutons secondaires s'y fondait.
 // Fond OPAQUE, bordure épaisse et ombre pour qu'ils se détachent ; le bouton « Quitter » est en rouge.
 const BOUTON_SUR_DECOR = "bouton border-2 border-accent bg-surface-pleine text-texte shadow-carte hover:bg-piste";
-const BOUTON_QUITTER = "bouton border-2 border-danger bg-surface-pleine text-danger shadow-carte hover:bg-piste";
+const BOUTON_QUITTER = "bouton border-2 border-alerte bg-surface-pleine text-alerte shadow-carte hover:bg-piste";
 
 // Bandeau de fin de combat : classes complètes pour chaque résultat (jamais de classe fabriquée à la volée).
 const STYLES_RESULTAT = {

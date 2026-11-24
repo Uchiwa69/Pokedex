@@ -43,6 +43,9 @@
   --color-balle-haut: #ef4444;
   --color-balle-bas: #f8fafc;
 
+  /* Rouge soutenu des boutons « Quitter le combat » (plus marqué que --color-danger, qui est un rose pâle en thème sombre) */
+  --color-alerte: #f87171;
+
   /* Copie à plat de la carte holographique (components/CarteStatique.tsx) :
      mêmes couleurs que le dessin canvas de lib/carte3d.ts */
   --color-carte-haut: #182056; /* coin haut gauche du fond */
