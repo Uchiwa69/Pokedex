@@ -1,7 +1,8 @@
 "use client";
 
-// Séquence d'ouverture « la page brûle », pilotée par le défilement : Dracaufeu crache un souffle de flammes,
-// l'écran se consume comme du papier et la VRAIE page (children) apparaît à travers la brûlure.
+// Séquence « l'écran brûle », pilotée par le défilement : Dracaufeu crache un souffle de flammes, l'écran se
+// consume comme du papier et ce qui est DERRIÈRE (children) apparaît à travers la brûlure. Placée en fin de page
+// (choix de l'utilisateur) : children est alors l'écran de fin, haut d'un écran. Dans la suite, « la page » = children.
 // Le dessin est fait par un shader (lib/scenes-feu/), sur un canvas transparent posé par-dessus la page.
 //
 // Principe : la page est « collante » (sticky) dans un conteneur plus haut qu'elle de 320 % de l'écran (un bloc vide la suit). Tant
@@ -97,13 +98,20 @@ export default function ScenesElements({ variante, children }: Props) {
           // Une image par rafraîchissement de l'écran : les flammes bougent même quand on ne défile pas.
           image = requestAnimationFrame(boucle);
         }
-        image = requestAnimationFrame(boucle);
+        // La boucle ne tourne que si la séquence est à l'écran (IntersectionObserver) : placée en fin de page,
+        // elle ne coûte rien tant qu'on parcourt la liste.
+        const guetteurVue = new IntersectionObserver(([entree]) => {
+          cancelAnimationFrame(image);
+          if (entree.isIntersecting) image = requestAnimationFrame(boucle);
+        });
+        guetteurVue.observe(elementConteneur);
         setEtat("pret");
 
         nettoyer = () => {
           cancelAnimationFrame(image);
           window.removeEventListener("resize", ajuster);
           guetteurTheme.disconnect();
+          guetteurVue.disconnect();
           dessin.liberer();
         };
       })

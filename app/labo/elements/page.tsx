@@ -1,6 +1,6 @@
-// PROTOTYPE — séquence d'ouverture « la page brûle » : Dracaufeu crache son feu, l'écran se consume et la
-// vraie page apparaît à travers. On y accède par /labo/elements ; un onglet par variante du shader (?v=…).
-// La grille dessous est la vraie : elle sert à juger l'arrivée sur la liste.
+// PROTOTYPE — séquence de FIN de page « l'écran brûle » : après la liste, Dracaufeu crache son feu, l'écran se
+// consume et l'écran de fin (page suivante, retour en haut) apparaît à travers. On y accède par /labo/elements ;
+// un onglet par variante du shader (?v=…). La grille au-dessus est la vraie.
 
 import { Suspense } from "react";
 import type { Metadata } from "next";
@@ -64,15 +64,31 @@ async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }
         </ul>
       </nav>
 
-      {/* key : changer de variante recrée le composant (nouveau canvas, nouveau shader). */}
+      {/* La page d'accueil, en résumé : titre, puis la vraie grille. */}
+      <header id="haut-liste" className="flex scroll-mt-28 flex-col items-center gap-2 text-center">
+        <h1 className="font-titre text-3xl font-bold tracking-tight sm:text-4xl">Pokédex National</h1>
+        <p className="text-sm text-texte-doux">{liste.total.toLocaleString("fr-FR")} Pokémon</p>
+      </header>
+      <GrillePokemons pokemons={liste.pokemons} />
+
+      {/* Fin de page : Dracaufeu brûle l'écran et révèle l'écran de fin (les enfants du composant).
+          key : changer de variante recrée le composant (nouveau canvas, nouveau shader). */}
       <ScenesElements key={active} variante={active}>
-        <div className="flex flex-col gap-6 pt-28 lg:pt-20">
-          <header className="flex flex-col items-center gap-2 text-center">
-            <h1 className="font-titre text-3xl font-bold tracking-tight sm:text-4xl">Pokédex National</h1>
-            <p className="text-sm text-texte-doux">{liste.total.toLocaleString("fr-FR")} Pokémon</p>
-          </header>
-          <GrillePokemons pokemons={liste.pokemons} />
-        </div>
+        <section aria-labelledby="titre-fin" className="flex h-svh flex-col items-center justify-center gap-6 text-center">
+          <p className="etiquette">Fin de la page 1</p>
+          <h2 id="titre-fin" className="font-titre text-3xl font-bold tracking-tight sm:text-5xl">
+            Il en reste {(liste.total - liste.pokemons.length).toLocaleString("fr-FR")} à découvrir
+          </h2>
+          <div className="flex flex-wrap justify-center gap-3">
+            {/* Deux navigations, donc deux liens : continuer (action principale) ou revenir chercher. */}
+            <Link href="/?page=2" className="bouton bouton-principal">
+              Page suivante
+            </Link>
+            <a href="#haut-liste" className="bouton bouton-secondaire">
+              Retour en haut de la liste
+            </a>
+          </div>
+        </section>
       </ScenesElements>
     </div>
   );
