@@ -217,3 +217,7 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   (`chrome.exe --headless=new --window-size=1280,800 --screenshot=... URL`).
 - Audit : `npx lighthouse URL --output=json --chrome-flags="--headless=new"` (émulation mobile, capture finale incluse).
 - Le README n'a plus de captures (choix de l'utilisateur).
+- PROTOTYPE (branche `refonte`, pas encore sur l'accueil) : séquence « feu contre eau » au défilement, `/labo/elements`.
+  `ScenesElements` (client : section de 350svh + scène `sticky`, progression 0→1 lue à chaque image) et
+  `lib/scenes-elements.ts` (UN shader plein écran : Dracaufeu, boule de feu, cendres, Tortank, jets, lavage ; les deux
+  illustrations sont des textures). Animations réduites ou pas de WebGL : deux illustrations fixes.
