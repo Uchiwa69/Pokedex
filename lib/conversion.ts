@@ -194,22 +194,6 @@ export function aplatir(maillon: MaillonBrut): number[] {
   return [extraireId(maillon.species.url), ...maillon.evolves_to.flatMap(aplatir)];
 }
 
-// Place d'un Pokémon dans sa lignée : son rang (0 = forme de base, 1 = première évolution, 2 = deuxième)
-// et s'il est « final » (il n'évolue plus). Un Pokémon sans évolution est à la fois de rang 0 et final.
-export type StadeEvolution = { rang: number; final: boolean };
-
-// Fonction RÉCURSIVE, comme aplatir : cherche une espèce dans l'arbre des évolutions en descendant d'un
-// maillon à ses évolutions, et compte la profondeur au passage. null si l'espèce n'est pas dans l'arbre.
-// Exemple : dans la lignée d'Aspicot, « kakuna » (Coconfort) → { rang: 1, final: false }.
-export function trouverStade(maillon: MaillonBrut, nomEspece: string, rang = 0): StadeEvolution | null {
-  if (maillon.species.name === nomEspece) return { rang, final: maillon.evolves_to.length === 0 };
-  for (const suivant of maillon.evolves_to) {
-    const trouve = trouverStade(suivant, nomEspece, rang + 1);
-    if (trouve) return trouve;
-  }
-  return null;
-}
-
 // 0.7 → "0,7 m" (virgule française)
 export function formaterMesure(valeur: number, unite: string): string {
   return `${valeur.toLocaleString("fr-FR")} ${unite}`;

@@ -13,7 +13,6 @@ import {
   convertirRelations,
   extraireApprentissages,
   extraireId,
-  trouverStade,
   type Apprentissage,
   type Attaque,
   type AttaqueBrute,
@@ -22,7 +21,6 @@ import {
   type EspeceBrute,
   type Pokemon,
   type PokemonBrut,
-  type StadeEvolution,
   type TypeBrut,
 } from "@/lib/conversion";
 import { filtrerNoms, normaliser } from "@/lib/recherche";
@@ -217,25 +215,6 @@ export async function recupererEvolutions(nomEspece: string): Promise<Pokemon[]>
   const ids = aplatir(chaine.chain);
   const pokemons = await Promise.all(ids.map((id) => recupererPokemon(String(id))));
   return pokemons.filter((p): p is Pokemon => p !== null);
-}
-
-// Stade d'évolution d'une espèce (forme de base, évolution intermédiaire, évolution finale). Il décide de la
-// rareté de la carte holographique. C'est un décor : en cas de panne de l'API, on ne fait pas tomber la fiche,
-// on répond « sans évolution connue » et on ne garde cette réponse que quelques minutes.
-export async function recupererStade(nomEspece: string): Promise<StadeEvolution> {
-  "use cache";
-  cacheLife("days");
-
-  const inconnu: StadeEvolution = { rang: 0, final: true };
-  try {
-    const espece = await recupererEspece(nomEspece);
-    if (!espece || !espece.urlEvolutions) return inconnu;
-    const chaine = await lire<ChaineBrute>(espece.urlEvolutions);
-    return (chaine && trouverStade(chaine.chain, nomEspece)) ?? inconnu;
-  } catch {
-    cacheLife("minutes");
-    return inconnu;
-  }
 }
 
 // Une attaque (par son nom anglais ou son numéro), ou null si elle n'existe pas.
