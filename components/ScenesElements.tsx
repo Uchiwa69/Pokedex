@@ -13,6 +13,9 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { VarianteFeu } from "@/lib/scenes-feu";
+import { preparerTexte } from "@/lib/scenes-feu/texte";
+
+const TITRE = "Dracaufeu";
 
 // Passe de 0 à 1 quand x va de a à b (comme smoothstep en GLSL) : sert aux fondus des textes.
 function fondu(a: number, b: number, x: number) {
@@ -70,6 +73,9 @@ export default function ScenesElements({ variante, children }: Props) {
         const guetteurTheme = new MutationObserver(dessin.actualiserTheme);
         guetteurTheme.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
+        // Le texte animé : ses éléments sont repérés une fois, puis mis à jour à chaque image.
+        const mettreAJourTexte = texte.current ? preparerTexte(texte.current) : null;
+
         let fini = false; // la séquence est terminée : le voile est caché et on ne dessine plus
         function boucle() {
           // La course = ce que le conteneur a de plus haut que la page (les 250 % d'écran).
@@ -86,7 +92,7 @@ export default function ScenesElements({ variante, children }: Props) {
             dessin.dessiner(progression);
             // Les textes : on écrit directement leur opacité, sans état React (60 rendus par seconde sinon).
             if (invite.current) invite.current.style.opacity = String(1 - fondu(0.02, 0.1, progression));
-            if (texte.current) texte.current.style.opacity = String(1 - fondu(0.1, 0.24, progression));
+            mettreAJourTexte?.(progression);
           }
           // Une image par rafraîchissement de l'écran : les flammes bougent même quand on ne défile pas.
           image = requestAnimationFrame(boucle);
@@ -137,12 +143,38 @@ export default function ScenesElements({ variante, children }: Props) {
           >
             <canvas ref={toile} aria-hidden="true" className="h-full w-full" />
 
-            {/* Texte : à gauche (Dracaufeu est à droite) ; en haut sur téléphone. Il s'efface avant le souffle. */}
+            {/* Texte : à gauche (Dracaufeu est à droite) ; en haut sur téléphone. Il chauffe puis part en cendres
+                avec la page (lib/scenes-feu/texte.ts) : data-bloc = ordre de départ, data-lettre = une lettre. */}
             <div className="absolute inset-0 mx-auto flex max-w-7xl px-4 lg:items-center">
-              <div ref={texte} className="absolute inset-x-4 top-32 text-center lg:static lg:max-w-sm lg:text-left">
-                <p className="etiquette">N° 0006 · Feu / Vol</p>
-                <p className="font-titre text-4xl font-bold sm:text-6xl">Dracaufeu</p>
-                <p className="mt-2 text-sm text-texte-doux">Son souffle est si chaud qu&apos;il fait fondre la roche.</p>
+              <div ref={texte} className="absolute inset-x-4 top-28 text-center lg:static lg:max-w-md lg:text-left">
+                <p data-bloc="0" className="etiquette text-accent">N° 0006 · Feu / Vol</p>
+                <p className="font-titre text-5xl font-bold tracking-tight sm:text-7xl">
+                  {/* Les lecteurs d'écran lisent le mot entier ; les lettres séparées ne sont que décor. */}
+                  <span className="sr-only">{TITRE}</span>
+                  {Array.from(TITRE, (lettre, i) => (
+                    <span key={i} data-lettre aria-hidden="true" className="inline-block origin-bottom">
+                      {lettre}
+                    </span>
+                  ))}
+                </p>
+                <p data-bloc="2" className="mt-3 text-sm text-texte-doux sm:text-base">
+                  Son souffle brûlant peut faire fondre la roche. Quand il s&apos;emporte, la flamme au bout de sa queue vire
+                  au blanc incandescent.
+                </p>
+                <p
+                  data-bloc="3"
+                  className="mt-4 hidden flex-wrap justify-center gap-x-5 gap-y-1 border-t border-accent/30 pt-3 text-sm text-texte-doux sm:flex lg:justify-start"
+                >
+                  <span>
+                    Taille : <strong className="text-texte">1,7 m</strong>
+                  </span>
+                  <span>
+                    Poids : <strong className="text-texte">90,5 kg</strong>
+                  </span>
+                  <span>
+                    Talent : <strong className="text-texte">Brasier</strong>
+                  </span>
+                </p>
               </div>
             </div>
 

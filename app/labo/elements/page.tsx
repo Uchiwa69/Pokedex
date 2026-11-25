@@ -17,6 +17,8 @@ export const metadata: Metadata = {
 };
 
 const VARIANTES: { cle: VarianteFeu; libelle: string }[] = [
+  { cle: "plaques", libelle: "V2 · Plaques" },
+  { cle: "erosion", libelle: "V2 · Érosion" },
   { cle: "cinema", libelle: "1 · Cinéma" },
   { cle: "pyroclastique", libelle: "2 · Pyroclastique" },
   { cle: "leger", libelle: "3 · Ultra-léger" },
@@ -36,7 +38,7 @@ export default function PageLaboElements({ searchParams }: Props) {
 async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }) {
   const { v } = await searchParams;
   // Validation : toute valeur inconnue (?v=nimporte) retombe sur la première variante.
-  const active = VARIANTES.find((variante) => variante.cle === v)?.cle ?? "cinema";
+  const active = VARIANTES.find((variante) => variante.cle === v)?.cle ?? "plaques";
   const liste = await recupererListe("", null, 1);
 
   return (

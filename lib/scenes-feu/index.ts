@@ -4,13 +4,14 @@
 // Le dessin est fait par UN shader, sur un rectangle qui couvre l'écran. Il reçoit « uProgression », un nombre
 // de 0 à 1 qui vient du défilement. Le canvas est posé PAR-DESSUS la page : là où le shader écrit un pixel
 // transparent (le papier a brûlé), on voit la page derrière.
-// Trois variantes du shader, fournies par l'utilisateur (générées avec Gemini) : une par fichier de ce dossier.
+// Cinq variantes du shader, fournies par l'utilisateur (générées avec Gemini) : une par fichier de ce dossier.
+// « plaques » et « erosion » sont la version 2 (le souffle retombe avant que la page se désintègre).
 // three.js est chargé à la demande (import()) : il ne pèse rien tant que la séquence n'est pas affichée.
 
 export const IMAGE_DRACAUFEU =
   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png";
 
-export const VARIANTES_FEU = ["cinema", "pyroclastique", "leger"] as const;
+export const VARIANTES_FEU = ["plaques", "erosion", "cinema", "pyroclastique", "leger"] as const;
 export type VarianteFeu = (typeof VARIANTES_FEU)[number];
 
 const FOND_PAR_DEFAUT = "#0f1115"; // si le jeton --color-fond est illisible : le fond du thème sombre
@@ -26,6 +27,8 @@ void main() {
 
 // Chaque variante est dans son fichier, téléchargé seulement si on la demande (table de correspondance).
 const CHARGER_SHADER: Record<VarianteFeu, () => Promise<string>> = {
+  plaques: () => import("./plaques").then((module) => module.SHADER_PLAQUES),
+  erosion: () => import("./erosion").then((module) => module.SHADER_EROSION),
   cinema: () => import("./cinema").then((module) => module.SHADER_CINEMA),
   pyroclastique: () => import("./pyroclastique").then((module) => module.SHADER_PYROCLASTIQUE),
   leger: () => import("./leger").then((module) => module.SHADER_LEGER),
