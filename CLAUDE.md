@@ -221,9 +221,9 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Audit : `npx lighthouse URL --output=json --chrome-flags="--headless=new"` (émulation mobile, capture finale incluse).
 - Le README n'a plus de captures (choix de l'utilisateur).
 - PROTOTYPE (branche `refonte`, pas encore sur l'accueil) : séquence d'ouverture « la page brûle », `/labo/elements?v=`.
-  `ScenesElements` (client) enveloppe la page : elle est `sticky` et suivie d'un bloc vide de 250svh (PAS un padding : un
+  `ScenesElements` (client) enveloppe la page : elle est `sticky` et suivie d'un bloc vide de 320svh (PAS un padding : un
   élément collant ne glisse que dans le contenu de son parent) ; un canvas transparent par-dessus, progression 0→1 lue
-  à chaque image. `lib/scenes-feu/` : 5 shaders fournis par l'utilisateur (Gemini ; version 2 = plaques et erosion, par défaut plaques ;
+  à chaque image. `lib/scenes-feu/` : 5 shaders fournis par l'utilisateur (Gemini ; version 2 = plaques et erosion, l'utilisateur a CHOISI erosion, ouverte par défaut ;
   version 1 = cinema, pyroclastique, leger) + `texte.ts` (titre qui brûle lettre par lettre, `data-lettre` / `data-bloc`), repris
   tels quels, sortie en alpha prémultiplié. Tortank et le jet d'eau : abandonnés (choix de l'utilisateur).
   Animations réduites ou pas de WebGL : pas de séquence.

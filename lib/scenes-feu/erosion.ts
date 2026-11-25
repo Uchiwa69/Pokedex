@@ -176,7 +176,8 @@ void main() {
     float bruitMicro = fbm(pos * 22.0 - vec2(0.0, uTemps * 0.9), 3);
 
     // Champ d'érosion combinant distance depuis la gueule, identifiant de cellule et micro-bruit de cendres
-    float champCombustion = distGueule + idCellule * 0.28 + (bruitMicro - 0.5) * 0.14;
+    // Réglage du projet : le hasard par cellule est réduit (0.28 → 0.16) pour qu'on voie mieux la brûlure PARTIR de la gueule.
+    float champCombustion = distGueule + idCellule * 0.16 + (bruitMicro - 0.5) * 0.14;
     // Le bord de chaque cellule (distBordCellule petit) brûle plus tôt que son cœur
     float erosionCellule = champCombustion + distBordCellule * 0.55;
     float seuilErosion = progDesint * (rayonMaxEcran * 1.25 + 0.45) - 0.12;

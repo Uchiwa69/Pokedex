@@ -38,7 +38,7 @@ export default function PageLaboElements({ searchParams }: Props) {
 async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }) {
   const { v } = await searchParams;
   // Validation : toute valeur inconnue (?v=nimporte) retombe sur la première variante.
-  const active = VARIANTES.find((variante) => variante.cle === v)?.cle ?? "cinema";
+  const active = VARIANTES.find((variante) => variante.cle === v)?.cle ?? "erosion";
   const liste = await recupererListe("", null, 1);
 
   return (

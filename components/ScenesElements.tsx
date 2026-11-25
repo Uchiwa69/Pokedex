@@ -4,7 +4,7 @@
 // l'écran se consume comme du papier et la VRAIE page (children) apparaît à travers la brûlure.
 // Le dessin est fait par un shader (lib/scenes-feu/), sur un canvas transparent posé par-dessus la page.
 //
-// Principe : la page est « collante » (sticky) dans un conteneur plus haut qu'elle de 250 % de l'écran (un bloc vide la suit). Tant
+// Principe : la page est « collante » (sticky) dans un conteneur plus haut qu'elle de 320 % de l'écran (un bloc vide la suit). Tant
 // qu'on parcourt ce supplément, la page reste en place sous le canvas ; on mesure seulement OÙ on en est
 // (de 0 à 1) et on donne ce nombre au shader. Remonter rejoue donc la séquence à l'envers. Ensuite la page
 // défile normalement.
@@ -78,7 +78,7 @@ export default function ScenesElements({ variante, children }: Props) {
 
         let fini = false; // la séquence est terminée : le voile est caché et on ne dessine plus
         function boucle() {
-          // La course = ce que le conteneur a de plus haut que la page (les 250 % d'écran).
+          // La course = ce que le conteneur a de plus haut que la page (les 320 % d'écran).
           // 0 quand la page vient de se coller en haut de l'écran, 1 quand elle va se décoller.
           const course = elementConteneur!.offsetHeight - elementPage!.offsetHeight;
           const progression = Math.min(1, Math.max(0, -elementConteneur!.getBoundingClientRect().top / course));
@@ -190,7 +190,7 @@ export default function ScenesElements({ variante, children }: Props) {
       </div>
       {/* Le supplément de hauteur qui sert de course à la séquence. Un bloc vide, et pas une marge intérieure
           (padding) : un élément collant ne peut glisser que dans le CONTENU de son parent. */}
-      {avecSequence && <div aria-hidden="true" className="h-[250svh] motion-reduce:hidden" />}
+      {avecSequence && <div aria-hidden="true" className="h-[320svh] motion-reduce:hidden" />}
     </div>
   );
 }
