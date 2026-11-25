@@ -29,8 +29,7 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
   précision, ordre selon la vitesse, IA adverse, journal de combat accessible, et **effets d'attaque dessinés sur
   un canvas** (projectile, trajectoire, impact) choisis selon le type, la catégorie et la puissance de l'attaque.
 - **Quiz « Qui est ce Pokémon ? »** : une silhouette, quatre propositions, révélation animée.
-- **Deux thèmes, sombre (par défaut) et clair**, avec un bouton de bascule dans l'en-tête : gris anthracite ou gris
-  perle, un seul accent rouge « Pokédex ». Toutes les couleurs sont des jetons sémantiques de @theme, une teinte
+- **Thème sombre** (le seul) : gris anthracite, un seul accent rouge « Pokédex ». Toutes les couleurs sont des jetons sémantiques de @theme, une teinte
   par Pokémon (couleur de son type principal).
 - **Animations** : apparition en cascade, inclinaison 3D des cartes, transition partagée de l'illustration entre la
   grille et la fiche (View Transitions) — uniquement `transform` et `opacity`, et réduites à de simples fondus avec
@@ -45,7 +44,7 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
 | Langage | TypeScript |
 | Styles | Tailwind CSS 4 (configuration dans `app/globals.css` avec `@theme`) |
 | État client | Zustand (`persist` + réhydratation après l'hydratation React) |
-| Thème | next-themes (sombre par défaut, clair au choix, mémorisé dans le navigateur) |
+| Thème | next-themes (thème sombre forcé) |
 | Animations | motion (`motion/react`) et CSS, `prefers-reduced-motion` respecté |
 | 3D | three.js, chargé à la demande : carte holographique, effets de type (shaders GLSL), introduction |
 | Tests | vitest (fonctions pures de `lib/combat.ts` et de `lib/labo/effets2d.ts`) |

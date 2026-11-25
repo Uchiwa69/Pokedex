@@ -1,12 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import BoutonTheme from "@/components/BoutonTheme";
 import IndicateurSacoche from "@/components/IndicateurSacoche";
 import LiensNavigation from "@/components/LiensNavigation";
 import Navigation from "@/components/Navigation";
 import Pokeball from "@/components/Pokeball";
 
-// En-tête du site : composant serveur. Seuls Navigation, BoutonTheme et IndicateurSacoche sont des composants client.
+// En-tête du site : composant serveur. Seuls Navigation et IndicateurSacoche sont des composants client.
 export default function EnTete() {
   return (
     // Fond de la page à 85 % + flou de ce qui défile derrière : l'en-tête se fond dans la page, un simple filet le sépare.
@@ -37,11 +36,8 @@ export default function EnTete() {
           </Suspense>
         </nav>
 
-        {/* À droite : l'équipe (sacoche) puis le bouton de thème. */}
-        <div className="flex items-center gap-2">
-          <IndicateurSacoche />
-          <BoutonTheme />
-        </div>
+        {/* À droite : l'équipe (sacoche). */}
+        <IndicateurSacoche />
       </div>
     </header>
   );

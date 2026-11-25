@@ -25,6 +25,9 @@ Code simple, lisible, commenté en français quand une notion du cours est appli
 - Données : PokéAPI https://pokeapi.co/api/v2 (lecture seule, sans clé).
 - Ajout autorisé pour l'UX : la bibliothèque motion (import depuis "motion/react"), seulement dans des composants client.
 - Tests : vitest, uniquement pour les fonctions pures de lib/combat.ts.
+- Thème : UN SEUL THÈME, LE SOMBRE (décision de l'utilisateur du 25 novembre 2026, soir : le thème clair est retiré, `BoutonTheme`
+  supprimé, `forcedTheme="dark"` dans `Fournisseurs`). Les jetons clairs restent dans `@theme static` mais ne s'affichent plus :
+  ne plus vérifier le thème clair. Ce qui suit décrit l'ancien réglage à deux thèmes.
 - Thème : DEUX THÈMES, sombre par défaut et clair (refonte demandée par l'utilisateur le 25 novembre 2026, qui
   remplace l'ancien « sombre uniquement » bleu nuit + accent lavande). next-themes : `defaultTheme="dark"`,
   `enableSystem={false}`, bascule par `BoutonTheme` (client) dans l'en-tête : les deux icônes sont dans la page et
