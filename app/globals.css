@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* Tailwind 4 : la variante dark: s'active quand <html> porte la classe .dark
-   (c'est next-themes qui pose cette classe). Le site est toujours en thème sombre :
-   la classe .dark est donc toujours présente (forcedTheme dans components/Fournisseurs.tsx). */
+   (c'est next-themes qui pose cette classe). Le site a DEUX thèmes : sombre (par défaut) et clair.
+   Le bouton de l'en-tête (components/BoutonTheme.tsx) ajoute ou retire cette classe. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Polices : next/font crée les variables --font-inter et --font-chakra (voir app/layout.tsx).
@@ -16,19 +16,27 @@
    Chaque --color-xxx crée les utilitaires bg-xxx, text-xxx, border-xxx… et chaque --shadow-xxx crée shadow-xxx.
    "static" : toutes ces variables sont écrites dans le CSS final, même celles utilisées seulement ci-dessous. */
 @theme static {
-  /* ---- Jetons sémantiques — thème CLAIR : gris-bleu très pâle, verre blanc, ombres bleutées ---- */
-  --color-fond: #eef2f8;
-  --color-cadre: #e2e8f3; /* fond de l'en-tête et du pied de page : le « cadre » du site, un cran plus soutenu que le fond */
-  --color-surface: rgb(255 255 255 / 0.72); /* « verre » : blanc translucide */
-  --color-surface-pleine: #ffffff; /* surface OPAQUE, pour ce qui flotte au-dessus du contenu (infobulles) */
-  --color-bordure: #c3cce2; /* bordure visible (champs, séparateurs) */
-  --color-bordure-verre: rgb(255 255 255 / 0.95); /* liseré lumineux des panneaux en verre */
-  --color-texte: #171a3a;
-  --color-texte-doux: #4a5578;
-  --color-piste: #dbe1f3; /* fond des barres, survols */
-  --color-accent: #4338ca;
-  --color-accent-bis: #0ea5e9; /* 2e couleur des dégradés */
-  --color-sur-accent: #ffffff; /* texte posé sur l'accent */
+  /* ---- Jetons sémantiques — thème CLAIR « Encyclopédie claire » : gris perle, surfaces blanches, ombres légères ----
+     Les composants n'utilisent QUE ces noms (bg-fond, text-texte…) : changer de thème = changer ces valeurs. */
+  --color-fond: #f4f5f8; /* fond de la page */
+  --color-cadre: #ffffff; /* fond de l'en-tête et du pied de page */
+  --color-surface: #ffffff; /* panneaux, cartes, champs */
+  --color-surface-pleine: #eef1f6; /* surface « surélevée » : ce qui flotte au-dessus du contenu (infobulles, menus) */
+  --color-bordure: rgb(15 23 42 / 0.16); /* bordure visible (champs, séparateurs) */
+  --color-bordure-verre: rgb(15 23 42 / 0.08); /* bordure subtile des panneaux */
+  --color-texte: #0f172a;
+  --color-texte-doux: #475569; /* texte secondaire */
+  --color-texte-discret: #64748b; /* texte d'indication (exemple dans un champ) : jamais pour une information utile */
+  --color-piste: rgb(15 23 42 / 0.07); /* fond des barres, survols */
+  /* Un seul accent : le rouge du Pokédex. Il a deux usages, donc deux jetons, pour garder un contraste d'au
+     moins 4,5:1 dans les deux cas :
+     - accent       = le rouge qui s'ÉCRIT sur le fond (liens, icônes, filets, contour de focus) ;
+     - accent-plein = le rouge qui REMPLIT un bouton, avec du texte blanc (sur-accent) par-dessus. */
+  --color-accent: #b91c1c;
+  --color-accent-plein: #dc2626;
+  --color-accent-survol: #b91c1c; /* bouton rempli, au survol */
+  --color-accent-bis: #ef4444; /* 2e couleur des dégradés : le même rouge, plus clair (plus de violet ni de cyan) */
+  --color-sur-accent: #ffffff; /* texte posé sur accent-plein */
   --color-danger: #b91c1c;
 
   /* Barre de points de vie : vert → jaune → rouge (mêmes couleurs dans les deux thèmes) */
@@ -38,7 +46,7 @@
 
   /* Disque des socles de l'équipe : nacré en clair (dégradé haut → bas) */
   --color-socle-haut: #ffffff;
-  --color-socle-bas: #dde4f6;
+  --color-socle-bas: #e2e8f0;
 
   /* Pokéball du logo : calotte rouge, base blanche (mêmes couleurs dans les deux thèmes) */
   --color-balle-haut: #ef4444;
@@ -61,8 +69,8 @@
 
 
   /* Une seule ombre de panneau et une seule lueur de bouton pour tout le site */
-  --shadow-carte: 0 18px 40px -18px rgb(67 56 202 / 0.35), 0 2px 6px -2px rgb(30 41 100 / 0.1);
-  --shadow-lueur: 0 10px 24px -10px rgb(67 56 202 / 0.7);
+  --shadow-carte: 0 12px 28px -18px rgb(15 23 42 / 0.28), 0 1px 2px rgb(15 23 42 / 0.06);
+  --shadow-lueur: 0 8px 18px -10px rgb(220 38 38 / 0.55);
 
   /* ---- Animations : uniquement transform et opacity ----
      Chaque --animate-xxx crée la classe animate-xxx. "both" : l'élément garde l'état de départ
@@ -251,30 +259,32 @@
   --color-type-fairy: #d685ad;
 }
 
-/* ---- Thème SOMBRE : nuit bleu très sombre, verre fumé, lueurs ----
+/* ---- Thème SOMBRE « Pokédex tech sombre » (thème par défaut) : gris anthracite, surfaces unies, accent rouge ----
    On redéfinit seulement les variables : comme bg-fond vaut var(--color-fond),
    toute l'interface change sans toucher aux composants. */
 .dark {
-  --color-fond: #070a1c;
-  --color-cadre: #03040d; /* même bleu que le fond, mais presque noir : en-tête et pied de page se détachent de la page */
-  --color-surface: rgb(255 255 255 / 0.06);
-  --color-surface-pleine: #141a3c;
-  --color-bordure: #2c3460;
-  --color-bordure-verre: rgb(255 255 255 / 0.1);
-  --color-texte: #eef0ff;
-  --color-texte-doux: #a9b1d6;
-  --color-piste: rgb(255 255 255 / 0.1);
-  --color-accent: #aab6ff;
-  --color-accent-bis: #67e8f9;
-  --color-sur-accent: #12143a;
+  --color-fond: #0f1115;
+  --color-cadre: #0f1115; /* en-tête et pied de page : la même couleur que la page, ils s'y fondent */
+  --color-surface: #171a21;
+  --color-surface-pleine: #1e232d;
+  --color-bordure: rgb(255 255 255 / 0.16);
+  --color-bordure-verre: rgb(255 255 255 / 0.08);
+  --color-texte: #f8fafc;
+  --color-texte-doux: #94a3b8;
+  --color-texte-discret: #64748b;
+  --color-piste: rgb(255 255 255 / 0.08);
+  --color-accent: #ef4444; /* rouge qui s'écrit sur le fond sombre (5:1) */
+  --color-accent-plein: #dc2626; /* rouge des boutons : le blanc y reste lisible (4,8:1), pas sur #ef4444 (3,8:1) */
+  --color-accent-survol: #b91c1c;
+  --color-accent-bis: #fca5a5;
+  --color-sur-accent: #ffffff;
   --color-danger: #fca5a5;
 
-  --color-socle-haut: #232b5c;
-  --color-socle-bas: #0a0e26;
+  --color-socle-haut: #2a303c;
+  --color-socle-bas: #12151b;
 
-
-  --shadow-carte: 0 18px 40px -18px rgb(0 0 0 / 0.8);
-  --shadow-lueur: 0 10px 24px -10px rgb(170 182 255 / 0.55);
+  --shadow-carte: 0 14px 30px -18px rgb(0 0 0 / 0.75);
+  --shadow-lueur: 0 8px 18px -10px rgb(220 38 38 / 0.6);
 }
 
 /* Indique au navigateur le thème en cours (barres de défilement, champs de formulaire…). */
@@ -362,9 +372,13 @@ html.dark {
 }
 
 @utility bouton-principal {
-  background-color: var(--color-accent);
+  background-color: var(--color-accent-plein);
   color: var(--color-sur-accent);
   box-shadow: var(--shadow-lueur);
+  transition: background-color 150ms;
+  &:hover {
+    background-color: var(--color-accent-survol);
+  }
 }
 
 @utility bouton-secondaire {
@@ -394,8 +408,22 @@ html.dark {
 }
 
 /* ---- Filtre par type : une tuile par type (symbole + libellé) ---- */
+/* Au repos : fond de surface légèrement teinté de la couleur du type (--teinte), pour le reconnaître d'un coup d'œil.
+   Au survol : la teinte se renforce, la bordure prend la couleur du type et la tuile se soulève d'un cran.
+   Au clic (:active) : elle s'enfonce un peu. On n'anime que les couleurs et transform. */
 @utility puce-tuile {
-  @apply flex min-h-11 w-[4.75rem] flex-col items-center gap-1 rounded-2xl border border-bordure bg-surface px-1 py-2 text-[11px] font-semibold text-texte transition-colors duration-200;
+  @apply flex min-h-11 w-[4.75rem] flex-col items-center gap-1 rounded-2xl border border-bordure-verre px-1 py-2 text-xs font-semibold text-texte transition-[background-color,border-color,transform] duration-150 active:scale-95 motion-reduce:transition-none;
+  background-color: color-mix(in srgb, var(--teinte, transparent) 9%, var(--color-surface));
+  &:hover {
+    border-color: var(--teinte, var(--color-bordure));
+    background-color: color-mix(in srgb, var(--teinte, var(--color-texte)) 20%, var(--color-surface));
+    transform: translateY(-2px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:hover {
+      transform: none;
+    }
+  }
 }
 
 /* ---- Effet joué sur l'écran quand on choisit un type (components/EffetType.tsx) ----

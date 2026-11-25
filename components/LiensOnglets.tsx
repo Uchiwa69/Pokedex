@@ -34,7 +34,7 @@ export default function LiensOnglets({ onglets, actif }: Props) {
               aria-current={actif === onglet.cle ? "page" : undefined}
               className={
                 actif === onglet.cle
-                  ? "flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-semibold text-sur-accent shadow-lueur"
+                  ? "flex min-h-11 items-center rounded-full bg-accent-plein px-5 text-sm font-semibold text-sur-accent shadow-lueur"
                   : "flex min-h-11 items-center rounded-full px-5 text-sm font-medium text-texte-doux hover:bg-piste hover:text-texte"
               }
             >

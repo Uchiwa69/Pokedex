@@ -33,7 +33,7 @@ type Props = {
 
 // Classes d'un bouton de choix (style, motif, effet) : actif ou non. Écrites en entier pour Tailwind.
 const CHOIX = "min-h-11 rounded-2xl border px-4 py-2 text-left text-sm transition-colors duration-200";
-const CHOIX_ACTIF = "border-transparent bg-accent text-sur-accent shadow-lueur";
+const CHOIX_ACTIF = "border-transparent bg-accent-plein text-sur-accent shadow-lueur";
 const CHOIX_INACTIF = "border-bordure bg-surface text-texte hover:bg-piste";
 
 export default function AtelierCarte({ pokemon, attaques }: Props) {

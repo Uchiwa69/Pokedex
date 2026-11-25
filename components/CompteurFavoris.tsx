@@ -15,9 +15,8 @@ export default function CompteurFavoris() {
   return (
     // Téléphone : pastille posée dans le coin du lien (absolute), pour ne pas élargir un menu déjà serré.
     // À partir de sm : elle prend place à la suite du libellé (static).
-    // bg-fond (opaque) + text-texte : texte clair sur fond sombre, lisible sur le lien inactif comme sur le
-    // lien actif (fond d'accent). Un fond translucide devenait pâle sur l'accent et le chiffre s'y perdait.
-    <span className="absolute right-0.5 top-0.5 flex min-w-5 items-center justify-center rounded-full border border-bordure bg-fond px-1.5 text-[11px] font-semibold leading-5 text-texte tabular-nums sm:static">
+    // Pastille rouge pleine, chiffre blanc : lisible dans les deux thèmes, sur l'onglet actif comme inactif.
+    <span className="absolute right-0.5 top-0.5 flex min-w-5 items-center justify-center rounded-full bg-accent-plein px-1.5 text-[11px] font-semibold leading-5 text-sur-accent tabular-nums sm:static">
       {nombre}
       {/* Lu par les lecteurs d'écran après le libellé du lien : « Favoris 3 enregistrés ». */}
       <span className="sr-only"> {nombre > 1 ? "enregistrés" : "enregistré"}</span>

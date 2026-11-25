@@ -8,8 +8,9 @@
 
 import { motion, useReducedMotion } from "motion/react";
 
-// Couleur de l'accent du site, plus ou moins transparente (le pourcentage est son opacité).
-const accent = (opacite: number) => `color-mix(in srgb, var(--color-accent) ${opacite}%, transparent)`;
+// Lumière blanche (la couleur du texte en thème sombre), plus ou moins transparente : le pourcentage est son
+// opacité. Pas l'accent : il est rouge comme le Pokédex, qui ne se détacherait plus de ses projecteurs.
+const accent = (opacite: number) => `color-mix(in srgb, var(--color-texte) ${opacite * 0.6}%, transparent)`;
 
 // Les trois faisceaux d'un projecteur : un large, puis deux étroits de plus en plus faibles.
 // Opacités un peu plus de deux fois celles du composant d'origine (8, 6 et 4 %) : sur notre fond bleu nuit,
@@ -34,7 +35,8 @@ export default function Projecteurs() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 1.5 }}
-      className="pointer-events-none absolute inset-0"
+      // hidden dark:block : des faisceaux de lumière n'ont de sens que sur fond sombre, ils sont absents du thème clair.
+      className="pointer-events-none absolute inset-0 hidden dark:block"
     >
       {/* Projecteur de gauche : ses faisceaux penchent de 45° vers la droite. */}
       <motion.div animate={balancer(1)} transition={rythme} className="absolute left-0 top-0 h-screen w-screen">

@@ -556,7 +556,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         </button>
         <button
           type="button"
-          className="flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-semibold text-sur-accent shadow-lueur"
+          className="flex min-h-11 items-center rounded-full bg-accent-plein px-5 text-sm font-semibold text-sur-accent shadow-lueur"
           onClick={() => refCommandes.current?.retourner()}
         >
           Retourner

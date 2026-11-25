@@ -21,10 +21,16 @@ export default function IndicateurSacoche() {
   return (
     <Link
       href="/sacoche"
-      aria-label={`Sacoche : ${nombre} Pokémon sur ${TAILLE_MAX_SACOCHE}`}
-      className="flex min-h-11 items-center gap-2 rounded-full border border-bordure-verre bg-surface px-3 text-texte-doux hover:bg-piste hover:text-texte"
+      // Le libellé reprend le texte affiché (« 2/6 ») : un utilisateur de commande vocale peut dire ce qu'il voit.
+      aria-label={`Sacoche : ${nombre}/${TAILLE_MAX_SACOCHE} Pokémon`}
+      className="flex min-h-11 items-center gap-2 rounded-full border border-bordure-verre bg-surface px-2.5 sm:px-3 text-texte-doux transition-colors hover:bg-piste hover:text-texte"
     >
       <IconeSac className="h-5 w-5" />
+      {/* Le nombre en clair (« 2/6 ») : plus rapide à lire que de compter les Pokéballs.
+          aria-hidden : le lien a déjà un aria-label complet. tabular-nums : chiffres de même largeur. */}
+      <span aria-hidden="true" className="hidden text-sm font-semibold tabular-nums text-texte sm:inline">
+        {nombre}/{TAILLE_MAX_SACOCHE}
+      </span>
       {/* id : BoutonSacoche retrouve ici l'emplacement vers lequel envoyer la Pokéball. */}
       <span id="emplacements-sacoche" aria-hidden="true" className="flex items-center gap-1">
         {Array.from({ length: TAILLE_MAX_SACOCHE }, (_, i) =>
@@ -34,7 +40,7 @@ export default function IndicateurSacoche() {
             <Pokeball key={i} className={i === dernierArrive ? "h-4 w-4 motion-safe:animate-rebond" : "h-4 w-4"} />
           ) : (
             // Place libre : un anneau vide de la même taille, pour que rien ne bouge quand il se remplit.
-            <span key={i} className="h-4 w-4 scale-85 rounded-full border border-texte-doux opacity-40" />
+            <span key={i} className="h-4 w-4 scale-85 rounded-full border border-texte-doux opacity-60" />
           ),
         )}
       </span>

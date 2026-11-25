@@ -34,14 +34,14 @@ export default function CartePokemon({ pokemon, prioritaire = false }: Props) {
             On n'anime que leur opacité (on n'anime jamais box-shadow directement). */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 shadow-[0_0_0_1px_var(--teinte),0_22px_44px_-14px_var(--teinte)] transition-opacity duration-200 group-hover:opacity-100 motion-reduce:transition-none"
+          className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 shadow-[0_0_0_1px_var(--teinte),0_18px_36px_-20px_var(--teinte)] transition-opacity duration-200 group-hover:opacity-100 motion-reduce:transition-none"
         />
 
         <Link href={`/pokemon/${pokemon.nom}`} className="verre relative flex h-full flex-col gap-2 p-3 sm:p-4">
           {/* Décor découpé aux arrondis de la carte (l'artwork, lui, n'est pas découpé et peut « sortir »). */}
           <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
             {/* Dégradé de la teinte */}
-            <span className="absolute inset-0 bg-[linear-gradient(145deg,var(--teinte),transparent_60%)] opacity-30 transition-opacity duration-200 group-hover:opacity-50 motion-reduce:transition-none dark:opacity-25 dark:group-hover:opacity-45" />
+            <span className="absolute inset-0 bg-[linear-gradient(145deg,var(--teinte),transparent_60%)] opacity-20 transition-opacity duration-200 group-hover:opacity-35 motion-reduce:transition-none dark:opacity-15 dark:group-hover:opacity-30" />
             {/* Effet verre : un reflet fixe en biais dans le coin haut gauche, comme sur une vitre… */}
             <span className="absolute inset-0 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--color-texte)_10%,transparent)_0%,transparent_32%)]" />
             {/* … et un liseré de lumière sur l'arête du haut (ombre intérieure d'un pixel). */}
@@ -55,12 +55,12 @@ export default function CartePokemon({ pokemon, prioritaire = false }: Props) {
           <p className="etiquette relative flex min-h-8 items-center">N° {numero}</p>
 
           <div className="relative mx-auto aspect-square w-full max-w-36">
-            {/* Halo diffus derrière l'artwork */}
-            <span aria-hidden="true" className="absolute inset-2 rounded-full bg-[var(--teinte)] opacity-30 blur-2xl dark:opacity-40" />
+            {/* Halo diffus derrière l'artwork (volontairement doux : il doit rester lisible dans les deux thèmes) */}
+            <span aria-hidden="true" className="absolute inset-2 rounded-full bg-[var(--teinte)] opacity-20 blur-2xl dark:opacity-25" />
             {/* Halo net au sol, comme une ombre portée de la couleur du type ; il s'élargit au survol */}
             <span
               aria-hidden="true"
-              className="absolute bottom-0 left-1/2 h-3 w-3/5 -translate-x-1/2 rounded-[100%] bg-[var(--teinte)] opacity-70 blur-xs transition-transform duration-200 group-hover:scale-x-125 motion-reduce:transition-none dark:opacity-60"
+              className="absolute bottom-0 left-1/2 h-3 w-3/5 -translate-x-1/2 rounded-[100%] bg-[var(--teinte)] opacity-45 blur-xs transition-transform duration-200 group-hover:scale-x-125 motion-reduce:transition-none dark:opacity-40"
             />
             {pokemon.artwork ? (
               // Transition partagée : la fiche porte le même nom → le navigateur anime l'image

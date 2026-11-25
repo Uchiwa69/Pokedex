@@ -14,18 +14,29 @@ type Props = {
   q: string;
   typeActif: NomType | null; // le type lu dans l'adresse par le serveur
   // Disposition des tuiles à partir de sm (sur téléphone, c'est toujours une ligne qui défile) :
-  // « defaut » = à la suite, calées à gauche ; « centre » = centrées ; « etale » = réparties sur toute la largeur.
+  // « defaut » = à la suite, calées à gauche ; « centre » = centrées ; « etale » = réparties sur toute la largeur ;
+  // « grille » = l'accueil : « Tous les types » seul sur sa ligne, puis les 18 types en rangées complètes.
   disposition?: keyof typeof DISPOSITIONS;
 };
 
 // Table de correspondance : les classes complètes de chaque disposition (jamais de classe fabriquée à la volée).
+// liste = la <ul> ; tous = la tuile « Tous » ; tuile = une tuile de type ; disque = le rond du symbole.
 const DISPOSITIONS = {
-  defaut: "sm:flex-wrap",
-  centre: "sm:flex-wrap sm:justify-center",
+  defaut: { liste: "sm:flex-wrap", tous: "", tuile: "", disque: "" },
+  centre: { liste: "sm:flex-wrap sm:justify-center", tous: "", tuile: "", disque: "" },
   // Grille de 5 colonnes, puis 10 sur grand écran. Il y a 19 tuiles (« Tous » + 18 types) : « Tous » occupe
   // deux colonnes ([&>li:first-child]:col-span-2), ce qui fait 20 cases, donc des rangées toujours complètes.
   // Chaque tuile remplit sa case ([&_a]:w-full).
-  etale: "sm:grid sm:grid-cols-5 sm:[&_a]:w-full sm:[&>li:first-child]:col-span-2 lg:grid-cols-10",
+  etale: { liste: "sm:grid sm:grid-cols-5 sm:[&_a]:w-full sm:[&>li:first-child]:col-span-2 lg:grid-cols-10", tous: "", tuile: "", disque: "" },
+  // 18 types = 3 rangées de 6, puis 2 rangées de 9 à partir de lg : toujours symétrique.
+  // « Tous » occupe une ligne entière (col-span-full) et devient une gélule centrée.
+  // À partir de xl, il y a la place d'écrire le libellé À CÔTÉ du symbole (flex-row) : tuiles plus basses.
+  grille: {
+    liste: "sm:grid sm:grid-cols-6 lg:grid-cols-9 sm:[&>li:first-child]:col-span-full sm:[&>li:first-child]:flex sm:[&>li:first-child]:justify-center",
+    tous: "sm:h-auto sm:min-h-10 sm:w-auto sm:flex-row sm:rounded-full sm:px-5 sm:py-0 sm:text-sm",
+    tuile: "sm:w-full xl:flex-row xl:justify-start xl:gap-2 xl:px-2 xl:py-1.5 xl:text-sm",
+    disque: "xl:size-8",
+  },
 };
 
 // L'effet CSS de repli, quand l'éclat en shader n'a pas pu partir.
@@ -106,7 +117,7 @@ export default function FiltreTypes({ q, typeActif, disposition = "defaut" }: Pr
   return (
     <nav aria-label="Filtrer par type">
       {/* Sur mobile : une seule ligne qui défile horizontalement. À partir de sm : retour à la ligne. */}
-      <ul className={`-mx-4 flex gap-2 overflow-x-auto px-4 py-2 sm:mx-0 sm:overflow-visible sm:px-0 ${DISPOSITIONS[disposition]}`}>
+      <ul className={`-mx-4 flex gap-2 overflow-x-auto px-4 py-2 sm:mx-0 sm:overflow-visible sm:px-0 ${DISPOSITIONS[disposition].liste}`}>
         <li className="shrink-0">
           <Link
             href={construireAdresse({ q, type: null, page: 1 })}
@@ -118,11 +129,14 @@ export default function FiltreTypes({ q, typeActif, disposition = "defaut" }: Pr
             scroll={false}
             onClick={(evenement) => choisir(null, evenement)}
             aria-current={actifAffiche === null ? "true" : undefined}
-            className={`puce-tuile h-full justify-center ${
-              actifAffiche === null ? "border-transparent bg-accent text-sur-accent shadow-lueur" : "hover:bg-piste"
+            className={`puce-tuile h-full justify-center ${DISPOSITIONS[disposition].tous} ${
+              // Actif : rouge plein, texte blanc. Le « ! » (important) passe devant le fond teinté de puce-tuile.
+              actifAffiche === null ? "border-transparent bg-accent-plein! text-sur-accent shadow-lueur" : ""
             }`}
           >
             Tous
+            {/* « les types » n'est écrit que dans la grille de l'accueil, où la tuile est une large gélule. */}
+            {disposition === "grille" && <span className="hidden sm:inline">les types</span>}
           </Link>
         </li>
         {NOMS_TYPES.map((type) => {
@@ -137,17 +151,22 @@ export default function FiltreTypes({ q, typeActif, disposition = "defaut" }: Pr
                 scroll={false}
                 onClick={(evenement) => choisir(type, evenement)}
                 aria-current={actif ? "true" : undefined}
-                className={`group puce-tuile ${
-                  actif ? `border-transparent shadow-[0_0_18px_-2px_var(--teinte)] ${TYPES[type].classes}` : "hover:border-[var(--teinte)]"
+                className={`group puce-tuile ${DISPOSITIONS[disposition].tuile} ${
+                  // Actif : la tuile est remplie de la couleur du type (classes de la table TYPES, avec un texte
+                  // contrasté), entourée d'un halo de la même teinte. Le style en ligne l'emporte sur le fond
+                  // teinté de puce-tuile ; la table TYPES donne la couleur du texte.
+                  actif ? `border-transparent shadow-[0_0_0_2px_var(--color-fond),0_0_0_4px_var(--teinte)] ${TYPES[type].classes}` : ""
                 }`}
+                style={actif ? { backgroundColor: "var(--teinte)" } : undefined}
               >
-                {/* Le symbole du type dans un disque, le libellé dessous. */}
+                {/* Le symbole du type dans un disque PLEIN de la couleur du type (classes de la table TYPES) :
+                    bien plus lisible au repos qu'un disque translucide. Le libellé est dessous (ou à côté). */}
                 <span
-                  className={`flex size-9 items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-110 motion-reduce:transition-none ${
-                    actif ? "bg-black/15" : "bg-[color-mix(in_srgb,var(--teinte)_22%,transparent)]"
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-110 motion-reduce:transition-none ${DISPOSITIONS[disposition].disque} ${
+                    actif ? "bg-black/15" : TYPES[type].classes
                   }`}
                 >
-                  <svg viewBox="0 0 24 24" aria-hidden="true" className={`size-5 ${actif ? "fill-current" : "fill-[var(--teinte)]"}`}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5 fill-current">
                     <path d={GLYPHES[type].trace} fillRule="evenodd" />
                   </svg>
                 </span>

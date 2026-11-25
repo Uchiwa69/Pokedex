@@ -106,7 +106,7 @@ export default function ChoixPokemonAtelier({ choisi }: Props) {
                     href={adresseAtelier(nom)}
                     aria-current={actif ? "true" : undefined}
                     className={`flex min-h-11 items-center rounded-full border px-4 text-sm ${
-                      actif ? "border-transparent bg-accent font-semibold text-sur-accent shadow-lueur" : "border-bordure bg-surface text-texte hover:bg-piste"
+                      actif ? "border-transparent bg-accent-plein font-semibold text-sur-accent shadow-lueur" : "border-bordure bg-surface text-texte hover:bg-piste"
                     }`}
                   >
                     {/* Le surnom donné à la carte, ou à défaut le nom du Pokémon. */}

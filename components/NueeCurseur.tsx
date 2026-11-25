@@ -34,7 +34,13 @@ const reduitServeur = () => false;
 // Le canvas WebGL ne comprend pas var(--color-accent) : on lit la VALEUR des jetons sur <html>.
 // On renvoie une seule chaîne (« couleur|couleur ») : useSyncExternalStore compare les valeurs avec Object.is,
 // un objet recréé à chaque lecture provoquerait un re-rendu sans fin.
-const abonnerCouleurs = () => () => {}; // le thème est sombre uniquement : les jetons ne changent jamais
+// Les jetons changent quand on change de thème, c'est-à-dire quand la classe de <html> change :
+// un MutationObserver la surveille et prévient React, qui relit alors les couleurs.
+function abonnerCouleurs(prevenir: () => void) {
+  const observateur = new MutationObserver(prevenir);
+  observateur.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  return () => observateur.disconnect();
+}
 function lireCouleurs() {
   const styles = getComputedStyle(document.documentElement);
   return `${styles.getPropertyValue("--color-accent").trim()}|${styles.getPropertyValue("--color-accent-bis").trim()}`;

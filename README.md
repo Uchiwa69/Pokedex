@@ -10,8 +10,7 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
 
 - **Introduction en 3D** : un Pokédex géant s'ouvre au défilement, puis on plonge dans son écran, où s'affiche le
   site. Jouée une fois par visite, jamais en animations réduites.
-- **Liste des 1 025 Pokémon** en grille paginée (20 par page), avec noms français, sous un titre dessiné en
-  particules.
+- **Liste des 1 025 Pokémon** en grille paginée (20 par page), avec noms français.
 - **Recherche par nom français ou anglais, ou par numéro**, même incomplet, sans tenir compte des accents ni des
   majuscules (« evoli » trouve Évoli, « char » trouve Charizard, « 25 » trouve Pikachu). Recherche, **filtre par type** et **pagination** sont
   entièrement pilotés par l'adresse (`?q=&type=&page=`) et validés côté serveur.
@@ -30,7 +29,8 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
   précision, ordre selon la vitesse, IA adverse, journal de combat accessible, et **effets d'attaque dessinés sur
   un canvas** (projectile, trajectoire, impact) choisis selon le type, la catégorie et la puissance de l'attaque.
 - **Quiz « Qui est ce Pokémon ? »** : une silhouette, quatre propositions, révélation animée.
-- **Direction artistique « verre holographique »** : thème sombre, panneaux translucides sur fond uni, une teinte
+- **Deux thèmes, sombre (par défaut) et clair**, avec un bouton de bascule dans l'en-tête : gris anthracite ou gris
+  perle, un seul accent rouge « Pokédex ». Toutes les couleurs sont des jetons sémantiques de @theme, une teinte
   par Pokémon (couleur de son type principal).
 - **Animations** : apparition en cascade, inclinaison 3D des cartes, transition partagée de l'illustration entre la
   grille et la fiche (View Transitions) — uniquement `transform` et `opacity`, et réduites à de simples fondus avec
@@ -45,7 +45,7 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
 | Langage | TypeScript |
 | Styles | Tailwind CSS 4 (configuration dans `app/globals.css` avec `@theme`) |
 | État client | Zustand (`persist` + réhydratation après l'hydratation React) |
-| Thème | next-themes (thème sombre imposé avec `forcedTheme`) |
+| Thème | next-themes (sombre par défaut, clair au choix, mémorisé dans le navigateur) |
 | Animations | motion (`motion/react`) et CSS, `prefers-reduced-motion` respecté |
 | 3D | three.js, chargé à la demande : carte holographique, effets de type (shaders GLSL), introduction |
 | Tests | vitest (fonctions pures de `lib/combat.ts` et de `lib/labo/effets2d.ts`) |
@@ -141,7 +141,7 @@ purement statique.
 - Données, illustrations, sprites et cris : [PokéAPI](https://pokeapi.co). Sprites animés issus de Pokémon Showdown.
 - Noms français pour la recherche : fichier de données du dépôt [PokeAPI/pokeapi](https://github.com/PokeAPI/pokeapi).
 - Animations d'attaques du mode combat : [Pokémon Showdown](https://github.com/smogon/pokemon-showdown-client) (CC0).
-- Titre en particules, nuée de points du pied de page, feuille holographique de l'atelier :
+- Nuée de points du pied de page, feuille holographique de l'atelier :
   composants de [React Bits](https://reactbits.dev).
   Projecteurs de l'introduction : adaptés d'[Aceternity UI](https://ui.aceternity.com).
 - Les effets par type (shaders GLSL) ont été générés avec Gemini, puis corrigés et intégrés pour ce projet.

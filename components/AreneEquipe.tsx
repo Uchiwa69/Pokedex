@@ -208,7 +208,7 @@ function EmplacementMembre({ membre, index, selectionne, nouveau, surSelection }
           bouton reçoit le focus clavier, pour montrer que le Pokémon est cliquable. On n'anime que l'opacité. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-accent text-sur-accent opacity-0 shadow-lueur transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"
+        className="pointer-events-none absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-accent-plein text-sur-accent opacity-0 shadow-lueur transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
           <path d="M9 11V5a1.5 1.5 0 0 1 3 0v5m0 0V9a1.5 1.5 0 0 1 3 0v2m0 0v-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.7-2.3L4 15a1.6 1.6 0 0 1 2.5-2L9 15" />

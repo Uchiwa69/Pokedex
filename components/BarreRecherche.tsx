@@ -48,8 +48,10 @@ export default function BarreRecherche() {
   }, [qAdresse]);
 
   return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor="recherche" className="etiquette">
+    <div className="relative">
+      {/* Le libellé reste dans la page pour les lecteurs d'écran (sr-only), mais n'est plus affiché :
+          la loupe et le texte d'exemple suffisent à l'œil. */}
+      <label htmlFor="recherche" className="sr-only">
         Rechercher un Pokémon
       </label>
       <div className="relative">
@@ -75,7 +77,7 @@ export default function BarreRecherche() {
           onChange={(evenement) => chercher(evenement.target.value)}
           placeholder="Nom ou numéro : Dracaufeu, pikachu, 25…"
           autoComplete="off"
-          className="min-h-12 w-full rounded-full border border-bordure bg-surface pl-12 pr-12 text-sm text-texte shadow-carte placeholder:text-texte-doux"
+          className="min-h-12 w-full rounded-full border border-bordure bg-surface pl-12 pr-12 text-sm text-texte shadow-carte placeholder:text-texte-discret"
         />
         <kbd
           aria-hidden="true"
@@ -84,9 +86,9 @@ export default function BarreRecherche() {
           /
         </kbd>
       </div>
-      {/* Zone toujours présente (hauteur fixe) : rien ne bouge quand le message apparaît.
+      {/* Message posé en absolute sous le champ : il ne prend aucune place, rien ne bouge quand il apparaît.
           role="status" : le message est annoncé par les lecteurs d'écran. */}
-      <p role="status" className="etiquette h-4 pl-4">
+      <p role="status" className="etiquette absolute left-4 top-full pt-0.5">
         {enAttente ? "Recherche…" : ""}
       </p>
     </div>

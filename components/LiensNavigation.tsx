@@ -7,12 +7,12 @@ import { LIENS_NAVIGATION, estLienActif } from "@/lib/navigation";
 // côté serveur (version sans lien actif) comme côté client (dans Navigation).
 export default function LiensNavigation({ cheminActif }: { cheminActif: string | null }) {
   return (
-    // Le menu est une « gélule » en verre ; sur mobile il occupe toute la largeur.
-    <ul className="flex items-center justify-between gap-1 rounded-full border border-bordure-verre bg-surface p-1 sm:justify-start">
+    // De simples onglets posés sur l'en-tête, sans cadre autour ; sur mobile ils occupent toute la largeur.
+    <ul className="flex items-center justify-between gap-1 lg:justify-start">
       {LIENS_NAVIGATION.map((lien) => {
         const actif = estLienActif(lien.href, cheminActif);
         return (
-          <li key={lien.href} className="flex-1 sm:flex-none">
+          <li key={lien.href} className="flex-1 lg:flex-none">
             <Link
               href={lien.href}
               // aria-current annonce la page en cours aux lecteurs d'écran.
@@ -20,17 +20,21 @@ export default function LiensNavigation({ cheminActif }: { cheminActif: string |
               // Mobile : icône AU-DESSUS du libellé (flex-col), comme la barre d'une appli.
               // À partir de sm : icône à gauche du libellé (flex-row).
               // `group` : l'icône réagit au survol du lien entier (group-hover).
-              // relative : le compteur de favoris se place par rapport au lien (sur téléphone).
-              className={`group relative flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-[11px] sm:min-h-10 sm:flex-row sm:gap-2 sm:px-4 sm:text-sm ${
+              // relative : le compteur de favoris et le filet de l'onglet actif se placent par rapport au lien.
+              // Onglet actif : texte plein, fond subtil, et un filet rouge dessous (pseudo-élément after:).
+              className={`group relative flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl px-2 text-[11px] sm:flex-row sm:gap-2 sm:px-3 sm:text-sm ${
                 actif
-                  ? "bg-accent font-semibold text-sur-accent shadow-lueur"
+                  ? "bg-piste font-semibold text-texte after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-accent"
                   : "font-medium text-texte-doux hover:bg-piste hover:text-texte"
               }`}
             >
-              {/* L'icône grossit un peu au survol : on n'anime que transform, et pas en animations réduites. */}
+              {/* L'icône grossit un peu au survol : on n'anime que transform, et pas en animations réduites.
+                  Sur l'onglet actif, elle prend la couleur d'accent. */}
               <IconeNavigation
                 nom={lien.icone}
-                className="size-4 transition-transform duration-200 group-hover:scale-125 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                className={`size-4 transition-transform duration-200 group-hover:scale-125 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
+                  actif ? "text-accent" : ""
+                }`}
               />
               {lien.libelle}
               {/* Le nombre de favoris, à côté de son lien (composant client : il lit le store). */}

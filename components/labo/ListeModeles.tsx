@@ -82,7 +82,7 @@ export default function ListeModeles({ modeles, idActif }: { modeles: ResumeMode
               scroll={false}
               aria-current={modele.id === idActif ? "true" : undefined}
               className={`flex min-h-11 items-center justify-between gap-2 rounded-full px-4 text-sm ${
-                modele.id === idActif ? "bg-accent font-semibold text-sur-accent" : "hover:bg-piste"
+                modele.id === idActif ? "bg-accent-plein font-semibold text-sur-accent" : "hover:bg-piste"
               }`}
             >
               <span className="truncate">

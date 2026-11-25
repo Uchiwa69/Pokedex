@@ -32,8 +32,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    // suppressHydrationWarning : next-themes ajoute la classe "dark" sur <html> avant l'hydratation,
-    // ce qui crée une différence serveur/client attendue (sur cette balise uniquement).
+    // suppressHydrationWarning : next-themes pose la classe du thème ("dark" ou "light") sur <html> avant
+    // l'hydratation, ce qui crée une différence serveur/client attendue (sur cette balise uniquement).
     <html lang="fr" suppressHydrationWarning className={`${inter.variable} ${chakra.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-fond font-sans text-texte">
         <Fournisseurs>
@@ -46,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {/* Lien d'évitement : visible seulement au focus clavier. */}
           <a
             href="#contenu"
-            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-sur-accent"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent-plein focus:px-4 focus:py-2 focus:text-sur-accent"
           >
             Aller au contenu
           </a>

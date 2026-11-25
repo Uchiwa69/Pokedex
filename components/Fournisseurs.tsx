@@ -7,10 +7,13 @@ import { ThemeProvider } from "next-themes";
 export default function Fournisseurs({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider
-      attribute="class" // pose la classe "dark" sur <html>
-      // Le site n'a plus qu'un thème, le sombre (choix de l'utilisateur). forcedTheme l'impose à tout le
-      // monde, quels que soient le réglage du système et un ancien choix mémorisé dans le navigateur.
-      forcedTheme="dark"
+      attribute="class" // pose la classe "dark" sur <html> (ou la retire pour le thème clair)
+      defaultTheme="dark" // première visite : thème sombre
+      // enableSystem={false} : on ne suit pas le réglage clair/sombre du système, c'est le bouton de
+      // l'en-tête (BoutonTheme) qui décide. Le choix est mémorisé dans le localStorage par next-themes.
+      enableSystem={false}
+      // Pas de fondu de toutes les couleurs au changement de thème : il se fait d'un coup, proprement.
+      disableTransitionOnChange
     >
       {children}
     </ThemeProvider>

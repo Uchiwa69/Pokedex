@@ -113,7 +113,7 @@ export default function ChoixAdversaires({ nombre, mode, surMode, choisis, surCh
             aria-pressed={mode === valeur}
             className={
               mode === valeur
-                ? "flex min-h-9 items-center rounded-full bg-accent px-4 text-sm font-semibold text-sur-accent shadow-lueur"
+                ? "flex min-h-9 items-center rounded-full bg-accent-plein px-4 text-sm font-semibold text-sur-accent shadow-lueur"
                 : "flex min-h-9 items-center rounded-full px-4 text-sm font-medium text-texte-doux hover:bg-piste hover:text-texte"
             }
           >

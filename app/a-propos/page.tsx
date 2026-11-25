@@ -36,12 +36,12 @@ export default function PageAPropos() {
         </p>
         {/* Crédits des composants d'interface repris ou adaptés d'autres projets. */}
         <p>
-          Le titre en particules de l&apos;accueil, la nuée de points du pied de page et la feuille
+          La nuée de points du pied de page et la feuille
           holographique des cartes de l&apos;atelier viennent de{" "}
           <a href="https://reactbits.dev" target="_blank" rel="noreferrer" className="font-medium text-accent underline">
             React Bits
           </a>{" "}
-          (composants « Particle Text », « Swarm Cursor » et « Holo Card »). Les projecteurs de l&apos;introduction sont adaptés du composant
+          (composants « Swarm Cursor » et « Holo Card »). Les projecteurs de l&apos;introduction sont adaptés du composant
           « Spotlight New » d&apos;
           <a href="https://ui.aceternity.com" target="_blank" rel="noreferrer" className="font-medium text-accent underline">
             Aceternity UI

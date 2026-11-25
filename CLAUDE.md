@@ -25,10 +25,12 @@ Code simple, lisible, commenté en français quand une notion du cours est appli
 - Données : PokéAPI https://pokeapi.co/api/v2 (lecture seule, sans clé).
 - Ajout autorisé pour l'UX : la bibliothèque motion (import depuis "motion/react"), seulement dans des composants client.
 - Tests : vitest, uniquement pour les fonctions pures de lib/combat.ts.
-- Thème : SOMBRE UNIQUEMENT (choix de l'utilisateur, novembre 2026) — next-themes avec forcedTheme="dark", plus de
-  bouton de thème. Les jetons clairs de globals.css ne servent plus. ThemeProvider dans un
+- Thème : DEUX THÈMES, sombre par défaut et clair (refonte demandée par l'utilisateur le 25 novembre 2026, qui
+  remplace l'ancien « sombre uniquement » bleu nuit + accent lavande). next-themes : `defaultTheme="dark"`,
+  `enableSystem={false}`, bascule par `BoutonTheme` (client) dans l'en-tête : les deux icônes sont dans la page et
+  c'est `dark:` qui choisit (aucun état, donc aucune erreur d'hydratation). ThemeProvider dans un
   petit composant client Fournisseurs monté dans le layout, avec suppressHydrationWarning sur <html>. Tailwind 4 :
-  `@custom-variant dark (&:where(.dark, .dark *));` dans globals.css.
+  `@custom-variant dark (&:where(.dark, .dark *));` dans globals.css. Toute retouche se vérifie DANS LES DEUX THÈMES.
 
 ## Conventions
 ```
@@ -65,7 +67,25 @@ Règles :
 - Couleurs : toujours les jetons sémantiques de @theme (bg-fond, bg-surface, border-bordure, text-texte,
   text-texte-doux, bg-piste, accent…), jamais de couleur en dur dans les composants.
 
-## Direction artistique (phase 6 — direction B « Verre holographique » choisie et appliquée)
+## Direction artistique actuelle (refonte du 25 novembre 2026 — elle PRIME sur la section « phase 6 » ci-dessous)
+- Sombre « Pokédex tech » : fond `#0F1115`, surfaces `#171A21` / `#1E232D`, texte `#F8FAFC` / `#94A3B8`.
+  Clair « Encyclopédie » : fond `#F4F5F8`, surfaces `#FFFFFF` / `#EEF1F6`, texte `#0F172A` / `#475569`.
+  Clair dans `@theme static`, sombre dans `.dark`. Surfaces OPAQUES (plus de verre translucide), bordures à 8 %.
+- UN SEUL accent, rouge, en deux jetons pour tenir 4,5:1 : `accent` = rouge qui s'écrit sur le fond (liens, icônes,
+  filets, focus : `#EF4444` sombre, `#B91C1C` clair) ; `accent-plein` = rouge des boutons remplis avec texte blanc
+  `sur-accent` (`#DC2626`, survol `accent-survol` `#B91C1C`). Blanc sur `#EF4444` ne fait que 3,8:1 : ne pas remplir
+  un bouton avec `bg-accent`. `accent-bis` = rouge clair pour les dégradés. `texte-discret` = indications seulement.
+- En-tête : onglets sans gélule autour, actif = `bg-piste` + filet rouge dessous ; une ligne à partir de `lg`.
+  `IndicateurSacoche` affiche « n/6 » (à partir de `sm`) + les 6 Pokéballs ; `BoutonTheme` à droite.
+- Accueil : `<h1>` texte « Pokédex National » + `NombreTotal` (le titre en particules React Bits est SUPPRIMÉ, fichiers
+  retirés), libellé de recherche en `sr-only`, « n Pokémon trouvés » seulement s'il y a un filtre.
+  `FiltreTypes disposition="grille"` : « Tous les types » seul sur sa ligne, puis 3 × 6 (`sm`) ou 2 × 9 (`lg`) ;
+  libellé à côté du symbole à partir de `xl`. `puce-tuile` : fond teinté par `--teinte`, survol et `:active` réactifs.
+- Cartes de la grille : mêmes éléments, halos adoucis (opacités baissées) pour rester lisibles dans les deux thèmes.
+- `Projecteurs` : lumière blanche, thème sombre seulement. Écran du Pokédex 3D : couleur lue sur `--color-fond`.
+  `NueeCurseur` relit ses couleurs au changement de thème (MutationObserver sur la classe de `<html>`).
+
+## Direction artistique d'origine (phase 6 — direction B « Verre holographique », en partie remplacée ci-dessus)
 - Jetons dans app/globals.css (@theme static + bloc .dark) : fond, surface (verre translucide), bordure, bordure-verre,
   texte, texte-doux, piste, accent (bleu-violet), accent-bis, sur-accent, danger, shadow-carte, shadow-lueur.
 - Fond du site : UNI (choix de l'utilisateur) — pas de grille ni de lueurs derrière le contenu.
@@ -190,8 +210,8 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   `NueeCurseur` (client, contenu serveur passé en `children`) autour de `components/SwarmCursor.tsx`, REPRIS TEL QUEL de React Bits (exclu d'ESLint, ne pas le
   réécrire). Couleurs lues sur les jetons accent / accent-bis, nombre de points réduit pour une bande étroite,
   rien de dessiné en animations réduites. Menu : Tous, Favoris, Sacoche, Combat, Atelier, Quiz (ordre voulu).
-- En-tête et pied de page : fond `bg-cadre` (jeton `--color-cadre`, bleu-noir plus sombre que `fond` ; noir pur
-  écarté car il jure avec le site teinté bleu). L'en-tête reste en verre flouté (`bg-cadre/80`).
+- En-tête et pied de page : fond `bg-cadre` (jeton `--color-cadre` : même couleur que la page en sombre, blanc en
+  clair). L'en-tête reste flouté (`bg-cadre/85`).
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif

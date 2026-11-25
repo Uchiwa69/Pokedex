@@ -8,7 +8,7 @@ type Modele = typeof import("@/lib/labo/pokedex3d");
 
 // Couleur de fond du site (--color-fond). L'écran de l'appareil la reprend : la vraie page, affichée par-dessus,
 // a ainsi le même fond qu'en vrai.
-const FOND = 0x070a1c;
+const FOND_PAR_DEFAUT = "#0f1115"; // si le jeton est illisible : le fond du thème sombre
 
 // Rend la main au navigateur un instant : la préparation est découpée en étapes pour ne pas figer la page
 // d'un seul bloc (il peut dessiner et répondre au visiteur entre deux étapes).
@@ -74,7 +74,9 @@ export async function preparerScenePokedex(THREE: Trois, modele: Modele, rendu: 
   });
   const plaqueEcran = ecran as import("three").Mesh | null;
   if (plaqueEcran) {
-    plaqueEcran.material = new THREE.MeshBasicMaterial({ color: FOND, toneMapped: false });
+    // La couleur est lue sur le jeton --color-fond : elle suit le thème (sombre ou clair) en cours.
+    const fond = getComputedStyle(document.documentElement).getPropertyValue("--color-fond").trim() || FOND_PAR_DEFAUT;
+    plaqueEcran.material = new THREE.MeshBasicMaterial({ color: fond, toneMapped: false });
     // Le cadre gris clair autour de l'écran est retiré (choix de l'utilisateur) : dans le groupe de l'écran, on ne
     // garde visible que la plaque. Elle est agrandie pour occuper la place du cadre (2,16 × 1,66 → 2,42 × 1,92).
     for (const piece of plaqueEcran.parent?.children ?? []) piece.visible = piece === plaqueEcran;
