@@ -135,9 +135,11 @@ void main() {
 
     // 1. Scène de base (fond texturé + Dracaufeu intégré + queue animée)
     float vignette = smoothstep(1.35, 0.15, length(pos * vec2(0.75, 1.0)));
-    float brumeFond = fbm(pos * 2.6 + vec2(uTemps * 0.08, -uTemps * 0.12), 3);
-    vec3 couleurFond = uFond * (0.65 + 0.45 * vignette) + vec3(0.07, 0.025, 0.008) * brumeFond * vignette;
-    float contreJour = smoothstep(uTaille * 0.95, uTaille * 0.12, length(pos - uCentre));
+    // Réglage du projet : la brume en taches du fond est retirée (elle dessinait des zones sombres aux bords
+    // nets derrière la tête) et le halo de contre-jour s'éteint plus loin et plus doucement.
+    vec3 couleurFond = uFond * (0.65 + 0.45 * vignette) + vec3(0.035, 0.012, 0.004) * vignette;
+    float contreJour = smoothstep(uTaille * 1.35, 0.0, length(pos - uCentre));
+    contreJour *= contreJour;
     couleurFond += vec3(0.24, 0.07, 0.015) * contreJour;
 
     vec2 posSol = (pos - (uCentre + vec2(0.02, -uTaille * 0.44))) / vec2(uTaille * 0.42, uTaille * 0.07);
@@ -170,6 +172,8 @@ void main() {
         smoothstep(tailleAnimee * 0.9, 0.05, distGueule) * phaseSouffle * 0.35
     );
     // Ajout du projet : éclairage adouci (les nouvelles images ont déjà la gueule incandescente).
+    // Tramage : un grain invisible (moins d'un niveau de couleur) qui casse les « marches » des dégradés sombres.
+    couleurFond += (hachage1(gl_FragCoord.xy) - 0.5) / 255.0 * 1.6;
     vec3 couleurScene = mix(couleurFond, tex.rgb * (0.92 + 0.12 * contreJour) + eclairageFeu * alphaSprite, alphaSprite);
 
     // Queue animée
