@@ -54,12 +54,30 @@ export function normaliser(texte: string): string {
     .replace(/^-+|-+$/g, ""); // pas de tiret au début ni à la fin
 }
 
+// true si le texte cherché est un numéro de Pokémon : « 25 », « #25 », « 0025 ».
+export function estUnNumero(texte: string): boolean {
+  return /^#?\d+$/.test(texte.trim());
+}
+
 // Garde les noms qui correspondent au texte cherché, en anglais OU en français.
 // - noms : les identifiants anglais de l'API ("charizard", "mr-mime") ;
 // - nomsFr : pour chaque identifiant, son nom français déjà normalisé ("dracaufeu", "m-mime").
+// - tousLesNoms : la liste complète dans l'ordre du Pokédex (le 25e nom est le n° 25). Elle sert à la
+//   recherche par numéro, et doit être fournie quand « noms » n'est qu'une partie de la liste (un type).
 // « drac » trouve Dracaufeu, « char » trouve Charizard, « evoli » trouve Évoli.
-export function filtrerNoms(noms: string[], q: string, nomsFr: Record<string, string> = {}): string[] {
+// « 25 », « #25 » ou « 0025 » trouvent Pikachu, puis les numéros qui commencent par 25 (250, 251…).
+export function filtrerNoms(noms: string[], q: string, nomsFr: Record<string, string> = {}, tousLesNoms: string[] = noms): string[] {
   const cherche = normaliser(q);
   if (!cherche) return noms;
-  return noms.filter((nom) => nom.includes(cherche) || (nomsFr[nom] ?? "").includes(cherche));
+  const parNom = noms.filter((nom) => nom.includes(cherche) || (nomsFr[nom] ?? "").includes(cherche));
+
+  // Que des chiffres : c'est un numéro. Number retire les zéros du début ("0025" → 25).
+  if (!/^\d+$/.test(cherche)) return parNom;
+  const numero = String(Number(cherche));
+  // Table nom → numéro (la position dans la liste complète, à partir de 1).
+  const numeros = new Map(tousLesNoms.map((nom, index) => [nom, String(index + 1)]));
+  const parNumero = noms.filter((nom) => numeros.get(nom)?.startsWith(numero));
+  // Les numéros d'abord (le numéro exact arrive en tête : la liste est dans l'ordre), puis les rares noms
+  // qui contiennent ce chiffre (« porygon2 »), sans doublon.
+  return [...parNumero, ...parNom.filter((nom) => !parNumero.includes(nom))];
 }

@@ -9,6 +9,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRappelTemporise } from "@/hooks/useRappelTemporise";
 import { mettreEnForme, type Pokemon } from "@/lib/conversion";
+import { estUnNumero } from "@/lib/recherche";
 import { TYPES } from "@/lib/types";
 import { useCartes } from "@/stores/cartes";
 
@@ -31,7 +32,8 @@ export default function ChoixPokemonAtelier({ choisi }: Props) {
   // Debounce de 250 ms : on attend une pause dans la frappe avant d'interroger le serveur.
   const chercher = useRappelTemporise(async (texte: string) => {
     const numero = ++derniereRecherche.current;
-    if (texte.trim().length < 2) {
+    // Moins de 2 lettres : rien à chercher, sauf si c'est un numéro (« 6 »).
+    if (texte.trim().length < 2 && !estUnNumero(texte)) {
       setSuggestions([]);
       return;
     }
@@ -67,7 +69,7 @@ export default function ChoixPokemonAtelier({ choisi }: Props) {
           type="search"
           autoComplete="off"
           onChange={(evenement) => chercher(evenement.target.value)}
-          placeholder="Nom français ou anglais : Dracaufeu, pikachu…"
+          placeholder="Nom ou numéro : Dracaufeu, pikachu, 25…"
           className="min-h-12 w-full rounded-full border border-bordure bg-surface px-5 text-sm text-texte placeholder:text-texte-doux"
         />
         {suggestions.length > 0 && (
@@ -79,7 +81,10 @@ export default function ChoixPokemonAtelier({ choisi }: Props) {
                   onClick={refermer}
                   className="flex min-h-11 items-center justify-between gap-2 rounded-2xl border border-bordure bg-surface px-4 py-2 hover:bg-piste"
                 >
-                  <span className="truncate font-titre text-sm font-semibold">{pokemon.nomFr}</span>
+                  <span className="truncate font-titre text-sm font-semibold">
+                    <span className="etiquette mr-2">N° {String(pokemon.id).padStart(4, "0")}</span>
+                    {pokemon.nomFr}
+                  </span>
                   <span className="etiquette shrink-0">{pokemon.types.map((type) => TYPES[type].libelle).join(" · ")}</span>
                 </Link>
               </li>

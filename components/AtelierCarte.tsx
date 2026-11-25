@@ -6,7 +6,7 @@
 // Les attaques se posent sur la carte par GLISSER-DÉPOSER (API native du navigateur : draggable, onDragStart,
 // onDragOver, onDrop), et aussi avec un bouton « Ajouter », pour le clavier et les écrans tactiles.
 
-import { useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useState, type DragEvent } from "react";
 import Carte3D, { type PersoCarte } from "@/components/Carte3D";
 import {
   adresseChromatique,
@@ -45,6 +45,12 @@ export default function AtelierCarte({ pokemon, attaques }: Props) {
 
   // Modifie une partie de la carte et l'enregistre (le store applique les règles : 2 attaques au plus…).
   const modifier = (changement: Partial<CartePerso>) => enregistrer(pokemon.nom, { ...carte, ...changement, nomPokemon: pokemon.nomFr });
+
+  // Une carte créée avant que le nom français soit noté : on le complète à l'ouverture, pour que la liste
+  // « Mes cartes » écrive « Dracaufeu » et non l'identifiant anglais « Charizard ».
+  useEffect(() => {
+    if (enregistree && !enregistree.nomPokemon) enregistrer(pokemon.nom, { ...enregistree, nomPokemon: pokemon.nomFr });
+  }, [enregistree, enregistrer, pokemon.nom, pokemon.nomFr]);
 
   // Où une attaque glissée est en train de passer : "carte", un numéro d'emplacement, ou null.
   const [survol, setSurvol] = useState<"carte" | number | null>(null);

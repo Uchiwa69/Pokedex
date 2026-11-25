@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRappelTemporise } from "@/hooks/useRappelTemporise";
 import type { Pokemon } from "@/lib/conversion";
+import { estUnNumero } from "@/lib/recherche";
 import { styleTeinte } from "@/lib/teinte";
 
 // Nombre de Pokémon du Pokédex national (pour tirer un numéro au hasard dans la roulette).
@@ -36,7 +37,8 @@ export default function ChoixAdversaires({ nombre, mode, surMode, choisis, surCh
   // Debounce de 250 ms : on attend une pause dans la frappe avant d'interroger le serveur.
   const chercher = useRappelTemporise(async (texte: string) => {
     const numero = ++derniereRecherche.current;
-    if (texte.trim().length < 2) {
+    // Moins de 2 lettres : rien à chercher, sauf si c'est un numéro (« 6 »).
+    if (texte.trim().length < 2 && !estUnNumero(texte)) {
       setSuggestions([]);
       return;
     }

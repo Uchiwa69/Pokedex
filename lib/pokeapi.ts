@@ -178,7 +178,8 @@ export async function recupererListe(q: string, type: NomType | null, page: numb
 
   // 2. Recherche sur les noms, anglais ou français (on ne charge pas encore les Pokémon).
   //    La table des noms français n'est lue que s'il y a bien une recherche.
-  const trouves = q ? filtrerNoms(noms, q, await recupererNomsFrancais()) : noms;
+  //    La liste complète (en cache) donne le numéro de chaque Pokémon, pour la recherche par numéro.
+  const trouves = q ? filtrerNoms(noms, q, await recupererNomsFrancais(), await recupererTousLesNoms()) : noms;
 
   // 3. Pagination. Une page trop grande (?page=9999) est ramenée à la dernière page.
   const total = trouves.length;
