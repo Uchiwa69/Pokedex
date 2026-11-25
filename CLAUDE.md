@@ -183,6 +183,9 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   `useCri(url, surEchec)` : les cris sont en .ogg, illisible sur les Safari d'avant 2025 → `BoutonCri` l'annonce au
   lieu de ne rien faire ; champs de saisie à 16 px sur écran tactile (`@media (pointer: coarse)` dans globals.css),
   sinon iOS zoome la page au focus. Tailwind 4 impose de toute façon Safari 16.4+ / Firefox 128+.
+- Cahier des charges du cours (grille sur 20, 19 étapes de TP) vérifié le 25 novembre 2026 : tout est couvert.
+  `CompteurFavoris` (client) affiche le nombre de favoris dans l'en-tête, exigé par l'étape 15. Le README doit
+  rester exact (20 par page, shaders, atelier) : le mettre à jour quand une fonctionnalité change.
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif

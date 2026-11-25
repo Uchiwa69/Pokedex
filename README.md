@@ -2,23 +2,29 @@
 
 Un Pokédex complet construit avec **Next.js 16 (App Router)**, **TypeScript** et **Tailwind CSS 4**, à partir des
 données publiques de la [PokéAPI](https://pokeapi.co) : liste, fiches détaillées, favoris, équipe, combats au tour
-par tour et quiz. Projet de fin de cours.
+par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
 
 **Démo en ligne : https://pokedex-pi-coral-47.vercel.app**
 
 ## Fonctionnalités
 
-- **Liste des 1 025 Pokémon** en grille paginée (24 par page), avec noms français.
-- **Recherche par nom français ou anglais**, même incomplet, sans tenir compte des accents ni des majuscules
-  (« evoli » trouve Évoli, « char » trouve Charizard). Recherche, **filtre par type** et **pagination** sont
+- **Introduction en 3D** : un Pokédex géant s'ouvre au défilement, puis on plonge dans son écran, où s'affiche le
+  site. Jouée une fois par visite, jamais en animations réduites.
+- **Liste des 1 025 Pokémon** en grille paginée (20 par page), avec noms français, sous un titre dessiné en
+  particules.
+- **Recherche par nom français ou anglais, ou par numéro**, même incomplet, sans tenir compte des accents ni des
+  majuscules (« evoli » trouve Évoli, « char » trouve Charizard, « 25 » trouve Pikachu). Recherche, **filtre par type** et **pagination** sont
   entièrement pilotés par l'adresse (`?q=&type=&page=`) et validés côté serveur.
 - **Filtre par type en tuiles** : un symbole original par type. Le type choisi est marqué actif immédiatement, sa
-  liste est préchargée au survol, et un **effet propre à chaque type** traverse l'écran (pluie pour Eau, braises
-  pour Feu, éclairs pour Électrik, flocons pour Glace…), entièrement en CSS.
+  liste est préchargée au survol, et un **éclat propre à chaque type** traverse l'écran (flammes pour Feu,
+  caustiques pour Eau, éclairs pour Électrik, givre pour Glace…) : un shader plein écran, avec un repli en CSS.
 - **Fiche détaillée** : **carte holographique en 3D** que l'on fait tourner à 360° (reflet qui suit le mouvement,
-  dos original), types, taille, poids, six statistiques, sprite animé (face / dos), cri, chaîne d'évolution
+  effet animé propre au type du Pokémon, dos original), types, taille, poids, six statistiques, sprite animé (face / dos), cri, chaîne d'évolution
   cliquable et **attaques apprises par niveau** (type, catégorie, puissance, précision, PP, description).
-- **Favoris** et **sacoche** conservés dans le navigateur ; la sacoche est une « arène d'équipe » : 6 socles animés,
+- **Atelier** : on compose sa propre carte holographique — style (classique, full art, chromatique, or), surnom,
+  motif brillant, effet de type, et jusqu'à deux attaques posées par glisser-déposer. La carte est enregistrée
+  dans le navigateur.
+- **Favoris** (leur nombre s'affiche dans l'en-tête) et **sacoche** conservés dans le navigateur ; la sacoche est une « arène d'équipe » : 6 socles animés,
   détail du membre sélectionné, surnoms, 4 attaques par Pokémon, ordre modifiable par glisser-déposer ou au clavier.
 - **Mode combat** : ta sacoche contre une équipe tirée au hasard, au niveau 50 — efficacité des 18 types, dégâts,
   précision, ordre selon la vitesse, IA adverse, journal de combat accessible, et **effets d'attaque dessinés sur
@@ -41,7 +47,7 @@ par tour et quiz. Projet de fin de cours.
 | État client | Zustand (`persist` + réhydratation après l'hydratation React) |
 | Thème | next-themes (thème sombre imposé avec `forcedTheme`) |
 | Animations | motion (`motion/react`) et CSS, `prefers-reduced-motion` respecté |
-| 3D | three.js, pour la carte holographique de la fiche (chargée après la page) |
+| 3D | three.js, chargé à la demande : carte holographique, effets de type (shaders GLSL), introduction |
 | Tests | vitest (fonctions pures de `lib/combat.ts` et de `lib/labo/effets2d.ts`) |
 | Données | PokéAPI v2 (lecture seule, sans clé) |
 | Hébergement | Vercel |
@@ -49,12 +55,12 @@ par tour et quiz. Projet de fin de cours.
 ## Architecture
 
 ```
-app/          Routes : liste, fiche /pokemon/[nom], favoris, sacoche, combat, quiz, à propos, routes /api
+app/          Routes : liste, fiche /pokemon/[nom], favoris, sacoche, combat, quiz, atelier, à propos, routes /api
 components/   Composants d'interface — serveur par défaut, client seulement pour l'interactivité
 hooks/        Hooks réutilisables (debounce, raccourci clavier, chargement client, cri…)
 lib/          Accès à la PokéAPI, conversion des données, validation de l'adresse, moteur de combat,
-              symboles et recettes d'effet des types, dessin de la carte 3D, effets d'attaque (lib/labo)
-stores/       Stores Zustand (favoris, sacoche) avec leurs règles métier
+              symboles des types, dessin de la carte 3D, effets par type (lib/effets-types), effets d'attaque
+stores/       Stores Zustand (favoris, sacoche, cartes de l'atelier) avec leurs règles métier
 ```
 
 Quelques principes suivis dans le code :
@@ -63,13 +69,13 @@ Quelques principes suivis dans le code :
 - **Données mises en cache côté serveur** (`"use cache"` + `cacheLife("days")`, et `"use cache: remote"` pour le
   cache partagé de l'hébergeur) ; les 151 premières fiches sont générées au build avec `generateStaticParams`.
 - **Appels à l'API tolérants aux pannes passagères** : un appel en échec est retenté jusqu'à trois fois, pour
-  qu'une seule erreur sur les 24 appels d'une page ne fasse pas tomber toute la page.
+  qu'une seule erreur sur les 20 appels d'une page ne fasse pas tomber toute la page.
 - **Tout ce qui dépend de la requête** (`params`, `searchParams`) est lu sous `<Suspense>`.
 - **L'état partageable vit dans l'adresse** : recherche, type, page, onglet de la fiche.
 - **Réaction immédiate au clic** : le filtre affiche tout de suite le type choisi (`useOptimistic`,
   `useTransition`) pendant que le serveur prépare la liste, préchargée dès le survol (`<Link prefetch>`).
 - **Les données restent en anglais** (`fire`) et ne sont traduites qu'à l'affichage.
-- **Les règles métier vivent dans les stores** (6 Pokémon maximum, pas de doublon).
+- **Les règles métier vivent dans les stores** (6 Pokémon maximum, pas de doublon, 2 attaques par carte).
 - **Le moteur de combat est fait de fonctions pures** : le hasard leur est passé en argument, ce qui les rend
   testables.
 - **Le plus lourd est chargé le plus tard** : three.js n'est téléchargé qu'une fois la fiche affichée et le
@@ -77,12 +83,18 @@ Quelques principes suivis dans le code :
 
 ## Qualité
 
-Audit Lighthouse (mobile) sur le site déployé :
+Audit Lighthouse (mobile) sur la version de production, le 25 novembre 2026 :
 
-| Page | Performance | Accessibilité | Bonnes pratiques | SEO |
-| --- | --- | --- | --- | --- |
-| Accueil | 100 | 100 | 100 | 100 |
-| Fiche (avec la carte 3D) | 89 | 100 | 100 | 100 |
+| Page | Accessibilité | Bonnes pratiques | SEO |
+| --- | --- | --- | --- |
+| Accueil | 100 | 100 | 100 |
+| Fiche | 100 | 100 | 100 |
+| Sacoche | 100 | 100 | 100 |
+| Favoris | 100 | 100 | 100 |
+| Atelier | 100 | 100 | 100 |
+
+Le site a aussi été parcouru sans erreur dans les moteurs de Safari (WebKit) et de Firefox, sur ordinateur et en
+largeur de téléphone.
 
 30 tests unitaires couvrent le moteur de combat et le choix des effets d'attaque (`npm test`).
 
@@ -128,6 +140,10 @@ purement statique.
 
 - Données, illustrations, sprites et cris : [PokéAPI](https://pokeapi.co). Sprites animés issus de Pokémon Showdown.
 - Noms français pour la recherche : fichier de données du dépôt [PokeAPI/pokeapi](https://github.com/PokeAPI/pokeapi).
+- Animations d'attaques du mode combat : [Pokémon Showdown](https://github.com/smogon/pokemon-showdown-client) (CC0).
+- Titre en particules et feuille holographique de l'atelier : composants de [React Bits](https://reactbits.dev).
+  Projecteurs de l'introduction : adaptés d'[Aceternity UI](https://ui.aceternity.com).
+- Les effets par type (shaders GLSL) ont été générés avec Gemini, puis corrigés et intégrés pour ce projet.
 - Les symboles des types, le décor et le dos de la carte holographique sont des dessins originaux réalisés pour
   ce projet.
 - Pokémon est une marque de Nintendo / Game Freak / The Pokémon Company. Projet étudiant non commercial, sans

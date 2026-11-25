@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CompteurFavoris from "@/components/CompteurFavoris";
 import IconeNavigation from "@/components/IconeNavigation";
 import { LIENS_NAVIGATION, estLienActif } from "@/lib/navigation";
 
@@ -19,7 +20,8 @@ export default function LiensNavigation({ cheminActif }: { cheminActif: string |
               // Mobile : icône AU-DESSUS du libellé (flex-col), comme la barre d'une appli.
               // À partir de sm : icône à gauche du libellé (flex-row).
               // `group` : l'icône réagit au survol du lien entier (group-hover).
-              className={`group flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-[11px] sm:min-h-10 sm:flex-row sm:gap-2 sm:px-4 sm:text-sm ${
+              // relative : le compteur de favoris se place par rapport au lien (sur téléphone).
+              className={`group relative flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-[11px] sm:min-h-10 sm:flex-row sm:gap-2 sm:px-4 sm:text-sm ${
                 actif
                   ? "bg-accent font-semibold text-sur-accent shadow-lueur"
                   : "font-medium text-texte-doux hover:bg-piste hover:text-texte"
@@ -31,6 +33,8 @@ export default function LiensNavigation({ cheminActif }: { cheminActif: string |
                 className="size-4 transition-transform duration-200 group-hover:scale-125 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
               />
               {lien.libelle}
+              {/* Le nombre de favoris, à côté de son lien (composant client : il lit le store). */}
+              {lien.href === "/favoris" && <CompteurFavoris />}
             </Link>
           </li>
         );
