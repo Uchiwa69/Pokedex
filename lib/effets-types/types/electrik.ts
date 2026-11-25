@@ -25,6 +25,13 @@ float arcElectrique(vec2 p, vec2 a, vec2 b, float t, float graine, float epaisse
   return coeur + halo;
 }
 
+// Ligne brisée : des valeurs au hasard reliées par des segments DROITS (pas de lissage, contrairement à
+// bruitValeur). C'est ce qui donne les angles vifs d'un éclair. Résultat entre -0.5 et 0.5.
+float ligneBrisee(float y, float graine) {
+  float cran = floor(y);
+  return mix(hachage11(cran + graine), hachage11(cran + 1.0 + graine), fract(y)) - 0.5;
+}
+
 vec4 effetType(vec2 uv, float proportions, float temps, vec2 inclinaison,
                float progression, vec2 origine, vec3 teinte) {
   float modeEclat = estModeEclat(progression);
@@ -42,19 +49,32 @@ vec4 effetType(vec2 uv, float proportions, float temps, vec2 inclinaison,
   float haloTotal = 0.0;
 
   if (modeEclat > 0.5) {
+    // Éclat : plusieurs éclairs VERTICAUX qui traversent l'écran de haut en bas, comme la foudre.
+    // (Avant : quatre arcs partant de la tuile. En s'allongeant, leurs zigzags s'étiraient et devenaient
+    // de grosses courbes lisses.) Ici le tracé de chaque éclair est fixe : il garde ses angles vifs.
     float pEclat = clamp(progression, 0.0, 1.0);
     vec2 p = coordonneesIsotropes(uv, origine, proportions);
-    float portee = smoothstep(0.0, 0.38, pEclat) * 1.45;
-    float attenuationFin = 1.0 - smoothstep(0.45, 1.0, pEclat);
 
-    int nbArcs = uQualite > 0.35 ? 4 : 2;
-    for (int i = 0; i < 4; i++) {
-      if (i >= nbArcs) break;
-      float angle = float(i) * (DEUX_PI / float(nbArcs)) + 0.42 + hachage11(float(i)) * 0.5;
-      vec2 cible = vec2(cos(angle), sin(angle)) * portee;
-      float arc = arcElectrique(p, vec2(0.0), cible, t * 1.4, float(i) + 1.0, 0.011);
-      float masquePortee = 1.0 - smoothstep(portee - 0.08, portee + 0.04, length(p));
-      coeurTotal += arc * masquePortee * attenuationFin;
+    int nbEclairs = uQualite > 0.35 ? 5 : 3;
+    for (int i = 0; i < 5; i++) {
+      if (i >= nbEclairs) break;
+      float rang = float(i);
+      // Un éclair passe par la tuile cliquée, les autres de part et d'autre : 0, +0.42, -0.42, +0.84, -0.84.
+      float cote = mod(rang, 2.0) < 0.5 ? -1.0 : 1.0;
+      float ecart = ceil(rang * 0.5) * 0.42 * cote;
+      // Le tracé : de grands zigzags, plus de petits crans par-dessus.
+      float trace = ligneBrisee(p.y * 7.0 + rang * 3.7, rang * 17.0) * 0.20
+                  + ligneBrisee(p.y * 19.0, rang * 31.0 + 5.0) * 0.06;
+      float dist = abs(p.x - ecart - trace);
+
+      // Les éclairs tombent en trois temps décalés (jamais plus de 3 flashs par seconde) : un coup vif,
+      // puis l'éclair reste allumé plus faiblement jusqu'à l'extinction générale.
+      float age = pEclat - mod(rang, 3.0) * 0.09;
+      float flash = smoothstep(0.0, 0.03, age) * (0.45 + 0.55 * exp(-max(age, 0.0) * 6.0));
+
+      float coeur = smoothstep(0.006, 0.001, dist);
+      float halo = exp(-dist / 0.03) * 0.5;
+      coeurTotal += (coeur + halo) * flash;
     }
 
     float noyau = exp(-length(p) * 6.5) * (1.0 - smoothstep(0.05, 0.55, pEclat));
