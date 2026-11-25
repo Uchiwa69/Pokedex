@@ -17,8 +17,9 @@ export type Motif = (typeof MOTIFS)[number];
 
 // Total des six statistiques → motif. Repères : Pikachu 320, Dracaufeu 534, oiseaux légendaires 580, Mewtwo 680.
 export function motifSelonPuissance(total: number): Motif {
-  if (total < 320) return "arc-en-ciel"; // simple voile irisé
-  if (total < 420) return "paillettes";
+  // (Le motif « paillettes » n'est plus attribué seul : ses points multicolores sur toute la carte faisaient
+  // guirlande. Il ne sert plus qu'à l'intérieur du motif « or », teinté de métal.)
+  if (total < 420) return "arc-en-ciel"; // simple voile irisé
   if (total < 490) return "etoiles";
   if (total < 535) return "rayons";
   if (total < 580) return "cosmos";
@@ -52,8 +53,8 @@ ${GLSL_COMMUN}
 uniform int uMotif;        // 0 arc-en-ciel, 1 paillettes, 2 étoiles, 3 rayons, 4 cosmos, 5 or
 uniform float uIntensite;  // force de la feuille, de 0 à 1
 uniform float uEchelle;    // taille du motif (1 = normale)
-uniform float uBordure;    // force des paillettes du bord
-uniform float uCadre;      // largeur du bord pailleté, en part de la largeur de la carte
+uniform float uBordure;    // force de la poussière brillante du bord
+uniform float uCadre;      // largeur du bord brillant, en part de la largeur de la carte
 uniform float uRayon;      // arrondi des coins, en part de la largeur
 uniform vec3 uMetal;       // couleur du métal de la feuille
 uniform float uPenche;     // 0 = carte vue bien de face, 1 = vue par la tranche
@@ -185,27 +186,17 @@ Feuille motifOr(vec2 p) {
   return Feuille(gravure, 0.9, 0.4, vec2(0.0));
 }
 
-// Paillettes du bord de la carte : de petits hexagones colorés, puis une poussière de points blancs.
-// Chacun a sa propre pente (« facette ») : il ne s'allume que lorsque la lumière tombe sous le bon angle.
-vec3 eclatsBordure(vec2 p, vec3 miChemin, vec2 balayage, float eveil) {
-  vec2 g = p * 62.0;
-  vec2 cellule = floor(g);
-  vec2 d = fract(g) - 0.5 - (hasard2(cellule) - 0.5) * 0.36;
-  float tour = hasard(cellule + 3.0) * TAU;
-  d = mat2(cos(tour), -sin(tour), sin(tour), cos(tour)) * d;
-  vec2 a = abs(d);
-  float hexagone = max(a.x * 0.866 + a.y * 0.5, a.y);
-  float taille = mix(0.22, 0.38, hasard(cellule + 2.0));
-  float piece = smoothstep(taille, taille - 0.07, hexagone) * step(0.42, hasard(cellule + 4.0));
-  vec3 facette = normalize(vec3((hasard2(cellule + 6.0) - 0.5) * 0.9, 1.0));
-  float flash = pow(max(dot(facette, miChemin), 0.0), 6.0);
-  vec3 teinte = irisation(dot(balayage, vec2(cos(tour), sin(tour))) * 1.2 + dot(balayage, vec2(0.8, 0.6)) * 0.8 + hasard(cellule + 8.0) * 0.5);
-  vec3 couleur = piece * teinte * (0.3 + 1.6 * flash) * eveil;
+// Poussière brillante du bord de la carte : de minuscules points blancs. Chacun a sa propre pente
+// (« facette ») et ne s'allume que lorsque la lumière tombe sous le bon angle : le bord scintille quand la
+// carte bouge, sans rien montrer au repos.
+// (Le composant d'origine y ajoutait de gros hexagones colorés, toujours visibles : sur notre bord sombre,
+// ils dessinaient une guirlande de points multicolores autour de la carte. Ils ont été retirés.)
+float poussiereBordure(vec2 p, vec3 miChemin) {
   vec2 fin = p * 210.0;
   vec2 grain = floor(fin);
   float point = smoothstep(0.24, 0.0, length(fract(fin) - 0.5 - (hasard2(grain) - 0.5) * 0.5)) * step(0.72, hasard(grain + 1.0));
-  float flashPoint = pow(max(dot(normalize(vec3((hasard2(grain + 2.0) - 0.5) * 0.9, 1.0)), miChemin), 0.0), 10.0);
-  return couleur + vec3(1.2) * point * flashPoint * (1.0 - piece);
+  float flash = pow(max(dot(normalize(vec3((hasard2(grain + 2.0) - 0.5) * 0.9, 1.0)), miChemin), 0.0), 10.0);
+  return 1.2 * point * flash;
 }
 
 void main() {
@@ -276,8 +267,8 @@ void main() {
     alpha = clamp(force * reglage.w, 0.0, 1.0);
     couleur = pow(clamp(feuille, 0.0, 1.0), vec3(1.0 / 2.2)) * alpha;
   }
-  // Le bord : paillettes et léger voile de métal, simplement ajoutés.
-  couleur += eclatsBordure(p, miChemin, balayage, mix(0.55, 1.0, penchee)) * uBordure * cadre;
+  // Le bord : poussière brillante et léger voile de métal, simplement ajoutés.
+  couleur += vec3(poussiereBordure(p, miChemin)) * uBordure * cadre;
   couleur += uMetal * voile * 0.12 * cadre;
 
   gl_FragColor = vec4(couleur * uForce, alpha * uForce);

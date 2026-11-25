@@ -110,9 +110,10 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   `effetType` par type, `index.ts` = table, zones calmes, assemblage). C'est une couche additive À PART, entre la face
   et le reflet : le reflet d'origine de `Carte3D` ne doit pas être modifié (à `uForce` = 0, carte d'origine).
   Feuille holographique (`lib/effets-types/feuille.ts`, adaptée du « HoloCard » de React Bits) : couche de la face
-  avant, SOUS l'effet du type (`renderOrder` 1/2/3 : feuille, effet, reflet), en alpha prémultiplié. Bord pailleté +
-  motif choisi par la PUISSANCE (total des stats, `motifSelonPuissance` : arc-en-ciel, paillettes, étoiles, rayons,
-  cosmos, or). Elle dort carte de face et s'éveille quand elle penche ; force réglée par `uIntensite` (0.5).
+  avant, SOUS l'effet du type (`renderOrder` 1/2/3 : feuille, effet, reflet), en alpha prémultiplié. Fine poussière
+  blanche sur le bord + motif choisi par la PUISSANCE (total des stats, `motifSelonPuissance` : arc-en-ciel, étoiles,
+  rayons, cosmos, or). Refusé par l'utilisateur (« guirlande ») : les hexagones multicolores du bord et le motif
+  « paillettes » seul — ne pas les remettre. Elle dort carte de face et s'éveille quand elle penche ; force réglée par `uIntensite` (0.5).
   Shaders fournis par l'utilisateur (générés avec Gemini), corrigés ici : eau (voile uniforme), acier (moiré, `fwidth`).
   Filtres de l'accueil : le mode « éclat » des mêmes fonctions joue le FOND de l'effet (`lib/effets-types/eclat.ts` :
   un seul canvas WebGL plein écran réutilisé, shader préparé au survol/focus de la tuile par `preparerEclat`).
