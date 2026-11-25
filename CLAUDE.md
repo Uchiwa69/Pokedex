@@ -217,7 +217,9 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   (`chrome.exe --headless=new --window-size=1280,800 --screenshot=... URL`).
 - Audit : `npx lighthouse URL --output=json --chrome-flags="--headless=new"` (émulation mobile, capture finale incluse).
 - Le README n'a plus de captures (choix de l'utilisateur).
-- PROTOTYPE (branche `refonte`, pas encore sur l'accueil) : séquence « feu contre eau » au défilement, `/labo/elements`.
-  `ScenesElements` (client : section de 350svh + scène `sticky`, progression 0→1 lue à chaque image) et
-  `lib/scenes-elements.ts` (UN shader plein écran : Dracaufeu, boule de feu, cendres, Tortank, jets, lavage ; les deux
-  illustrations sont des textures). Animations réduites ou pas de WebGL : deux illustrations fixes.
+- PROTOTYPE (branche `refonte`, pas encore sur l'accueil) : séquence d'ouverture « la page brûle », `/labo/elements?v=`.
+  `ScenesElements` (client) enveloppe la page : elle est `sticky` et suivie d'un bloc vide de 250svh (PAS un padding : un
+  élément collant ne glisse que dans le contenu de son parent) ; un canvas transparent par-dessus, progression 0→1 lue
+  à chaque image. `lib/scenes-feu/` : 3 shaders fournis par l'utilisateur (Gemini : cinema, pyroclastique, leger), repris
+  tels quels, sortie en alpha prémultiplié. Tortank et le jet d'eau : abandonnés (choix de l'utilisateur).
+  Animations réduites ou pas de WebGL : pas de séquence.
