@@ -1,4 +1,4 @@
-// Animation du texte posé à côté de Dracaufeu (components/ScenesElements.tsx), liée au défilement.
+// Animation du texte posé à côté de Dracaufeu (components/SequenceFeu.tsx), liée au défilement.
 // Adapté du code fourni avec les shaders (généré avec Gemini) : le titre est découpé en lettres ; celles de
 // droite, les plus proches de la gueule, rougissent, s'élèvent et se dispersent avant celles de gauche. Les
 // autres blocs (étiquette, description, chiffres) chauffent puis partent en cendres l'un après l'autre.

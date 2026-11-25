@@ -1,21 +1,14 @@
-// Séquence d'ouverture « la page brûle » (components/ScenesElements.tsx) : Dracaufeu crache un souffle de
-// flammes qui envahit l'écran, puis l'écran se consume comme une feuille de papier et laisse voir la vraie page.
+// Séquence de fin de page « l'écran brûle » (components/SequenceFeu.tsx) : Dracaufeu crache un souffle de flammes
+// qui envahit l'écran, puis l'écran se consume et laisse voir ce qui est derrière lui.
 //
-// Le dessin est fait par UN shader, sur un rectangle qui couvre l'écran. Il reçoit « uProgression », un nombre
-// de 0 à 1 qui vient du défilement. Le canvas est posé PAR-DESSUS la page : là où le shader écrit un pixel
-// transparent (le papier a brûlé), on voit la page derrière.
-// Cinq variantes du shader, fournies par l'utilisateur (générées avec Gemini) : une par fichier de ce dossier.
-// « plaques » et « erosion » sont la version 2 (le souffle retombe avant que la page se désintègre).
-// three.js est chargé à la demande (import()) : il ne pèse rien tant que la séquence n'est pas affichée.
+// Le dessin est fait par UN shader (erosion.ts), sur un rectangle qui couvre l'écran. Il reçoit « uProgression »,
+// un nombre de 0 à 1 qui vient du défilement. Le canvas est posé PAR-DESSUS la page : là où le shader écrit un
+// pixel transparent (tout a brûlé), on voit la page derrière.
+// three.js et le shader sont chargés à la demande (import()) : ils ne pèsent rien tant que la séquence est loin.
 
-export const IMAGE_DRACAUFEU =
-  "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png";
-
-// Images générées par IA (Gemini) à la demande de l'utilisateur : même pose, seule la tête change.
-const IMAGES_EROSION = ["/dracaufeu/repos.webp", "/dracaufeu/inspiration.webp", "/dracaufeu/souffle.webp"];
-
-export const VARIANTES_FEU = ["plaques", "erosion", "cinema", "pyroclastique", "leger"] as const;
-export type VarianteFeu = (typeof VARIANTES_FEU)[number];
+// Trois images superposables de Dracaufeu (repos, inspiration, souffle) : même pose, seule la tête change.
+// Générées par IA (Gemini) à la demande de l'utilisateur, détourées, rangées dans public/dracaufeu.
+const IMAGES = ["/dracaufeu/repos.webp", "/dracaufeu/inspiration.webp", "/dracaufeu/souffle.webp"];
 
 const FOND_PAR_DEFAUT = "#0f1115"; // si le jeton --color-fond est illisible : le fond du thème sombre
 
@@ -28,31 +21,19 @@ void main() {
 }
 `;
 
-// Chaque variante est dans son fichier, téléchargé seulement si on la demande (table de correspondance).
-const CHARGER_SHADER: Record<VarianteFeu, () => Promise<string>> = {
-  plaques: () => import("./plaques").then((module) => module.SHADER_PLAQUES),
-  erosion: () => import("./erosion").then((module) => module.SHADER_EROSION),
-  cinema: () => import("./cinema").then((module) => module.SHADER_CINEMA),
-  pyroclastique: () => import("./pyroclastique").then((module) => module.SHADER_PYROCLASTIQUE),
-  leger: () => import("./leger").then((module) => module.SHADER_LEGER),
-};
-
 export type SceneFeu = {
   dessiner: (progression: number) => void;
   redimensionner: (largeur: number, hauteur: number) => void;
-  actualiserTheme: () => void;
   liberer: () => void;
 };
 
 // Prépare la scène dans le canvas donné. Lève une erreur si WebGL ou l'image est indisponible :
 // l'appelant retire alors la séquence et la page s'affiche normalement.
-export async function creerSceneFeu(toile: HTMLCanvasElement, variante: VarianteFeu): Promise<SceneFeu> {
-  const [THREE, shaderPixels] = await Promise.all([import("three"), CHARGER_SHADER[variante]()]);
-  // La variante retenue (erosion) utilise trois images superposables de Dracaufeu (repos, inspiration, souffle),
-  // détourées et rangées dans public/dracaufeu ; les anciennes variantes gardent l'illustration officielle, seule.
-  const adresses = variante === "erosion" ? IMAGES_EROSION : [IMAGE_DRACAUFEU, IMAGE_DRACAUFEU, IMAGE_DRACAUFEU];
+export async function creerSceneFeu(toile: HTMLCanvasElement): Promise<SceneFeu> {
+  // Promise.all : three.js et le shader sont téléchargés en même temps.
+  const [THREE, { SHADER_EROSION }] = await Promise.all([import("three"), import("./erosion")]);
   const chargeur = new THREE.TextureLoader();
-  const images = await Promise.all(adresses.map((adresse) => chargeur.loadAsync(adresse)));
+  const images = await Promise.all(IMAGES.map((adresse) => chargeur.loadAsync(adresse)));
   for (const image of images) {
     // Pas de versions réduites (mipmaps) : l'image est affichée à peu près à sa taille.
     image.generateMipmaps = false;
@@ -72,7 +53,7 @@ export async function creerSceneFeu(toile: HTMLCanvasElement, variante: Variante
     uTemps: { value: 0 },
     uProgression: { value: 0 },
     uProportions: { value: 1 },
-    uQualite: { value: window.matchMedia("(pointer: coarse)").matches ? 0.5 : 1 },
+    uQualite: { value: tactile ? 0.5 : 1 },
     uIntensiteSecousse: { value: 0.015 }, // amplitude du tremblement (valeur conseillée avec les shaders)
     uImage: { value: images[0] },
     uImage2: { value: images[1] },
@@ -83,7 +64,7 @@ export async function creerSceneFeu(toile: HTMLCanvasElement, variante: Variante
   };
   const materiau = new THREE.ShaderMaterial({
     vertexShader: SHADER_SOMMETS,
-    fragmentShader: shaderPixels,
+    fragmentShader: SHADER_EROSION,
     uniforms: uniformes,
     blending: THREE.NoBlending, // le pixel calculé est écrit tel quel dans le canvas
     depthTest: false,
@@ -95,14 +76,11 @@ export async function creerSceneFeu(toile: HTMLCanvasElement, variante: Variante
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const naissance = performance.now();
 
-  // La couleur de la page est lue sur le jeton --color-fond : la séquence suit le thème (sombre ou clair).
-  function actualiserTheme() {
-    const fond = getComputedStyle(document.documentElement).getPropertyValue("--color-fond").trim() || FOND_PAR_DEFAUT;
-    const couleur = new THREE.Color(fond);
-    couleur.convertLinearToSRGB(); // valeurs d'écran : le shader écrit ses couleurs telles quelles
-    uniformes.uFond.value = [couleur.r, couleur.g, couleur.b];
-  }
-  actualiserTheme();
+  // La couleur de la page est lue sur le jeton --color-fond (app/globals.css), une fois : le site n'a qu'un thème.
+  const fond = getComputedStyle(document.documentElement).getPropertyValue("--color-fond").trim() || FOND_PAR_DEFAUT;
+  const couleur = new THREE.Color(fond);
+  couleur.convertLinearToSRGB(); // valeurs d'écran : le shader écrit ses couleurs telles quelles
+  uniformes.uFond.value = [couleur.r, couleur.g, couleur.b];
 
   return {
     dessiner(progression) {
@@ -116,12 +94,9 @@ export async function creerSceneFeu(toile: HTMLCanvasElement, variante: Variante
       const proportions = largeur / hauteur;
       uniformes.uProportions.value = proportions;
       // Écran large : Dracaufeu à droite (le texte est à gauche). Téléphone : au milieu, un peu plus petit.
-      // Les images de la variante erosion ont plus de marge autour du personnage : on les affiche plus grandes.
-      uniformes.uTaille.value = Math.min(variante === "erosion" ? 0.82 : 0.66, proportions * 0.98);
+      uniformes.uTaille.value = Math.min(0.82, proportions * 0.98);
       uniformes.uCentre.value = proportions > 1.2 ? [proportions * 0.2, -0.06] : [0, -0.1];
     },
-
-    actualiserTheme,
 
     liberer() {
       for (const image of images) image.dispose();

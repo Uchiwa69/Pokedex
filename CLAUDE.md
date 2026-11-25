@@ -220,26 +220,21 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   (`chrome.exe --headless=new --window-size=1280,800 --screenshot=... URL`).
 - Audit : `npx lighthouse URL --output=json --chrome-flags="--headless=new"` (émulation mobile, capture finale incluse).
 - Le README n'a plus de captures (choix de l'utilisateur).
-- SUR L'ACCUEIL depuis le 25 novembre 2026 (branche `refonte`) : titre géant, `CarrouselVedettes`, recherche (`#haut-liste`),
-  types, grille, pagination, puis `ScenesElements variante="erosion"` et son écran de fin, le tout DANS `IntroPokedex`.
-  Le souffle occupe 25 % du défilement et la désintégration 75 % (fonction `allonger`, course de 560svh ; 440svh jugé encore trop rapide) : l'utilisateur
-  la voulait plus longue. `/labo/elements?v=` garde les 5 variantes pour comparer.
-- Séquence « l'écran brûle », `/labo/elements?v=`. Elle se place
-  EN FIN DE PAGE, après la liste (choix de l'utilisateur) : elle révèle un écran de fin (gros titre « Attrapez-les tous ! » + un seul lien « Retour à la liste
-  des Pokémon » ; pas de bouton « Passer », retiré à la demande de l'utilisateur) ; rejouable en remontant puis redescendant, jamais en boucle. Plan voulu pour l'accueil : Pokédex 3D →
-  gros titre + carrousel + recherche → cartes → Dracaufeu.
-  `ScenesElements` (client) enveloppe la page : elle est `sticky` et suivie d'un bloc vide de 320svh (PAS un padding : un
-  élément collant ne glisse que dans le contenu de son parent) ; un canvas transparent par-dessus, progression 0→1 lue
-  à chaque image. `lib/scenes-feu/` : 5 shaders fournis par l'utilisateur (Gemini ; version 2 = plaques et erosion, l'utilisateur a CHOISI erosion, ouverte par défaut ;
-  version 1 = cinema, pyroclastique, leger) + `texte.ts` (titre qui brûle lettre par lettre, `data-lettre` / `data-bloc`), repris
-  tels quels, sortie en alpha prémultiplié. Tortank et le jet d'eau : abandonnés (choix de l'utilisateur).
-  Animations réduites ou pas de WebGL : pas de séquence.
-  Variante erosion : trois images de Dracaufeu GÉNÉRÉES PAR IA (Gemini, fournies par l'utilisateur) dans `public/dracaufeu/`
-  (repos, inspiration, souffle ; .webp détourés par un script hors dépôt), fondues selon la progression ; écran de fin de
-  72svh pour que le pied de page soit visible dès la fin ;
-  des braises restent en fond sur l'écran de fin (demande de l'utilisateur). À créditer sur la page À propos quand la
-  séquence arrivera sur l'accueil.
-- Carrousel des vedettes (branche `refonte`, dans `/labo/elements` en attendant l'accueil) : `components/FlexCarousel.tsx` est
+- Accueil (depuis le 25 novembre 2026) : titre géant, `CarrouselVedettes`, recherche (`#haut-liste`), types, grille,
+  pagination, puis `SequenceFeu` et son écran de fin, le tout DANS `IntroPokedex`.
+- Fin de page « l'écran brûle » : `components/SequenceFeu.tsx` (client) enveloppe l'écran de fin (ses `children`, rendus
+  par le serveur) : celui-ci est `sticky` et suivi d'un bloc vide de 560svh (PAS un padding : un élément collant ne glisse
+  que dans le contenu de son parent) ; un canvas transparent par-dessus, progression 0→1 lue à chaque image, boucle en
+  pause hors écran (IntersectionObserver). Le souffle occupe 25 % du défilement et la désintégration 75 % (fonction
+  `allonger`) : l'utilisateur la voulait longue. Rejouable en remontant puis redescendant, jamais en boucle ; pas de bouton
+  « Passer » (retiré à sa demande). Écran de fin : « Attrapez-les tous ! » + un lien « Retour à la liste des Pokémon »,
+  72svh pour que le pied de page soit visible dès la fin ; des braises restent en fond.
+  `lib/scenes-feu/` : `index.ts` (scène three.js), `erosion.ts` (shader fourni par l'utilisateur, généré avec Gemini, ADAPTÉ :
+  les ajouts sont marqués « Ajout du projet »), `texte.ts` (titre qui brûle lettre par lettre, `data-lettre` / `data-bloc`).
+  Trois images de Dracaufeu GÉNÉRÉES PAR IA dans `public/dracaufeu/` (repos, inspiration, souffle ; .webp détourés par un
+  script hors dépôt), créditées sur la page À propos. Essayés puis retirés : Tortank et le jet d'eau, quatre autres
+  variantes du shader (cinema, pyroclastique, leger, plaques), la page `/labo/elements` — récupérables dans Git.
+- Carrousel des vedettes (accueil) : `components/FlexCarousel.tsx` est
   fourni par l'utilisateur et REPRIS TEL QUEL (ne pas le réécrire ; deux libellés d'accessibilité traduits). Il a ajouté la
   dépendance npm `ogl` (acceptée implicitement : c'est son composant). `CarrouselVedettes` (client) dessine une carte par
   Pokémon dans un canvas 2D (lueur du type, numéro, illustration) puis la passe en image ; `captureWheel={false}` et

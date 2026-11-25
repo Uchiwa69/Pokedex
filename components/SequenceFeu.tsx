@@ -13,7 +13,6 @@
 // Animations réduites, ou pas de WebGL : pas de séquence, la page s'affiche directement.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { VarianteFeu } from "@/lib/scenes-feu";
 import { preparerTexte } from "@/lib/scenes-feu/texte";
 
 const TITRE = "Dracaufeu";
@@ -31,9 +30,9 @@ function allonger(parcouru: number) {
   return parcouru < 0.25 ? (parcouru / 0.25) * 0.4 : 0.4 + ((parcouru - 0.25) / 0.75) * 0.6;
 }
 
-type Props = { variante: VarianteFeu; children: ReactNode };
+type Props = { children: ReactNode };
 
-export default function ScenesElements({ variante, children }: Props) {
+export default function SequenceFeu({ children }: Props) {
   const conteneur = useRef<HTMLDivElement>(null);
   const page = useRef<HTMLDivElement>(null);
   const voile = useRef<HTMLDivElement>(null);
@@ -58,7 +57,7 @@ export default function ScenesElements({ variante, children }: Props) {
     let nettoyer = () => {};
 
     import("@/lib/scenes-feu")
-      .then((module) => module.creerSceneFeu(elementToile, variante))
+      .then((module) => module.creerSceneFeu(elementToile))
       .then((dessin) => {
         if (annule) {
           dessin.liberer();
@@ -76,10 +75,6 @@ export default function ScenesElements({ variante, children }: Props) {
         }
         ajuster();
         window.addEventListener("resize", ajuster);
-
-        // Changement de thème : next-themes change la classe de <html>, on relit alors la couleur du fond.
-        const guetteurTheme = new MutationObserver(dessin.actualiserTheme);
-        guetteurTheme.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
         // Le texte animé : ses éléments sont repérés une fois, puis mis à jour à chaque image.
         const mettreAJourTexte = texte.current ? preparerTexte(texte.current) : null;
@@ -114,7 +109,6 @@ export default function ScenesElements({ variante, children }: Props) {
         nettoyer = () => {
           cancelAnimationFrame(image);
           window.removeEventListener("resize", ajuster);
-          guetteurTheme.disconnect();
           guetteurVue.disconnect();
           dessin.liberer();
         };
@@ -127,7 +121,7 @@ export default function ScenesElements({ variante, children }: Props) {
       annule = true;
       nettoyer();
     };
-  }, [variante]);
+  }, []);
 
   const avecSequence = etat !== "echec";
 

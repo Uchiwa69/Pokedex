@@ -6,7 +6,7 @@ import FiltreTypes from "@/components/FiltreTypes";
 import GrillePokemons from "@/components/GrillePokemons";
 import IntroPokedex from "@/components/IntroPokedex";
 import Pagination from "@/components/Pagination";
-import ScenesElements from "@/components/ScenesElements";
+import SequenceFeu from "@/components/SequenceFeu";
 import SqueletteGrille from "@/components/SqueletteGrille";
 import { recupererListe, recupererTousLesNoms } from "@/lib/pokeapi";
 import { validerFiltres } from "@/lib/recherche";
@@ -60,7 +60,7 @@ export default function PageAccueil({ searchParams }: Props) {
 
       {/* Fin de page : Dracaufeu brûle l'écran au défilement et révèle l'écran de fin (les enfants du composant).
           Composant client ; l'écran de fin, lui, reste rendu par le serveur. */}
-      <ScenesElements variante="erosion">
+      <SequenceFeu>
         <section aria-labelledby="titre-fin" className="flex h-[72svh] flex-col items-center justify-center gap-8 text-center">
           <h2 id="titre-fin" className="font-titre text-5xl font-bold tracking-tight sm:text-7xl lg:text-8xl">
             Attrapez-les tous !
@@ -70,7 +70,7 @@ export default function PageAccueil({ searchParams }: Props) {
             Retour à la liste des Pokémon
           </a>
         </section>
-      </ScenesElements>
+      </SequenceFeu>
     </IntroPokedex>
   );
 }
