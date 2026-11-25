@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import BarreRecherche from "@/components/BarreRecherche";
 import EtatVide from "@/components/EtatVide";
 import FiltreTypes from "@/components/FiltreTypes";
@@ -26,20 +25,16 @@ export default function PageAccueil({ searchParams }: Props) {
     // des composants serveur, rendus normalement. À la première arrivée, il les affiche dans l'écran d'un
     // Pokédex géant, puis on plonge dedans ; ensuite, il les affiche simplement, en colonne.
     <IntroPokedex>
-      {/* Haut de page centré : titre, phrase d'accroche, recherche, lien vers l'atelier, puis les types.
+      {/* Haut de page centré : titre, phrase d'accroche, recherche, puis les types.
           (Choisi parmi quatre propositions comparées dans /labo/hero.) */}
       <div className="flex flex-col items-center gap-6 py-4 text-center sm:py-6">
         {/* Le titre a sa propre zone, sur toute la largeur : il est dessiné en particules (TitreParticules),
-            qui ont besoin de place autour d'elles. L'accroche et le lien vers l'atelier sont réunis dessous. */}
+            qui ont besoin de place autour d'elles. L'accroche est dessous. */}
         <header className="flex w-full flex-col items-center gap-1">
           <p className="etiquette">Pokédex national</p>
           <TitreParticules texte="Tous les Pokémon" />
           <p className="max-w-xl text-sm text-texte-doux sm:text-base">
-            {TOTAL} Pokémon, {NOMS_TYPES.length} types. Cherche par nom ou par numéro, ou{" "}
-            <Link href="/atelier" className="font-medium text-accent underline">
-              crée ta carte dans l&apos;atelier
-            </Link>
-            .
+            {TOTAL} Pokémon, {NOMS_TYPES.length} types. Cherche par nom ou par numéro.
           </p>
         </header>
 
