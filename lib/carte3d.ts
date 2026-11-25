@@ -3,6 +3,8 @@
 // Tout le décor (cadre, grille, motifs, dos) est original ; seule l'illustration est l'image
 // déjà affichée sur la fiche, chargée par son adresse.
 
+import type { StyleCarte } from "@/lib/carte-perso";
+
 export const LARGEUR = 720;
 export const HAUTEUR = 1000;
 // Ces dimensions sont des dimensions de TRAVAIL. La texture réelle est dessinée à l'échelle « finesse »,
@@ -15,7 +17,36 @@ export type DonneesCarte = {
   mesures: string; // "1,7 m · 90,5 kg"
   teinte: string; // couleur du type principal, ex. "#ee8130"
   policeTitre: string; // famille de police des titres (Chakra Petch)
+  // Carte personnalisée (atelier). Absents = la carte de la fiche, inchangée.
+  style?: StyleCarte;
+  attaques?: AttaqueDessinee[]; // une ou deux attaques, écrites sous le nom
 };
+
+// Une attaque telle qu'elle est écrite sur la carte.
+export type AttaqueDessinee = {
+  nomFr: string;
+  couleur: string; // couleur de son type
+  puissance: number | null;
+};
+
+// Mise en page de la face, en pixels du canvas (720 × 1000). Elle change quand la carte porte des attaques
+// (il faut leur faire de la place) ou qu'elle est en « full art » (l'illustration occupe toute la carte).
+// Les zones calmes des shaders sont calées sur les mêmes nombres (zonesDeLaFace, lib/effets-types/index.ts).
+export function miseEnPage(style: StyleCarte | undefined, nombreAttaques: number) {
+  const pleine = style === "pleine";
+  const avecAttaques = nombreAttaques > 0;
+  return {
+    pleine,
+    cote: pleine ? 760 : avecAttaques ? 420 : 520, // côté du carré de l'illustration
+    centreY: pleine ? 450 : avecAttaques ? 400 : 470, // hauteur de son centre
+    debutBandeau: avecAttaques ? 590 : 720, // où commence le bandeau sombre du bas
+    ligneNom: avecAttaques ? 712 : 862, // ligne de base du nom
+    tailleNom: avecAttaques ? 76 : 96,
+    // Haut de chaque rangée d'attaque (une rangée fait 74 px de haut).
+    rangees: nombreAttaques >= 2 ? [748, 834] : nombreAttaques === 1 ? [790] : [],
+    ligneMesures: avecAttaques ? 958 : 926,
+  };
+}
 
 // Trace un rectangle aux coins arrondis (chemin seulement : à remplir ou à contourner ensuite).
 function rectangleArrondi(ctx: CanvasRenderingContext2D, x: number, y: number, l: number, h: number, r: number) {
@@ -85,55 +116,96 @@ export function dessinerFace(toile: HTMLCanvasElement, donnees: DonneesCarte, il
   haut.addColorStop(1, "rgba(5,7,22,0)");
   ctx.fillStyle = haut;
   ctx.fillRect(0, 0, LARGEUR, 170);
-  etiquette(ctx, `N° ${donnees.numero}`, 60, 100);
+  // Carte chromatique : une petite étoile après le numéro, comme la marque des cartes « shiny ».
+  etiquette(ctx, `N° ${donnees.numero}${donnees.style === "chromatique" ? " ✦" : ""}`, 60, 100);
   etiquette(ctx, donnees.types.join(" · "), LARGEUR - 60, 100, "right");
 
-  // Numéro en filigrane.
-  ctx.font = `700 220px ${donnees.policeTitre}`;
-  ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(238,240,255,0.05)";
-  ctx.fillText(donnees.numero, LARGEUR - 50, 340);
+  const attaques = donnees.attaques ?? [];
+  const page = miseEnPage(donnees.style, attaques.length);
+  // Sans attaque et hors « full art », ces nombres sont ceux de la carte de la fiche : elle ne change pas.
+  const echelle = page.cote / 520; // 1 pour la carte de la fiche
+
+  // Numéro en filigrane (pas en « full art » : l'illustration prend toute la place).
+  if (!page.pleine) {
+    ctx.font = `700 220px ${donnees.policeTitre}`;
+    ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(238,240,255,0.05)";
+    ctx.fillText(donnees.numero, LARGEUR - 50, 340);
+  }
 
   // Halo diffus derrière l'illustration, puis halo net au sol.
   const centreX = LARGEUR / 2;
-  const centreY = 470;
-  const halo = ctx.createRadialGradient(centreX, centreY, 20, centreX, centreY, 300);
+  const centreY = page.centreY;
+  const halo = ctx.createRadialGradient(centreX, centreY, 20, centreX, centreY, 300 * echelle);
   halo.addColorStop(0, donnees.teinte);
   halo.addColorStop(1, "rgba(0,0,0,0)");
   ctx.globalAlpha = 0.55;
   ctx.fillStyle = halo;
   ctx.fillRect(0, 150, LARGEUR, 640);
-  ctx.globalAlpha = 0.7;
-  ctx.fillStyle = donnees.teinte;
-  ctx.beginPath();
-  ctx.ellipse(centreX, 720, 170, 22, 0, 0, Math.PI * 2);
-  ctx.fill();
+  if (!page.pleine) {
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = donnees.teinte;
+    ctx.beginPath();
+    ctx.ellipse(centreX, centreY + 250 * echelle, 170 * echelle, 22 * echelle, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.globalAlpha = 1;
 
   if (illustration) {
-    const cote = 520;
-    ctx.drawImage(illustration, centreX - cote / 2, centreY - cote / 2 - 10, cote, cote);
+    ctx.drawImage(illustration, centreX - page.cote / 2, centreY - page.cote / 2 - 10 * echelle, page.cote, page.cote);
   }
 
-  // Bandeau sombre en bas, derrière le nom et les mesures.
-  const bas = ctx.createLinearGradient(0, 720, 0, HAUTEUR);
+  // Bandeau sombre en bas, derrière le nom, les attaques et les mesures.
+  const bas = ctx.createLinearGradient(0, page.debutBandeau, 0, HAUTEUR);
   bas.addColorStop(0, "rgba(5,7,22,0)");
   bas.addColorStop(0.45, "rgba(5,7,22,0.8)");
   bas.addColorStop(1, "rgba(5,7,22,0.9)");
   ctx.fillStyle = bas;
-  ctx.fillRect(0, 720, LARGEUR, HAUTEUR - 720);
+  ctx.fillRect(0, page.debutBandeau, LARGEUR, HAUTEUR - page.debutBandeau);
 
   // Nom, réduit s'il est trop long pour la carte.
-  let taille = 96;
+  let taille = page.tailleNom;
   ctx.textAlign = "left";
   do {
     ctx.font = `700 ${taille}px ${donnees.policeTitre}`;
     taille -= 4;
   } while (ctx.measureText(donnees.nom).width > LARGEUR - 120 && taille > 36);
   ctx.fillStyle = "#ffffff";
-  ctx.fillText(donnees.nom, 60, 862);
+  ctx.fillText(donnees.nom, 60, page.ligneNom);
 
-  etiquette(ctx, donnees.mesures, 60, 926);
+  // Les attaques : une rangée chacune, avec une pastille de la couleur de son type, son nom et sa puissance.
+  attaques.forEach((attaque, index) => {
+    const haut = page.rangees[index];
+    if (haut === undefined) return;
+    rectangleArrondi(ctx, 50, haut, LARGEUR - 100, 74, 22);
+    ctx.fillStyle = "rgba(5,7,22,0.6)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.22)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = attaque.couleur;
+    ctx.beginPath();
+    ctx.arc(92, haut + 37, 15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // La puissance à droite (un tiret pour une attaque de statut), puis le nom, réduit s'il est trop long.
+    const puissance = attaque.puissance === null ? "—" : String(attaque.puissance);
+    ctx.font = `700 38px ${donnees.policeTitre}`;
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(puissance, LARGEUR - 74, haut + 50);
+    const placeNom = LARGEUR - 74 - ctx.measureText(puissance).width - 24 - 124;
+    let tailleAttaque = 34;
+    ctx.textAlign = "left";
+    do {
+      ctx.font = `600 ${tailleAttaque}px ${donnees.policeTitre}`;
+      tailleAttaque -= 2;
+    } while (ctx.measureText(attaque.nomFr).width > placeNom && tailleAttaque > 20);
+    ctx.fillText(attaque.nomFr, 124, haut + 49);
+  });
+
+  etiquette(ctx, donnees.mesures, 60, page.ligneMesures);
 }
 
 // Dos de la carte : anneaux, Pokéball rouge et blanche au centre, nom du site.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useCartes } from "@/stores/cartes";
 import { useFavoris } from "@/stores/favoris";
 import { useSacoche } from "@/stores/sacoche";
 
@@ -11,6 +12,7 @@ export default function HydratationStores() {
   useEffect(() => {
     useFavoris.persist.rehydrate();
     useSacoche.persist.rehydrate();
+    useCartes.persist.rehydrate();
   }, []);
 
   return null;

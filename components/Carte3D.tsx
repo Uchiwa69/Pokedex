@@ -6,8 +6,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
-import { dessinerDos, dessinerFace, HAUTEUR, type DonneesCarte } from "@/lib/carte3d";
+import { TEINTE_OR, type AttaqueCarte, type StyleCarte } from "@/lib/carte-perso";
+import { dessinerDos, dessinerFace, HAUTEUR, miseEnPage, type DonneesCarte } from "@/lib/carte3d";
 import type { ZonesCarte } from "@/lib/effets-types";
+import type { Motif } from "@/lib/effets-types/feuille";
 import { estUnType } from "@/lib/types";
 
 type Props = {
@@ -20,9 +22,23 @@ type Props = {
   // Total des six statistiques : il choisit le motif de la feuille holographique (plus il est haut, plus
   // le motif est rare). Absent = le motif le plus discret.
   puissance?: number;
+  // Carte personnalisée (atelier). Absent sur la fiche : la carte reste alors celle d'origine.
+  // Quand il change, la carte est mise à jour SUR PLACE (texture redessinée, réglages des shaders),
+  // sans recréer la scène 3D : pas de clignotement à chaque modification.
+  perso?: PersoCarte;
   // Prévenir le parent quand la carte est affichée, ou quand la 3D est indisponible.
   surPret?: () => void;
   surEchec?: () => void;
+};
+
+// Ce que l'atelier peut changer sur la carte.
+export type PersoCarte = {
+  nom: string; // nom ou surnom écrit sur la carte
+  illustration: string | null; // illustration normale ou chromatique
+  style: StyleCarte;
+  motif: Motif | null; // motif de la feuille holographique ; null = selon la puissance
+  typeEffet: string; // clé anglaise du type : il donne l'effet animé et la couleur de la carte
+  attaques: AttaqueCarte[];
 };
 
 type Commandes = { retourner: () => void; recentrer: () => void; tourner: (degres: number) => void };
@@ -116,9 +132,17 @@ function chargerImage(adresse: string | null) {
 // Petit bouton rond de la barre de commandes (44 px : assez grand pour le doigt).
 const BOUTON_ROND = "flex size-11 items-center justify-center rounded-full text-texte-doux hover:bg-piste hover:text-texte";
 
-export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, puissance = 0, surPret, surEchec }: Props) {
+export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, puissance = 0, perso, surPret, surEchec }: Props) {
   const refConteneur = useRef<HTMLDivElement>(null);
   const refCommandes = useRef<Commandes | null>(null);
+  // La personnalisation est gardée dans un ref (lue par la scène à sa création), et la fonction qui
+  // l'applique à une scène déjà créée aussi : à chaque changement, on l'appelle sans rien reconstruire.
+  const refPerso = useRef(perso);
+  const refAppliquer = useRef<((p: PersoCarte) => Promise<void>) | null>(null);
+  useEffect(() => {
+    refPerso.current = perso;
+    if (perso) refAppliquer.current?.(perso);
+  }, [perso]);
   const animationsReduites = useReducedMotion();
   // Les fonctions reçues du parent sont gardées dans un ref : la scène 3D n'est pas recréée quand elles changent.
   const refRappels = useRef({ surPret, surEchec });
@@ -373,6 +397,57 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         },
       };
 
+      /* ---------- Personnalisation (atelier) : mise à jour de la carte sur place ---------- */
+      const lireCouleur = (type: string) => styles.getPropertyValue(`--color-type-${type}`).trim() || "#aab6ff";
+      let illustrationAffichee = illustration;
+      let imageAffichee = image;
+      let typeAffiche: string = estUnType(typePrincipal) ? typePrincipal : "normal";
+      let tour = 0; // numéro de la dernière demande : une demande plus ancienne, encore en attente, est abandonnée
+      const appliquer = async (p: PersoCarte) => {
+        const monTour = ++tour;
+        // 1. L'illustration, seulement si elle a changé (passage en chromatique) : il faut la télécharger.
+        if (p.illustration !== illustrationAffichee) {
+          const adresse = p.illustration ? `/_next/image?url=${encodeURIComponent(p.illustration)}&w=640&q=75` : null;
+          const nouvelle = await chargerImage(adresse);
+          if (annule || monTour !== tour) return;
+          illustrationAffichee = p.illustration;
+          imageAffichee = nouvelle;
+        }
+
+        // 2. Les deux faces sont redessinées dans leurs canvas, puis renvoyées à la carte graphique.
+        const type = estUnType(p.typeEffet) ? p.typeEffet : "normal";
+        const teinteType = lireCouleur(type);
+        const teinteCarte = p.style === "or" ? TEINTE_OR : teinteType;
+        const attaques = p.attaques.map((a) => ({ nomFr: a.nomFr, couleur: lireCouleur(a.type), puissance: a.puissance }));
+        dessinerFace(toileFace, { ...donnees, nom: p.nom, teinte: teinteCarte, style: p.style, attaques }, imageAffichee, finesse);
+        dessinerDos(toileDos, teinteCarte, policeTitre, finesse);
+        textureFace.needsUpdate = true;
+        textureDos.needsUpdate = true;
+
+        // 3. L'effet du type : un autre type = un autre programme, que three.js recompile (needsUpdate).
+        if (type !== typeAffiche) {
+          typeAffiche = type;
+          const nouveau = effets.assemblerEffet(type);
+          for (const materiau of [effetFace, effetDos]) {
+            materiau.fragmentShader = nouveau.fragmentShader;
+            materiau.needsUpdate = true;
+          }
+        }
+        couleurType.set(teinteType).convertLinearToSRGB();
+        for (const materiau of [effetFace, effetDos]) materiau.uniforms.uTeinte.value = [couleurType.r, couleurType.g, couleurType.b];
+
+        // 4. Les zones calmes suivent la nouvelle mise en page, et la feuille prend le motif choisi.
+        const zones = effets.zonesDeLaFace(miseEnPage(p.style, attaques.length));
+        for (const materiau of [effetFace, feuille]) {
+          materiau.uniforms.uZonesCalmes.value = zones.textes.flat();
+          materiau.uniforms.uZoneIllustration.value = zones.illustration;
+        }
+        feuille.uniforms.uMotif.value = feuilles.MOTIFS.indexOf(p.motif ?? feuilles.motifSelonPuissance(puissance));
+      };
+      refAppliquer.current = appliquer;
+      // Une carte déjà personnalisée (relue dans le navigateur) est appliquée avant le premier affichage.
+      if (refPerso.current) await appliquer(refPerso.current);
+
       const horloge = new THREE.Clock();
       let rotation = 0;
       let temps = 0;
@@ -437,6 +512,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         rendu.dispose();
         rendu.domElement.remove();
         refCommandes.current = null;
+        refAppliquer.current = null;
       };
       if (annule) nettoyer();
     })();

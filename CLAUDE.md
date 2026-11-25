@@ -121,6 +121,13 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   repli quand `jouerEclat` renvoie false (moteur pas prêt, pas de WebGL, animations réduites = voile seul).
   Électrik a un éclat propre (éclairs verticaux en ligne brisée). Effet et éclat sont retirés quand l'accueil est mis
   en veille (nettoyage d'un useEffect dans `FiltreTypes`), sinon ils rejouaient au retour d'une fiche.
+- Atelier de carte : `/pokemon/[nom]/carte` (`AtelierCarte`, client), ouvert par le lien « Créer sa carte » sous la
+  carte de la fiche (`VitrineFiche`). Styles classique / full art / chromatique / or, surnom, motif, effet de type,
+  2 attaques au plus posées par glisser-déposer natif (+ bouton « Ajouter » pour clavier et tactile). Données et
+  règles dans `lib/carte-perso.ts`, sauvegarde automatique dans `stores/cartes.ts` (persist, réhydraté par
+  `HydratationStores`). `Carte3D` reçoit `perso` et met la carte à jour SUR PLACE (`appliquer` : texture
+  redessinée, shaders réglés) sans recréer la scène. Mise en page de la face : `miseEnPage` (lib/carte3d.ts), les
+  zones calmes des shaders en découlent (`zonesDeLaFace`). Sans `perso`, la carte de la fiche est inchangée.
 - Introduction : `Projecteurs` (client, adapté de « Spotlight New » d'Aceternity UI) = deux faisceaux doux qui
   descendent des coins de la scène, DERRIÈRE le Pokédex 3D (dans `ScenePokedex`, liés à `lumiereOpacite`).
   L'utilisateur les veut sur le Pokédex, PAS sur la liste de l'accueil (essayé puis retiré). Couleur = jeton accent.

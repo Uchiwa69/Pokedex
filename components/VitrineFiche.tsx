@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
 import Carte3D from "@/components/Carte3D";
+import { useCartes } from "@/stores/cartes";
 import { formaterMesure, type Pokemon } from "@/lib/conversion";
 import { LIBELLES_STATS } from "@/lib/stats";
 import { TYPES } from "@/lib/types";
@@ -22,6 +24,8 @@ const DUREE_RELAIS = 350; // millisecondes
 // PAR-DESSUS la copie (même image, même position), puis la copie est retirée : on ne voit aucun changement,
 // seulement la carte qui se met à bouger. Rien ne se décale dans la page.
 export default function VitrineFiche({ pokemon, children }: Props) {
+  // true si une carte personnalisée existe déjà pour ce Pokémon (le sélecteur renvoie un simple booléen).
+  const aUneCarte = useCartes((etat) => etat.cartes[pokemon.nom] !== undefined);
   const [prete, setPrete] = useState(false);
   const [echec, setEchec] = useState(false);
   // true tant que la copie à plat doit rester affichée.
@@ -64,6 +68,12 @@ export default function VitrineFiche({ pokemon, children }: Props) {
           surEchec={() => setEchec(true)}
         />
       </div>
+
+      {/* Vers l'atelier : on y compose sa propre carte (style, surnom, motif, attaques). C'est une navigation,
+          donc un lien. Hors du bloc « inert » : il est utilisable sans attendre la carte 3D. */}
+      <Link href={`/pokemon/${pokemon.nom}/carte`} className="bouton bouton-secondaire mx-auto mt-4 flex w-fit px-5 text-sm">
+        {aUneCarte ? "Modifier ma carte" : "Créer sa carte"}
+      </Link>
     </div>
   );
 }

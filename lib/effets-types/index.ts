@@ -5,6 +5,7 @@
 // L'effet est une couche À PART, posée entre la face et le reflet d'origine : le reflet de Carte3D n'est
 // pas modifié, et à uForce = 0 la carte est exactement celle d'avant.
 
+import { HAUTEUR, LARGEUR, type miseEnPage } from "@/lib/carte3d";
 import type { NomType } from "@/lib/types";
 import { GLSL_COMMUN } from "./commun";
 import { GLSL_ACIER } from "./types/acier";
@@ -71,6 +72,22 @@ export const ZONES_FACE: ZonesCarte = {
   ],
   illustration: [0.14, 0.28, 0.86, 0.8],
 };
+// Les mêmes zones pour une carte personnalisée, calculées à partir de sa mise en page (lib/carte3d.ts) :
+// avec des attaques, le bloc de texte du bas est plus haut et l'illustration plus petite.
+// px → carte : x / 720 ; y = 1 − py / 1000 (le canvas compte de haut en bas).
+export function zonesDeLaFace(page: ReturnType<typeof miseEnPage>): ZonesCarte {
+  const moitie = page.cote / 2;
+  return {
+    textes: [
+      ZONES_FACE.textes[0],
+      [0.05, 0.03, 0.95, 1 - (page.debutBandeau + 60) / HAUTEUR],
+    ],
+    illustration: page.pleine
+      ? [0.05, 0.28, 0.95, 0.86] // « full art » : l'illustration couvre presque toute la carte
+      : [(LARGEUR / 2 - moitie + 40) / LARGEUR, 1 - (page.centreY + moitie) / HAUTEUR, (LARGEUR / 2 + moitie - 40) / LARGEUR, 1 - (page.centreY - moitie + 10) / HAUTEUR],
+  };
+}
+
 export const ZONES_DOS: ZonesCarte = {
   textes: [
     [0.15, 0.09, 0.85, 0.18], // le mot « POKÉDEX »
