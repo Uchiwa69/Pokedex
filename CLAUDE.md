@@ -83,7 +83,6 @@ Règles :
   libellé à côté du symbole à partir de `xl`. `puce-tuile` : fond teinté par `--teinte`, survol et `:active` réactifs.
 - Cartes de la grille : mêmes éléments, halos adoucis (opacités baissées) pour rester lisibles dans les deux thèmes.
 - `Projecteurs` : lumière blanche, thème sombre seulement. Écran du Pokédex 3D : couleur lue sur `--color-fond`.
-  `NueeCurseur` relit ses couleurs au changement de thème (MutationObserver sur la classe de `<html>`).
 
 ## Direction artistique d'origine (phase 6 — direction B « Verre holographique », en partie remplacée ci-dessus)
 - Jetons dans app/globals.css (@theme static + bloc .dark) : fond, surface (verre translucide), bordure, bordure-verre,
@@ -206,10 +205,9 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Cahier des charges du cours (grille sur 20, 19 étapes de TP) vérifié le 25 novembre 2026 : tout est couvert.
   `CompteurFavoris` (client) affiche le nombre de favoris dans l'en-tête, exigé par l'étape 15. Le README doit
   rester exact (20 par page, shaders, atelier) : le mettre à jour quand une fonctionnalité change.
-- Pied de page SEULEMENT (essayée dans l'en-tête puis retirée à la demande de l'utilisateur) : nuée de points
-  `NueeCurseur` (client, contenu serveur passé en `children`) autour de `components/SwarmCursor.tsx`, REPRIS TEL QUEL de React Bits (exclu d'ESLint, ne pas le
-  réécrire). Couleurs lues sur les jetons accent / accent-bis, nombre de points réduit pour une bande étroite,
-  rien de dessiné en animations réduites. Menu : Tous, Favoris, Sacoche, Combat, Atelier, Quiz (ordre voulu).
+- Nuée de points « Swarm Cursor » de React Bits : essayée dans l'en-tête puis dans le pied de page, RETIRÉE des deux
+  à la demande de l'utilisateur (fichiers supprimés) — ne pas la remettre. Le pied de page est un simple composant
+  serveur. Menu : Tous, Favoris, Sacoche, Combat, Atelier, Quiz (ordre voulu).
 - En-tête et pied de page : fond `bg-cadre` (jeton `--color-cadre` : même couleur que la page en sombre, blanc en
   clair). L'en-tête reste flouté (`bg-cadre/85`).
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).

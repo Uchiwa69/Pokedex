@@ -141,8 +141,7 @@ purement statique.
 - Données, illustrations, sprites et cris : [PokéAPI](https://pokeapi.co). Sprites animés issus de Pokémon Showdown.
 - Noms français pour la recherche : fichier de données du dépôt [PokeAPI/pokeapi](https://github.com/PokeAPI/pokeapi).
 - Animations d'attaques du mode combat : [Pokémon Showdown](https://github.com/smogon/pokemon-showdown-client) (CC0).
-- Nuée de points du pied de page, feuille holographique de l'atelier :
-  composants de [React Bits](https://reactbits.dev).
+- Feuille holographique de l'atelier : composant de [React Bits](https://reactbits.dev).
   Projecteurs de l'introduction : adaptés d'[Aceternity UI](https://ui.aceternity.com).
 - Les effets par type (shaders GLSL) ont été générés avec Gemini, puis corrigés et intégrés pour ce projet.
 - Les symboles des types, le décor et le dos de la carte holographique sont des dessins originaux réalisés pour
