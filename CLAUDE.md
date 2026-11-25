@@ -221,8 +221,8 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Audit : `npx lighthouse URL --output=json --chrome-flags="--headless=new"` (émulation mobile, capture finale incluse).
 - Le README n'a plus de captures (choix de l'utilisateur).
 - PROTOTYPE (branche `refonte`, pas encore sur l'accueil) : séquence « l'écran brûle », `/labo/elements?v=`. Elle se place
-  EN FIN DE PAGE, après la liste (choix de l'utilisateur) : elle révèle un écran de fin (« Page suivante », « Retour en haut
-  de la liste ») ; rejouable en remontant puis redescendant, jamais en boucle. Plan voulu pour l'accueil : Pokédex 3D →
+  EN FIN DE PAGE, après la liste (choix de l'utilisateur) : elle révèle un écran de fin (gros titre « Attrapez-les tous ! » + un seul lien « Retour à la liste
+  des Pokémon » ; pas de bouton « Passer », retiré à la demande de l'utilisateur) ; rejouable en remontant puis redescendant, jamais en boucle. Plan voulu pour l'accueil : Pokédex 3D →
   gros titre + carrousel + recherche → cartes → Dracaufeu.
   `ScenesElements` (client) enveloppe la page : elle est `sticky` et suivie d'un bloc vide de 320svh (PAS un padding : un
   élément collant ne glisse que dans le contenu de son parent) ; un canvas transparent par-dessus, progression 0→1 lue

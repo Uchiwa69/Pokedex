@@ -1,5 +1,5 @@
 // PROTOTYPE — séquence de FIN de page « l'écran brûle » : après la liste, Dracaufeu crache son feu, l'écran se
-// consume et l'écran de fin (page suivante, retour en haut) apparaît à travers. On y accède par /labo/elements ;
+// consume et l'écran de fin (« Attrapez-les tous ! », retour à la liste) apparaît à travers. On y accède par /labo/elements ;
 // un onglet par variante du shader (?v=…). La grille au-dessus est la vraie.
 
 import { Suspense } from "react";
@@ -74,20 +74,14 @@ async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }
       {/* Fin de page : Dracaufeu brûle l'écran et révèle l'écran de fin (les enfants du composant).
           key : changer de variante recrée le composant (nouveau canvas, nouveau shader). */}
       <ScenesElements key={active} variante={active}>
-        <section aria-labelledby="titre-fin" className="flex h-svh flex-col items-center justify-center gap-6 text-center">
-          <p className="etiquette">Fin de la page 1</p>
-          <h2 id="titre-fin" className="font-titre text-3xl font-bold tracking-tight sm:text-5xl">
-            Il en reste {(liste.total - liste.pokemons.length).toLocaleString("fr-FR")} à découvrir
+        <section aria-labelledby="titre-fin" className="flex h-svh flex-col items-center justify-center gap-8 text-center">
+          <h2 id="titre-fin" className="font-titre text-5xl font-bold tracking-tight sm:text-7xl lg:text-8xl">
+            Attrapez-les tous !
           </h2>
-          <div className="flex flex-wrap justify-center gap-3">
-            {/* Deux navigations, donc deux liens : continuer (action principale) ou revenir chercher. */}
-            <Link href="/?page=2" className="bouton bouton-principal">
-              Page suivante
-            </Link>
-            <a href="#haut-liste" className="bouton bouton-secondaire">
-              Retour en haut de la liste
-            </a>
-          </div>
+          {/* Une navigation dans la page : un lien (ancre vers le haut de la liste). */}
+          <a href="#haut-liste" className="bouton bouton-principal">
+            Retour à la liste des Pokémon
+          </a>
         </section>
       </ScenesElements>
     </div>

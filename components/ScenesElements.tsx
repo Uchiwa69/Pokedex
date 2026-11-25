@@ -125,15 +125,6 @@ export default function ScenesElements({ variante, children }: Props) {
     };
   }, [variante]);
 
-  // Bouton « Passer » : on saute à la fin de la course (la page est alors entièrement dégagée).
-  function passer() {
-    const elementConteneur = conteneur.current;
-    const elementPage = page.current;
-    if (!elementConteneur || !elementPage) return;
-    const course = elementConteneur.offsetHeight - elementPage.offsetHeight;
-    window.scrollTo({ top: elementConteneur.getBoundingClientRect().top + window.scrollY + course });
-  }
-
   const avecSequence = etat !== "echec";
 
   return (
@@ -186,13 +177,9 @@ export default function ScenesElements({ variante, children }: Props) {
               </div>
             </div>
 
-            <p ref={invite} aria-hidden="true" className="etiquette absolute inset-x-0 bottom-20 text-center">
+            <p ref={invite} aria-hidden="true" className="etiquette absolute inset-x-0 bottom-10 text-center">
               Faites défiler ↓
             </p>
-            {/* Raccourci : un visiteur pressé (ou au clavier) saute la séquence. C'est une action : un <button>. */}
-            <button type="button" onClick={passer} className="bouton bouton-secondaire pointer-events-auto absolute bottom-6 right-4">
-              Passer
-            </button>
           </div>
         )}
       </div>
