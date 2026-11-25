@@ -2,9 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import IndicateurSacoche from "@/components/IndicateurSacoche";
 import LiensNavigation from "@/components/LiensNavigation";
-import Navigation from "@/components/Navigation";
-import NueeCurseur from "@/components/NueeCurseur";
-import Pokeball from "@/components/Pokeball";
+import Navigation from "@/components/Navigation";import Pokeball from "@/components/Pokeball";
 
 // En-tête du site : composant serveur. Seuls Navigation et IndicateurSacoche sont des composants client.
 export default function EnTete() {
@@ -12,8 +10,6 @@ export default function EnTete() {
     // Verre fumé : fond du thème à 75 % + flou de ce qui défile derrière.
     // data-entete + transition-opacity : l'introduction de l'accueil masque l'en-tête en fondu (voir globals.css).
     <header data-entete className="sticky top-0 z-40 border-b border-bordure-verre bg-fond/75 backdrop-blur-xl transition-opacity duration-300">
-      {/* La nuée de points vit derrière le contenu de l'en-tête (composant client, le contenu reste serveur). */}
-      <NueeCurseur zone="entete">
       {/* Sur mobile le menu passe sur une 2e ligne (order-last + w-full), à partir de sm tout tient sur une ligne. */}
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2">
         {/* aria-label : les lecteurs d'écran lisent « Pokédex » en entier, même si le « O » est un dessin.
@@ -41,7 +37,6 @@ export default function EnTete() {
 
         <IndicateurSacoche />
       </div>
-      </NueeCurseur>
       {/* Filet lumineux sous l'en-tête : un dégradé de l'accent qui s'efface vers les bords. */}
       <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-linear-to-r from-transparent via-accent to-transparent opacity-60" />
     </header>

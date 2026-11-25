@@ -5,7 +5,7 @@ import NueeCurseur from "@/components/NueeCurseur";
 export default function PiedDePage() {
   return (
     <footer className="border-t border-bordure-verre">
-      <NueeCurseur zone="pied">
+      <NueeCurseur>
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-texte-doux sm:flex-row sm:items-center sm:justify-between">
           <p>
             Données :{" "}

@@ -19,7 +19,7 @@ const eslintConfig = defineConfig([
     "lib/showdown/effets.ts",
     // Modèle 3D du Pokédex repris d'un fichier fourni par l'utilisateur (prototype du labo).
     "lib/labo/pokedex3d.ts",
-    // Nuée de points de l'en-tête et du pied de page, reprise telle quelle de React Bits.
+    // Nuée de points du pied de page, reprise telle quelle de React Bits.
     "components/SwarmCursor.tsx",
   ]),
 ]);

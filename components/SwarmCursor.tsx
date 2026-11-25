@@ -8,7 +8,7 @@
 // 2. chaque point est emporté par ce courant, attiré vers le pointeur et repoussé par ses voisins (move) ;
 // 3. tous les points sont dessinés d'un coup par la carte graphique, en WebGL (draw).
 // Sans pointeur dans la zone, la nuée se promène toute seule (idle = "roam").
-// Le code du projet qui s'en sert est components/NueeCurseur.tsx.
+// Utilisée dans le pied de page. Le code du projet qui s'en sert est components/NueeCurseur.tsx.
 
 import { useEffect, useRef, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 

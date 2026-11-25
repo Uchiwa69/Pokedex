@@ -3,21 +3,19 @@
 import { useSyncExternalStore, type ReactNode } from "react";
 import SwarmCursor from "@/components/SwarmCursor";
 
-// Une nuée de petits points lumineux derrière le contenu de l'en-tête et du pied de page.
+// Une nuée de petits points lumineux derrière le contenu du pied de page.
 // Elle se promène seule, suit le pointeur, entoure le lien survolé et éclate au clic.
 // Le moteur (components/SwarmCursor.tsx) vient de React Bits et n'est pas modifié : ce composant ne fait que
 // le régler pour le site (couleurs du thème, quantité de points adaptée à une bande étroite, animations réduites).
 //
 // NOTION DU COURS : ce composant est client, mais ses `children` restent des composants SERVEUR.
-// EnTete et PiedDePage (serveur) lui passent leur contenu déjà rendu : "use client" ne « contamine » pas les enfants.
+// PiedDePage (serveur) lui passe son contenu déjà rendu : "use client" ne « contamine » pas les enfants.
 
-// Réglages par zone. Une table plutôt que des props libres : les deux bandes n'ont pas la même hauteur.
 // Sur le site de React Bits la nuée a tout l'écran (800 points, rayon 90) ; ici elle vit dans une bande
-// de 60 à 100 px de haut, d'où moins de points et un rayon plus petit, sinon elle déborde et se fait couper.
-const REGLAGES = {
-  entete: { nombre: 260, rayon: 44, taille: 2.2 },
-  pied: { nombre: 320, rayon: 56, taille: 2.4 },
-};
+// d'environ 70 px de haut, d'où moins de points et un rayon plus petit, sinon elle déborde et se fait couper.
+const NOMBRE = 320;
+const RAYON = 56;
+const TAILLE = 2.4;
 
 const REQUETE_REDUIT = "(prefers-reduced-motion: reduce)";
 
@@ -43,16 +41,15 @@ function lireCouleurs() {
 }
 const couleursServeur = () => "|";
 
-export default function NueeCurseur({ zone, children }: { zone: keyof typeof REGLAGES; children: ReactNode }) {
+export default function NueeCurseur({ children }: { children: ReactNode }) {
   const reduit = useSyncExternalStore(abonnerReduit, lireReduit, reduitServeur);
   const [accent, accentBis] = useSyncExternalStore(abonnerCouleurs, lireCouleurs, couleursServeur).split("|");
-  const reglages = REGLAGES[zone];
 
   return (
     <SwarmCursor
-      count={reglages.nombre}
-      spread={reglages.rayon}
-      size={reglages.taille}
+      count={NOMBRE}
+      spread={RAYON}
+      size={TAILLE}
       swirl={0.6}
       clickEffect="burst"
       // Points de la couleur d'accent ; ils virent au cyan quand ils vont vite ou au clic.
