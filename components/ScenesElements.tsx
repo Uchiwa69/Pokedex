@@ -77,24 +77,16 @@ export default function ScenesElements({ variante, children }: Props) {
         // Le texte animé : ses éléments sont repérés une fois, puis mis à jour à chaque image.
         const mettreAJourTexte = texte.current ? preparerTexte(texte.current) : null;
 
-        let fini = false; // la séquence est terminée : le voile est caché et on ne dessine plus
         function boucle() {
           // La course = ce que le conteneur a de plus haut que la page (les 320 % d'écran).
           // 0 quand la page vient de se coller en haut de l'écran, 1 quand elle va se décoller.
           const course = elementConteneur!.offsetHeight - elementPage!.offsetHeight;
           const progression = Math.min(1, Math.max(0, -elementConteneur!.getBoundingClientRect().top / course));
-          if (progression >= 1) {
-            // Tout a brûlé : le canvas serait transparent, autant le cacher et ne plus rien calculer.
-            if (!fini) elementVoile!.style.visibility = "hidden";
-            fini = true;
-          } else {
-            if (fini) elementVoile!.style.visibility = "visible";
-            fini = false;
-            dessin.dessiner(progression);
-            // Les textes : on écrit directement leur opacité, sans état React (60 rendus par seconde sinon).
-            if (invite.current) invite.current.style.opacity = String(1 - fondu(0.02, 0.1, progression));
-            mettreAJourTexte?.(progression);
-          }
+          // On dessine même à la fin (progression = 1) : des braises continuent de monter derrière l'écran de fin.
+          dessin.dessiner(progression);
+          // Les textes : on écrit directement leur opacité, sans état React (60 rendus par seconde sinon).
+          if (invite.current) invite.current.style.opacity = String(1 - fondu(0.02, 0.1, progression));
+          mettreAJourTexte?.(progression);
           // Une image par rafraîchissement de l'écran : les flammes bougent même quand on ne défile pas.
           image = requestAnimationFrame(boucle);
         }

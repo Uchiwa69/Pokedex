@@ -1,14 +1,16 @@
 // Version 2B « érosion » : même souffle, puis chaque cellule carbonisée rétrécit jusqu'à disparaître en cendres.
 // Dracaufeu y est intégré à la scène : fond brumeux, contre-jour, ombre au sol, respiration, flamme de la queue.
-// Shader fourni par l'utilisateur (généré avec Gemini), repris tel quel, à deux détails près : la ligne
-// « precision » est retirée (three.js l'ajoute déjà) et la flamme de la queue est replacée en (0.87, 0.44). Sortie en alpha prémultiplié : (0,0,0,0) = on voit la vraie page derrière.
+// Shader fourni par l'utilisateur (généré avec Gemini), ADAPTÉ au projet (les ajouts sont marqués « Ajout du projet ») : trois images
+// de Dracaufeu en fondu, gueule et queue recalées sur ces images, braises qui restent à la fin. Sortie en alpha prémultiplié : (0,0,0,0) = on voit la vraie page derrière.
 
 export const SHADER_EROSION = /* glsl */ `
 // --- UNIFORMS IMPOSÉS ---
 uniform float uProgression;   // 0 -> 1, piloté par le défilement
 uniform float uTemps;         // secondes, animation continue
 uniform float uProportions;   // largeur / hauteur de l'écran
-uniform sampler2D uImage;     // Dracaufeu, alpha droit (non prémultiplié)
+uniform sampler2D uImage;     // Dracaufeu au repos, sur fond NOIR (image générée, sans transparence)
+uniform sampler2D uImage2;    // Dracaufeu qui inspire, gueule entrouverte
+uniform sampler2D uImage3;    // Dracaufeu gueule grande ouverte, incandescente
 uniform vec2 uCentre;         // centre de l'illustration
 uniform float uTaille;        // côté de l'illustration
 uniform vec3 uFond;           // couleur de fond sombre (#0F1115)
@@ -119,7 +121,8 @@ float particulesAscendantes(vec2 uv, float temps, float densite, float tailleMax
 void main() {
     int octaves = (uQualite < 0.75) ? 3 : 5;
     vec2 posEcran = (vUv - 0.5) * vec2(uProportions, 1.0);
-    vec2 posGueule = uCentre + (vec2(0.40, 0.81) - 0.5) * uTaille;
+    // Gueule des nouvelles images : (0.26, 0.33) depuis le coin haut-gauche => (0.26, 0.67) en UV WebGL.
+    vec2 posGueule = uCentre + (vec2(0.26, 0.67) - 0.5) * uTaille;
 
     float envSecousse = sin(clamp((uProgression - 0.10) / 0.34, 0.0, 1.0) * 3.14159265);
     envSecousse *= envSecousse;
@@ -147,23 +150,36 @@ void main() {
 
     vec2 uvImage = (pos - centreAnime) / tailleAnimee + 0.5;
     float dansCadre = step(0.0, uvImage.x) * step(uvImage.x, 1.0) * step(0.0, uvImage.y) * step(uvImage.y, 1.0);
-    vec4 tex = texture2D(uImage, clamp(uvImage, 0.0, 1.0));
+    // Ajout du projet : trois images superposables au lieu d'une. On passe en fondu du repos à l'inspiration,
+    // puis à la gueule ouverte pendant le souffle, et on revient au repos quand le souffle est retombé.
+    vec2 uvBorne = clamp(uvImage, 0.0, 1.0);
+    float versInspiration = smoothstep(0.02, 0.09, uProgression);
+    float versSouffle = smoothstep(0.09, 0.17, uProgression);
+    float retourRepos = smoothstep(0.44, 0.54, uProgression);
+    vec3 rgbDracaufeu = mix(texture2D(uImage, uvBorne).rgb, texture2D(uImage2, uvBorne).rgb, versInspiration);
+    rgbDracaufeu = mix(rgbDracaufeu, texture2D(uImage3, uvBorne).rgb, versSouffle);
+    rgbDracaufeu = mix(rgbDracaufeu, texture2D(uImage, uvBorne).rgb, retourRepos);
+    // Les images ont un fond noir : l'opacité se déduit de la luminosité (noir = transparent).
+    float visible = smoothstep(0.035, 0.11, max(rgbDracaufeu.r, max(rgbDracaufeu.g, rgbDracaufeu.b)));
+    vec4 tex = vec4(rgbDracaufeu, visible);
     float alphaSprite = tex.a * dansCadre;
 
     float phaseCharge = smoothstep(0.0, 0.14, uProgression) * smoothstep(0.48, 0.18, uProgression);
     float phaseSouffle = smoothstep(0.08, 0.25, uProgression) * smoothstep(0.55, 0.32, uProgression);
     vec3 eclairageFeu = vec3(1.0, 0.38, 0.06) * (
-        smoothstep(tailleAnimee * 0.35, 0.0, distGueule) * phaseCharge * 1.1 +
-        smoothstep(tailleAnimee * 0.9, 0.05, distGueule) * phaseSouffle * 0.75
+        smoothstep(tailleAnimee * 0.35, 0.0, distGueule) * phaseCharge * 0.3 +
+        smoothstep(tailleAnimee * 0.9, 0.05, distGueule) * phaseSouffle * 0.35
     );
-    vec3 couleurScene = mix(couleurFond, tex.rgb * (0.92 + 0.12 * contreJour) + eclairageFeu * alphaSprite, alphaSprite);
+    // Ajout du projet : éclairage adouci (les nouvelles images ont déjà la gueule incandescente), et l'image est
+    // AJOUTÉE au fond au lieu de le remplacer : le halo sombre autour de la flamme de la queue n'assombrit plus rien.
+    vec3 couleurScene = couleurFond * (1.0 - alphaSprite) + tex.rgb * (0.92 + 0.12 * contreJour) + eclairageFeu * alphaSprite;
 
     // Queue animée
     vec2 posQueue = centreAnime + (vec2(0.87, 0.44) - 0.5) * tailleAnimee;
     vec2 deltaQueue = (pos - posQueue) / tailleAnimee;
     float turbQueue = fbm(pos * 14.0 - vec2(0.0, uTemps * 5.5), 3);
     float intensiteQueue = smoothstep(0.11, 0.015, length(vec2(deltaQueue.x * 1.6, (deltaQueue.y - 0.02) * 0.85)) + (turbQueue - 0.5) * 0.075);
-    couleurScene += paletteFeu(intensiteQueue * 1.1) * intensiteQueue * 1.55 + vec3(1.0, 0.35, 0.05) * smoothstep(0.26, 0.0, length(deltaQueue)) * 0.32;
+    couleurScene += paletteFeu(intensiteQueue * 1.1) * intensiteQueue * 0.55 + vec3(1.0, 0.35, 0.05) * smoothstep(0.26, 0.0, length(deltaQueue)) * 0.32;
 
     // 2. DÉSINTÉGRATION VARIANTE 2B : ÉROSION DE L'INTÉRIEUR VERS L'EXTÉRIEUR DES CELLULES
     // Les fissures brûlent d'abord, puis chaque îlot carbonisé rétrécit jusqu'à disparaître en cendres
@@ -227,6 +243,11 @@ void main() {
     alphaFinal = clamp(alphaFinal + alphaEmissif * (1.0 - alphaFinal), 0.0, 1.0);
 
     float fin = 1.0 - smoothstep(0.95, 1.0, uProgression);
-    gl_FragColor = vec4(rgbFinal * fin, alphaFinal * fin);
+    // Ajout du projet (demande de l'utilisateur) : quand tout a brûlé, des braises continuent de monter en
+    // fond, derrière l'écran de fin. Elles apparaissent pendant que le reste s'éteint.
+    float restes = particulesAscendantes(pos + vec2(1.7, -uTemps * 0.22), uTemps * 0.6, 11.0, 0.07) * smoothstep(0.86, 1.0, uProgression);
+    vec3 rgbRestes = vec3(1.0, 0.48, 0.09) * restes * 1.2;
+    float alphaRestes = clamp(restes * 0.6, 0.0, 1.0);
+    gl_FragColor = vec4(rgbFinal * fin + rgbRestes, clamp(alphaFinal * fin + alphaRestes, 0.0, 1.0));
 }
 `;

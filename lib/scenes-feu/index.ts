@@ -11,6 +11,9 @@
 export const IMAGE_DRACAUFEU =
   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png";
 
+// Images générées par IA (Gemini) à la demande de l'utilisateur : même pose, seule la tête change.
+const IMAGES_EROSION = ["/dracaufeu/repos.jpg", "/dracaufeu/inspiration.jpg", "/dracaufeu/souffle.jpg"];
+
 export const VARIANTES_FEU = ["plaques", "erosion", "cinema", "pyroclastique", "leger"] as const;
 export type VarianteFeu = (typeof VARIANTES_FEU)[number];
 
@@ -45,10 +48,16 @@ export type SceneFeu = {
 // l'appelant retire alors la séquence et la page s'affiche normalement.
 export async function creerSceneFeu(toile: HTMLCanvasElement, variante: VarianteFeu): Promise<SceneFeu> {
   const [THREE, shaderPixels] = await Promise.all([import("three"), CHARGER_SHADER[variante]()]);
-  const image = await new THREE.TextureLoader().loadAsync(IMAGE_DRACAUFEU);
-  // Pas de versions réduites (mipmaps) : l'illustration est affichée à peu près à sa taille.
-  image.generateMipmaps = false;
-  image.minFilter = THREE.LinearFilter;
+  // La variante retenue (erosion) utilise trois images superposables de Dracaufeu (repos, inspiration, souffle),
+  // rangées dans public/dracaufeu ; les anciennes variantes gardent l'illustration officielle, seule.
+  const adresses = variante === "erosion" ? IMAGES_EROSION : [IMAGE_DRACAUFEU, IMAGE_DRACAUFEU, IMAGE_DRACAUFEU];
+  const chargeur = new THREE.TextureLoader();
+  const images = await Promise.all(adresses.map((adresse) => chargeur.loadAsync(adresse)));
+  for (const image of images) {
+    // Pas de versions réduites (mipmaps) : l'image est affichée à peu près à sa taille.
+    image.generateMipmaps = false;
+    image.minFilter = THREE.LinearFilter;
+  }
 
   // alpha: true = le canvas peut être transparent. premultipliedAlpha (vrai par défaut) : les shaders écrivent
   // déjà leurs couleurs multipliées par leur opacité.
@@ -64,7 +73,9 @@ export async function creerSceneFeu(toile: HTMLCanvasElement, variante: Variante
     uProportions: { value: 1 },
     uQualite: { value: window.matchMedia("(pointer: coarse)").matches ? 0.5 : 1 },
     uIntensiteSecousse: { value: 0.015 }, // amplitude du tremblement (valeur conseillée avec les shaders)
-    uImage: { value: image },
+    uImage: { value: images[0] },
+    uImage2: { value: images[1] },
+    uImage3: { value: images[2] },
     uFond: { value: [0, 0, 0] },
     uCentre: { value: [0, 0] },
     uTaille: { value: 0.6 },
@@ -104,14 +115,15 @@ export async function creerSceneFeu(toile: HTMLCanvasElement, variante: Variante
       const proportions = largeur / hauteur;
       uniformes.uProportions.value = proportions;
       // Écran large : Dracaufeu à droite (le texte est à gauche). Téléphone : au milieu, un peu plus petit.
-      uniformes.uTaille.value = Math.min(0.66, proportions * 0.92);
+      // Les images de la variante erosion ont plus de marge autour du personnage : on les affiche plus grandes.
+      uniformes.uTaille.value = Math.min(variante === "erosion" ? 0.82 : 0.66, proportions * 0.98);
       uniformes.uCentre.value = proportions > 1.2 ? [proportions * 0.2, -0.06] : [0, -0.1];
     },
 
     actualiserTheme,
 
     liberer() {
-      image.dispose();
+      for (const image of images) image.dispose();
       geometrie.dispose();
       materiau.dispose();
       rendu.dispose();
