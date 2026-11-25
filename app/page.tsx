@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 import BarreRecherche from "@/components/BarreRecherche";
+import CarrouselVedettes from "@/components/CarrouselVedettes";
 import EtatVide from "@/components/EtatVide";
 import FiltreTypes from "@/components/FiltreTypes";
 import GrillePokemons from "@/components/GrillePokemons";
 import IntroPokedex from "@/components/IntroPokedex";
 import Pagination from "@/components/Pagination";
+import ScenesElements from "@/components/ScenesElements";
 import SqueletteGrille from "@/components/SqueletteGrille";
 import { recupererListe, recupererTousLesNoms } from "@/lib/pokeapi";
 import { validerFiltres } from "@/lib/recherche";
@@ -20,18 +22,23 @@ export default function PageAccueil({ searchParams }: Props) {
     // des composants serveur, rendus normalement. À la première arrivée, il les affiche dans l'écran d'un
     // Pokédex géant, puis on plonge dedans ; ensuite, il les affiche simplement, en colonne.
     <IntroPokedex>
-      {/* Haut de page centré et compact : titre, recherche, puis les types. Peu de hauteur, pour que les
-          cartes arrivent vite à l'écran. */}
+      {/* Haut de page : le titre en très gros (le seul h1 de la page), le carrousel des vedettes, puis la
+          recherche et les types. */}
       <div className="flex flex-col items-center gap-4 pb-4 text-center">
-        {/* Titre sobre : un vrai texte (le seul h1 de la page), et le nombre de Pokémon du Pokédex dessous. */}
-        <header className="flex w-full flex-col items-center gap-1">
-          <h1 className="font-titre text-3xl font-bold tracking-tight sm:text-4xl">Pokédex National</h1>
+        <header className="flex w-full flex-col items-center gap-2 pt-6">
+          <h1 className="font-titre text-5xl font-bold tracking-tight sm:text-7xl lg:text-8xl">Pokédex National</h1>
           <NombreTotal />
         </header>
 
+        {/* Composant client : il dessine ses cartes dans le navigateur et tourne avec le défilement. */}
+        <div className="w-full">
+          <CarrouselVedettes />
+        </div>
+
         {/* BarreRecherche lit l'adresse avec useSearchParams → elle aussi a besoin d'un Suspense.
-            max-w-2xl : le champ ne s'étire pas sur toute la largeur. Le repli a la hauteur du champ. */}
-        <div className="w-full max-w-2xl text-left">
+            max-w-2xl : le champ ne s'étire pas sur toute la largeur. Le repli a la hauteur du champ.
+            id : cible du lien « Retour à la liste » de l'écran de fin ; scroll-mt : l'en-tête ne la cache pas. */}
+        <div id="haut-liste" className="w-full max-w-2xl scroll-mt-28 text-left">
           <Suspense fallback={<div className="h-12" />}>
             <BarreRecherche />
           </Suspense>
@@ -50,6 +57,20 @@ export default function PageAccueil({ searchParams }: Props) {
       <Suspense fallback={<SqueletteGrille />}>
         <Resultats searchParams={searchParams} />
       </Suspense>
+
+      {/* Fin de page : Dracaufeu brûle l'écran au défilement et révèle l'écran de fin (les enfants du composant).
+          Composant client ; l'écran de fin, lui, reste rendu par le serveur. */}
+      <ScenesElements variante="erosion">
+        <section aria-labelledby="titre-fin" className="flex h-[72svh] flex-col items-center justify-center gap-8 text-center">
+          <h2 id="titre-fin" className="font-titre text-5xl font-bold tracking-tight sm:text-7xl lg:text-8xl">
+            Attrapez-les tous !
+          </h2>
+          {/* Une navigation dans la page : un lien (ancre vers la recherche, en haut de la liste). */}
+          <a href="#haut-liste" className="bouton bouton-principal">
+            Retour à la liste des Pokémon
+          </a>
+        </section>
+      </ScenesElements>
     </IntroPokedex>
   );
 }
@@ -65,7 +86,7 @@ async function Filtre({ searchParams }: { searchParams: Props["searchParams"] })
 async function NombreTotal() {
   const noms = await recupererTousLesNoms();
   // toLocaleString("fr-FR") : « 1 025 » avec l'espace des milliers.
-  return <p className="text-sm font-medium text-texte-doux">{noms.length.toLocaleString("fr-FR")} Pokémon</p>;
+  return <p className="text-sm font-medium text-texte-doux sm:text-base">{noms.length.toLocaleString("fr-FR")} Pokémon à découvrir</p>;
 }
 
 async function Resultats({ searchParams }: { searchParams: Props["searchParams"] }) {

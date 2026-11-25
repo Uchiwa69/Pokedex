@@ -10,6 +10,10 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
 
 - **Introduction en 3D** : un Pokédex géant s'ouvre au défilement, puis on plonge dans son écran, où s'affiche le
   site. Jouée une fois par visite, jamais en animations réduites.
+- **Carrousel des vedettes** sous le titre : douze Pokémon dans un carrousel à lentille déformante (WebGL), qui
+  tourne avec le défilement de la page, au glisser et aux flèches du clavier.
+- **Fin de page « Attrapez-les tous ! »** : après la liste, Dracaufeu ouvre la gueule, crache son feu, et l'écran
+  se consume au défilement (shader GLSL) ; la séquence se rejoue en remontant puis en redescendant.
 - **Liste des 1 025 Pokémon** en grille paginée (20 par page), avec noms français.
 - **Recherche par nom français ou anglais, ou par numéro**, même incomplet, sans tenir compte des accents ni des
   majuscules (« evoli » trouve Évoli, « char » trouve Charizard, « 25 » trouve Pikachu). Recherche, **filtre par type** et **pagination** sont
@@ -46,7 +50,7 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
 | État client | Zustand (`persist` + réhydratation après l'hydratation React) |
 | Thème | next-themes (thème sombre forcé) |
 | Animations | motion (`motion/react`) et CSS, `prefers-reduced-motion` respecté |
-| 3D | three.js, chargé à la demande : carte holographique, effets de type (shaders GLSL), introduction |
+| 3D | three.js, chargé à la demande : carte holographique, effets de type (shaders GLSL), introduction, fin de page ; ogl pour le carrousel |
 | Tests | vitest (fonctions pures de `lib/combat.ts` et de `lib/labo/effets2d.ts`) |
 | Données | PokéAPI v2 (lecture seule, sans clé) |
 | Hébergement | Vercel |

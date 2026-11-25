@@ -45,7 +45,12 @@ export default function PageAPropos() {
           <a href="https://ui.aceternity.com" target="_blank" rel="noreferrer" className="font-medium text-accent underline">
             Aceternity UI
           </a>
-          .
+          . Le carrousel de l&apos;accueil est le composant « Flex Carousel », qui s&apos;appuie sur la bibliothèque ogl.
+        </p>
+        {/* Transparence : ces trois images ne sont pas des illustrations officielles. */}
+        <p>
+          Les trois images de Dracaufeu de la séquence de fin de l&apos;accueil ont été générées par une intelligence
+          artificielle (Gemini) ; les shaders de cette séquence ont été écrits avec son aide puis adaptés.
         </p>
         <p>
           Pokémon est une marque de Nintendo / Game Freak / The Pokémon Company. Projet étudiant non commercial.

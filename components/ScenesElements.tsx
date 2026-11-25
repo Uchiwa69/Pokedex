@@ -5,7 +5,7 @@
 // (choix de l'utilisateur) : children est alors l'écran de fin, haut d'un écran. Dans la suite, « la page » = children.
 // Le dessin est fait par un shader (lib/scenes-feu/), sur un canvas transparent posé par-dessus la page.
 //
-// Principe : la page est « collante » (sticky) dans un conteneur plus haut qu'elle de 320 % de l'écran (un bloc vide la suit). Tant
+// Principe : la page est « collante » (sticky) dans un conteneur plus haut qu'elle de 440 % de l'écran (un bloc vide la suit). Tant
 // qu'on parcourt ce supplément, la page reste en place sous le canvas ; on mesure seulement OÙ on en est
 // (de 0 à 1) et on donne ce nombre au shader. Remonter rejoue donc la séquence à l'envers. Ensuite la page
 // défile normalement.
@@ -22,6 +22,13 @@ const TITRE = "Dracaufeu";
 function fondu(a: number, b: number, x: number) {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
+}
+
+// Le shader joue le souffle de 0 à 0,4 et la désintégration de 0,4 à 1. On donne au souffle les 30 premiers
+// pour cent du défilement et à la désintégration les 70 restants : elle dure plus longtemps sous la molette
+// (demande de l'utilisateur), sans toucher au shader.
+function allonger(parcouru: number) {
+  return parcouru < 0.3 ? (parcouru / 0.3) * 0.4 : 0.4 + ((parcouru - 0.3) / 0.7) * 0.6;
 }
 
 type Props = { variante: VarianteFeu; children: ReactNode };
@@ -78,10 +85,11 @@ export default function ScenesElements({ variante, children }: Props) {
         const mettreAJourTexte = texte.current ? preparerTexte(texte.current) : null;
 
         function boucle() {
-          // La course = ce que le conteneur a de plus haut que la page (les 320 % d'écran).
+          // La course = ce que le conteneur a de plus haut que la page (les 440 % d'écran).
           // 0 quand la page vient de se coller en haut de l'écran, 1 quand elle va se décoller.
           const course = elementConteneur!.offsetHeight - elementPage!.offsetHeight;
-          const progression = Math.min(1, Math.max(0, -elementConteneur!.getBoundingClientRect().top / course));
+          const parcouru = Math.min(1, Math.max(0, -elementConteneur!.getBoundingClientRect().top / course));
+          const progression = allonger(parcouru);
           // On dessine même à la fin (progression = 1) : des braises continuent de monter derrière l'écran de fin.
           dessin.dessiner(progression);
           // Les textes : on écrit directement leur opacité, sans état React (60 rendus par seconde sinon).
@@ -94,7 +102,11 @@ export default function ScenesElements({ variante, children }: Props) {
         // elle ne coûte rien tant qu'on parcourt la liste.
         const guetteurVue = new IntersectionObserver(([entree]) => {
           cancelAnimationFrame(image);
-          if (entree.isIntersecting) image = requestAnimationFrame(boucle);
+          if (entree.isIntersecting) {
+            // On recale le voile à chaque arrivée : la colonne a pu bouger depuis (introduction du Pokédex).
+            ajuster();
+            image = requestAnimationFrame(boucle);
+          }
         });
         guetteurVue.observe(elementConteneur);
         setEtat("pret");
@@ -183,7 +195,7 @@ export default function ScenesElements({ variante, children }: Props) {
       </div>
       {/* Le supplément de hauteur qui sert de course à la séquence. Un bloc vide, et pas une marge intérieure
           (padding) : un élément collant ne peut glisser que dans le CONTENU de son parent. */}
-      {avecSequence && <div aria-hidden="true" className="h-[320svh] motion-reduce:hidden" />}
+      {avecSequence && <div aria-hidden="true" className="h-[440svh] motion-reduce:hidden" />}
     </div>
   );
 }
