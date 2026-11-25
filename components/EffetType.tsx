@@ -33,6 +33,10 @@ const ETALEMENT: Record<Mouvement, number> = {
   lourde: 450,
 };
 
+// Types dont l'éclat en shader se suffit : leurs symboles ne sont pas ajoutés par-dessus.
+// Ténèbres : ses symboles bruns juraient avec l'éclipse violette du shader.
+const SHADER_SEUL: NomType[] = ["dark"];
+
 // Nombre « au hasard » mais toujours le même pour un même indice (entre 0 et 1).
 // On n'utilise pas Math.random : un composant React doit donner le même rendu à chaque fois.
 function hasard(indice: number, graine: number) {
@@ -116,7 +120,7 @@ export default function EffetType({ type, origine, avecShader, surFin }: Props) 
         </>
       )}
 
-      {!animationsReduites && (
+      {!animationsReduites && !(avecShader && SHADER_SEUL.includes(type)) && (
         <>
           {/* ---- Les symboles ---- */}
           {Array.from({ length: nombre }, (_, i) => {
