@@ -1,9 +1,10 @@
 import Link from "next/link";
 
 // Pied de page : composant serveur, sans aucun JavaScript côté navigateur.
+// Pas de filet au-dessus (choix de l'utilisateur) : il prolonge la page sans séparation.
 export default function PiedDePage() {
   return (
-    <footer className="border-t border-bordure-verre bg-cadre">
+    <footer className="bg-cadre">
       <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-texte-doux sm:flex-row sm:items-center sm:justify-between">
         <p>
           Données :{" "}
