@@ -186,6 +186,10 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Cahier des charges du cours (grille sur 20, 19 étapes de TP) vérifié le 25 novembre 2026 : tout est couvert.
   `CompteurFavoris` (client) affiche le nombre de favoris dans l'en-tête, exigé par l'étape 15. Le README doit
   rester exact (20 par page, shaders, atelier) : le mettre à jour quand une fonctionnalité change.
+- En-tête et pied de page : nuée de points `NueeCurseur` (client, `zone="entete" | "pied"`, contenu serveur passé en
+  `children`) autour de `components/SwarmCursor.tsx`, REPRIS TEL QUEL de React Bits (exclu d'ESLint, ne pas le
+  réécrire). Couleurs lues sur les jetons accent / accent-bis, nombre de points réduit pour une bande étroite,
+  rien de dessiné en animations réduites. Menu : Tous, Favoris, Sacoche, Combat, Atelier, Quiz (ordre voulu).
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif

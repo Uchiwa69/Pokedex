@@ -14,8 +14,8 @@ export const LIENS_NAVIGATION: LienNavigation[] = [
   { href: "/favoris", libelle: "Favoris", icone: "etoile" },
   { href: "/sacoche", libelle: "Sacoche", icone: "sac" },
   { href: "/combat", libelle: "Combat", icone: "eclair" },
-  { href: "/quiz", libelle: "Quiz", icone: "question" },
   { href: "/atelier", libelle: "Atelier", icone: "carte" },
+  { href: "/quiz", libelle: "Quiz", icone: "question" },
 ];
 
 // Dit si un lien correspond à la page affichée.
