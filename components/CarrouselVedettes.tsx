@@ -7,7 +7,7 @@
 // On fabrique donc ici une carte par Pokémon dans un canvas 2D (fond sombre, lueur de la couleur du type,
 // numéro en filigrane, illustration), puis on la transforme en image (toDataURL).
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import FlexCarousel, { type FlexCarouselItem } from "@/components/FlexCarousel";
 import type { NomType } from "@/lib/types";
@@ -33,6 +33,7 @@ const VEDETTES: Vedette[] = [
 const ARTWORK = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork";
 const LARGEUR = 600;
 const HAUTEUR = 800;
+const PAS_DEFILEMENT = 140; // pixels de défilement de la page pour passer à la carte suivante
 
 function chargerImage(adresse: string) {
   return new Promise<HTMLImageElement>((reussi, echoue) => {
@@ -85,6 +86,7 @@ async function dessinerCarte(vedette: Vedette, couleurs: CSSStyleDeclaration) {
 export default function CarrouselVedettes() {
   const [cartes, setCartes] = useState<FlexCarouselItem[] | null>(null);
   const [actif, setActif] = useState(0);
+  const cadre = useRef<HTMLDivElement>(null);
 
   // Les cartes sont dessinées une fois, dans le navigateur (useEffect : canvas et images n'existent pas côté serveur).
   useEffect(() => {
@@ -107,12 +109,41 @@ export default function CarrouselVedettes() {
     };
   }, []);
 
+  // Le carrousel tourne avec le défilement de la PAGE : une carte tous les PAS_DEFILEMENT pixels. On ne lui
+  // laisse pas capturer la molette (la page resterait bloquée dessus). À la place, on lui envoie une fausse
+  // frappe de touche fléchée, qu'il sait déjà traiter : le composant fourni n'est donc pas modifié.
+  useEffect(() => {
+    if (!cartes || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const zone = cadre.current?.querySelector<HTMLElement>("[aria-roledescription='carousel']");
+    if (!zone) return;
+    let dernier = window.scrollY;
+    let cumul = 0; // défilement accumulé depuis la dernière carte passée
+    function suivre() {
+      const ecart = window.scrollY - dernier;
+      dernier = window.scrollY;
+      // Inutile s'il est sorti de l'écran, ou si la page a sauté d'un coup (lien d'ancre, touche Fin).
+      const place = zone!.getBoundingClientRect();
+      if (place.bottom < 0 || place.top > window.innerHeight || Math.abs(ecart) > 400) {
+        cumul = 0;
+        return;
+      }
+      cumul += ecart;
+      while (Math.abs(cumul) >= PAS_DEFILEMENT) {
+        const sens = cumul > 0 ? 1 : -1;
+        zone!.dispatchEvent(new KeyboardEvent("keydown", { key: sens > 0 ? "ArrowRight" : "ArrowLeft", cancelable: true }));
+        cumul -= sens * PAS_DEFILEMENT;
+      }
+    }
+    window.addEventListener("scroll", suivre, { passive: true });
+    return () => window.removeEventListener("scroll", suivre);
+  }, [cartes]);
+
   const vedette = VEDETTES[actif] ?? VEDETTES[0];
 
   return (
     <section aria-label="Pokémon vedettes" className="flex flex-col items-center gap-2">
       {/* Hauteur réservée dès le départ : rien ne saute quand les cartes arrivent. */}
-      <div className="relative h-[26rem] w-full sm:h-[34rem]">
+      <div ref={cadre} className="relative h-[26rem] w-full sm:h-[34rem]">
         {cartes && (
           <FlexCarousel
             items={cartes}
@@ -126,8 +157,11 @@ export default function CarrouselVedettes() {
             fit="natural"
             radius={18}
             autoplay={false}
-            // La molette continue de faire défiler la PAGE : le carrousel se pilote au glisser, au clic et au clavier.
+            // La molette continue de faire défiler la PAGE ; le carrousel suit ce défilement (voir l'effet plus haut).
             captureWheel={false}
+            // Le composant pose « overscroll-contain », qui empêche la page de défiler quand la souris est sur lui.
+            // On le neutralise d'ici (le ! rend la classe prioritaire), sans toucher au composant.
+            className="overscroll-auto!"
             onChange={setActif}
           />
         )}
