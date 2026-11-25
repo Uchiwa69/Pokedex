@@ -235,3 +235,11 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   72svh pour que le pied de page soit visible dès la fin ;
   des braises restent en fond sur l'écran de fin (demande de l'utilisateur). À créditer sur la page À propos quand la
   séquence arrivera sur l'accueil.
+- Carrousel des vedettes (branche `refonte`, dans `/labo/elements` en attendant l'accueil) : `components/FlexCarousel.tsx` est
+  fourni par l'utilisateur et REPRIS TEL QUEL (ne pas le réécrire ; deux libellés d'accessibilité traduits). Il a ajouté la
+  dépendance npm `ogl` (acceptée implicitement : c'est son composant). `CarrouselVedettes` (client) dessine une carte par
+  Pokémon dans un canvas 2D (lueur du type, numéro, illustration) puis la passe en image ; `captureWheel={false}` pour que
+  la molette fasse défiler la page ; un vrai lien « Voir la fiche de … » suit la carte centrale.
+- ATTENTION `npm install` : il supprime le paquet `shaders`, installé à la main pour la page locale `/labo/fond` (dossiers
+  `effets/` et `app/labo/fond/` exclus par `.git/info/exclude`) et absent de package.json → le build casse. Le remettre
+  avec `npm install shaders --no-save`.

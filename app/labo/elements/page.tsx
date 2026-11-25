@@ -5,6 +5,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import CarrouselVedettes from "@/components/CarrouselVedettes";
 import GrillePokemons from "@/components/GrillePokemons";
 import ScenesElements from "@/components/ScenesElements";
 import SqueletteGrille from "@/components/SqueletteGrille";
@@ -64,11 +65,15 @@ async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }
         </ul>
       </nav>
 
-      {/* La page d'accueil, en résumé : titre, puis la vraie grille. */}
-      <header id="haut-liste" className="flex scroll-mt-28 flex-col items-center gap-2 text-center">
-        <h1 className="font-titre text-3xl font-bold tracking-tight sm:text-4xl">Pokédex National</h1>
-        <p className="text-sm text-texte-doux">{liste.total.toLocaleString("fr-FR")} Pokémon</p>
+      {/* Le haut de l'accueil : titre en très gros, puis le carrousel des vedettes. */}
+      <header className="flex flex-col items-center gap-2 pt-6 text-center">
+        <h1 className="font-titre text-5xl font-bold tracking-tight sm:text-7xl lg:text-8xl">Pokédex National</h1>
+        <p className="text-sm text-texte-doux sm:text-base">{liste.total.toLocaleString("fr-FR")} Pokémon à découvrir</p>
       </header>
+      <CarrouselVedettes />
+
+      {/* La liste (id : cible du lien « Retour à la liste » de l'écran de fin). */}
+      <div id="haut-liste" className="scroll-mt-28" />
       <GrillePokemons pokemons={liste.pokemons} />
 
       {/* Fin de page : Dracaufeu brûle l'écran et révèle l'écran de fin (les enfants du composant).
