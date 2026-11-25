@@ -33,10 +33,6 @@ const ETALEMENT: Record<Mouvement, number> = {
   lourde: 450,
 };
 
-// Types dont l'éclat en shader se suffit : leurs symboles ne sont pas ajoutés par-dessus.
-// Ténèbres : ses symboles bruns juraient avec l'éclipse violette du shader.
-const SHADER_SEUL: NomType[] = ["dark"];
-
 // Nombre « au hasard » mais toujours le même pour un même indice (entre 0 et 1).
 // On n'utilise pas Math.random : un composant React doit donner le même rendu à chaque fois.
 function hasard(indice: number, graine: number) {
@@ -54,9 +50,6 @@ const ECLAIRS = [
 type Props = {
   type: NomType;
   origine: { x: number; y: number }; // centre de la tuile cliquée, en pixels dans la fenêtre
-  // true : le fond est joué par le shader du type (lib/effets-types/eclat.ts). On ne garde alors ici que
-  // les symboles ; le voile, le fond et les ondes en CSS ne servent plus que de repli.
-  avecShader: boolean;
   surFin: () => void;
 };
 
@@ -64,8 +57,7 @@ type Props = {
 // un mouvement pour ses symboles (pluie, braises qui montent, flocons, orbite…), un fond éventuel
 // (éclairs, lueur, rafale, vignette, reflet) et un nombre d'ondes partant de la tuile.
 // Tout est fait en CSS (transform et opacity uniquement) : aucune image, aucun canvas, aucune bibliothèque.
-// Quand le shader du type joue le fond (avecShader), seuls les symboles sont dessinés ici, par-dessus lui.
-export default function EffetType({ type, origine, avecShader, surFin }: Props) {
+export default function EffetType({ type, origine, surFin }: Props) {
   const animationsReduites = useReducedMotion();
   const { trace, particules, nombre, duree, fond, anneaux } = GLYPHES[type];
   const dureeTotale = duree + ETALEMENT[particules] + 200;
@@ -82,12 +74,12 @@ export default function EffetType({ type, origine, avecShader, surFin }: Props) 
   return (
     // aria-hidden + pointer-events-none : purement décoratif, il ne gêne ni la lecture ni les clics.
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-50 overflow-hidden" style={style}>
-      {!avecShader && <span className="effet-voile absolute inset-0 bg-[var(--teinte)]" />}
+      <span className="effet-voile absolute inset-0 bg-[var(--teinte)]" />
 
       {/* Animations réduites : seulement l'éclat de couleur, rien ne bouge. */}
-      {!animationsReduites && !avecShader && (
+      {!animationsReduites && (
         <>
-          {/* ---- Le fond (repli sans shader) ---- */}
+          {/* ---- Le fond ---- */}
           {fond === "vague" && <span className="effet-vague absolute inset-x-0 bottom-0 h-[90vh]" />}
           {fond === "vignette" && <span className="effet-vignette absolute inset-0" />}
           {fond === "reflet" && <span className="effet-reflet absolute -top-[20vh] left-0 h-[140vh] w-[28vw]" />}
@@ -117,11 +109,7 @@ export default function EffetType({ type, origine, avecShader, surFin }: Props) 
           {Array.from({ length: anneaux }, (_, i) => (
             <span key={i} className="effet-anneau absolute" style={{ "--delai": `${i * 130}ms` } as CSSProperties} />
           ))}
-        </>
-      )}
 
-      {!animationsReduites && !(avecShader && SHADER_SEUL.includes(type)) && (
-        <>
           {/* ---- Les symboles ---- */}
           {Array.from({ length: nombre }, (_, i) => {
             const angle = ((i + hasard(i, 1) * 0.8) / nombre) * 360; // direction, en degrés
