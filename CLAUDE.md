@@ -131,7 +131,9 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   redessinée, shaders réglés) sans recréer la scène. Mise en page de la face : `miseEnPage` (lib/carte3d.ts), les
   zones calmes des shaders en découlent (`zonesDeLaFace`). Sans `perso`, la carte de la fiche est inchangée.
 - Accueil, haut de page (après l'introduction) : CENTRÉ (choisi par l'utilisateur dans `/labo/hero`, 4 propositions
-  dans `components/labo/HerosAccueil.tsx`) : titre en dégradé, accroche, recherche en `max-w-2xl`, lien Atelier
+  dans `components/labo/HerosAccueil.tsx`) : titre EN PARTICULES (`TitreParticules`, client : vrai `<h1>` en
+  `sr-only` + canvas `aria-hidden` ; `components/ParticleText.tsx` est REPRIS TEL QUEL de React Bits, ne pas le
+  réécrire ; deux lignes sous 640 px, sinon illisible), accroche, recherche en `max-w-2xl`, lien Atelier
   (bouton « Pokémon au hasard » essayé puis retiré à la demande de l'utilisateur), `FiltreTypes disposition="centre"` (prop : defaut / centre / etale). Les cartes de la grille ne
   changent pas. L'utilisateur doit envoyer des composants pour embellir le titre.
 - Introduction : `Projecteurs` (client, adapté de « Spotlight New » d'Aceternity UI) = deux faisceaux doux qui

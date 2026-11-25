@@ -34,6 +34,19 @@ export default function PageAPropos() {
           (Guangcong Luo et contributeurs), placées dans le domaine public (CC0). Les images de glaçon et d&apos;éclair
           sont de Clint Bellanger (OpenGameArt), sous licence CC-BY-SA 3.0.
         </p>
+        {/* Crédits des composants d'interface repris ou adaptés d'autres projets. */}
+        <p>
+          Le titre en particules de l&apos;accueil et la feuille holographique des cartes de l&apos;atelier viennent de{" "}
+          <a href="https://reactbits.dev" target="_blank" rel="noreferrer" className="font-medium text-accent underline">
+            React Bits
+          </a>{" "}
+          (composants « Particle Text » et « Holo Card »). Les projecteurs de l&apos;introduction sont adaptés du composant
+          « Spotlight New » d&apos;
+          <a href="https://ui.aceternity.com" target="_blank" rel="noreferrer" className="font-medium text-accent underline">
+            Aceternity UI
+          </a>
+          .
+        </p>
         <p>
           Pokémon est une marque de Nintendo / Game Freak / The Pokémon Company. Projet étudiant non commercial.
         </p>
