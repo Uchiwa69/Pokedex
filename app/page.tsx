@@ -5,6 +5,7 @@ import FiltreTypes from "@/components/FiltreTypes";
 import GrillePokemons from "@/components/GrillePokemons";
 import IntroPokedex from "@/components/IntroPokedex";
 import Pagination from "@/components/Pagination";
+import Projecteurs from "@/components/Projecteurs";
 import SqueletteGrille from "@/components/SqueletteGrille";
 import { recupererListe } from "@/lib/pokeapi";
 import { validerFiltres } from "@/lib/recherche";
@@ -20,6 +21,18 @@ export default function PageAccueil({ searchParams }: Props) {
     // des composants serveur, rendus normalement. À la première arrivée, il les affiche dans l'écran d'un
     // Pokédex géant, puis on plonge dedans ; ensuite, il les affiche simplement, en colonne.
     <IntroPokedex>
+      {/* Décor du haut de la page : deux projecteurs doux derrière le titre, la recherche et les filtres.
+          absolute : il ne prend aucune place dans la colonne. -z-10 : derrière le contenu de la page.
+          left-1/2 + largeur + -translate-x-1/2 : il couvre la largeur de la fenêtre, pas seulement la colonne
+          de 1280 px. La largeur est 100vw MOINS 1,5rem : 100vw compte aussi la barre de défilement, et le décor
+          dépasserait alors de quelques pixels (la page pouvait glisser de côté).
+          -top-6 : il remonte jusque sous l'en-tête (il annule la marge py-6 de <main>).
+          Les deux masques superposés le font disparaître en fondu vers le bas et sur les côtés, sans coupure.
+          opacity-60 sur téléphone : l'écran est étroit, les deux projecteurs se recouvrent et voilaient le haut. */}
+      <div className="pointer-events-none absolute -top-6 left-1/2 -z-10 h-[40rem] opacity-60 sm:opacity-100 w-[calc(100vw-1.5rem)] -translate-x-1/2 overflow-hidden [mask-composite:intersect] [mask-image:linear-gradient(to_bottom,black_55%,transparent),linear-gradient(to_right,transparent,black_2rem,black_calc(100%-2rem),transparent)]">
+        <Projecteurs />
+      </div>
+
       <header className="flex flex-col gap-2">
         <p className="etiquette">Pokédex national</p>
         <h1 className="font-titre text-3xl font-bold">Tous les Pokémon</h1>

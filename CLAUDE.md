@@ -116,6 +116,10 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   repli quand `jouerEclat` renvoie false (moteur pas prêt, pas de WebGL, animations réduites = voile seul).
   Électrik a un éclat propre (éclairs verticaux en ligne brisée). Effet et éclat sont retirés quand l'accueil est mis
   en veille (nettoyage d'un useEffect dans `FiltreTypes`), sinon ils rejouaient au retour d'une fiche.
+- Accueil : `Projecteurs` (client, adapté de « Spotlight New » d'Aceternity UI) = deux faisceaux doux derrière le
+  titre, la recherche et les filtres. Posé dans `app/page.tsx` DANS la page d'`IntroPokedex` (il est donc découpé
+  avec elle pendant l'introduction), en `absolute -z-10`, large de `100vw - 1.5rem` (100vw débordait de la largeur
+  de la barre de défilement). Couleur = jeton accent ; immobile en animations réduites.
 - Accueil : introduction `IntroPokedex` (client, `components/`) autour de toute la page. Un Pokédex géant EN 3D
   (three.js, chargé à la demande : `lib/labo/pokedex3d.ts` = modèle repris d'un fichier fourni, `@ts-nocheck`, exclu
   d'ESLint ; `lib/labo/scene-pokedex.ts` = lumières et reflets validés par l'utilisateur) s'ouvre au défilement, puis
