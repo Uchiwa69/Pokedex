@@ -17,6 +17,9 @@ type Props = {
   types: string[]; // libellés français
   typePrincipal: string; // clé anglaise ("fire"), pour lire la couleur --color-type-fire
   mesures: string;
+  // Total des six statistiques : il choisit le motif de la feuille holographique (plus il est haut, plus
+  // le motif est rare). Absent = le motif le plus discret.
+  puissance?: number;
   // Prévenir le parent quand la carte est affichée, ou quand la 3D est indisponible.
   surPret?: () => void;
   surEchec?: () => void;
@@ -113,7 +116,7 @@ function chargerImage(adresse: string | null) {
 // Petit bouton rond de la barre de commandes (44 px : assez grand pour le doigt).
 const BOUTON_ROND = "flex size-11 items-center justify-center rounded-full text-texte-doux hover:bg-piste hover:text-texte";
 
-export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, surPret, surEchec }: Props) {
+export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, puissance = 0, surPret, surEchec }: Props) {
   const refConteneur = useRef<HTMLDivElement>(null);
   const refCommandes = useRef<Commandes | null>(null);
   const animationsReduites = useReducedMotion();
@@ -153,10 +156,11 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
 
       // Tout ce qu'il faut télécharger part EN MÊME TEMPS (Promise.all) : three.js, ses contrôles,
       // l'image et la police. Avant, chaque téléchargement attendait la fin du précédent.
-      const [THREE, { OrbitControls }, effets, image] = await Promise.all([
+      const [THREE, { OrbitControls }, effets, feuilles, image] = await Promise.all([
         import("three"),
         import("three/examples/jsm/controls/OrbitControls.js"),
         import("@/lib/effets-types"), // les effets par type, chargés à la demande comme three.js
+        import("@/lib/effets-types/feuille"), // la feuille holographique (motif selon la puissance)
         chargerImage(adresseImage),
         document.fonts.load(`700 64px ${policeTitre}`).catch(() => {}),
       ]);
@@ -286,9 +290,26 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       effetFace.uniforms.uQualite.value = qualite;
       effetDos.uniforms.uQualite.value = qualite;
 
+      /* ---------- Feuille holographique : le motif brillant des cartes rares, sur la face avant ---------- */
+      // Le motif (paillettes, étoiles, rayons, or…) dépend de la puissance du Pokémon. La couche est posée
+      // juste au-dessus de la face, SOUS l'effet du type et le reflet. premultipliedAlpha : three.js mélange
+      // alors « carte × (1 − alpha) + couleur », ce qui permet à la feuille de recouvrir la carte par endroits.
+      const feuille = new THREE.ShaderMaterial({
+        ...feuilles.assemblerFeuille(feuilles.motifSelonPuissance(puissance)),
+        transparent: true,
+        premultipliedAlpha: true,
+        depthWrite: false,
+      });
+      // Les axes de la caméra, pour placer la lampe de la feuille par rapport à l'écran.
+      const droite = new THREE.Vector3();
+      const haut = new THREE.Vector3();
+      const versOeil = new THREE.Vector3();
+
       const carte = new THREE.Group();
       const avant = new THREE.Mesh(geometrieFace, new THREE.MeshBasicMaterial({ map: textureFace }));
       avant.position.z = epaisseur / 2 + 0.001;
+      const feuilleAvant = new THREE.Mesh(geometrieFace, feuille);
+      feuilleAvant.position.z = epaisseur / 2 + 0.0015;
       const effetAvant = new THREE.Mesh(geometrieFace, effetFace);
       effetAvant.position.z = epaisseur / 2 + 0.002;
       const effetArriere = new THREE.Mesh(geometrieFace, effetDos);
@@ -305,8 +326,14 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       const refletArriere = new THREE.Mesh(geometrieFace, refletDos);
       refletArriere.position.z = -epaisseur / 2 - 0.003;
       refletArriere.rotation.y = Math.PI;
-      carte.add(tranche, avant, effetAvant, refletAvant, arriere, effetArriere, refletArriere);
+      carte.add(tranche, avant, feuilleAvant, effetAvant, refletAvant, arriere, effetArriere, refletArriere);
       scene.add(carte);
+      // Ordre de dessin des couches transparentes, de la plus basse à la plus haute. Elles sont presque à la
+      // même distance de la caméra : sans cet ordre imposé, three.js pourrait dessiner la feuille en dernier,
+      // et elle voilerait l'effet du type et le reflet.
+      feuilleAvant.renderOrder = 1;
+      effetAvant.renderOrder = effetArriere.renderOrder = 2;
+      refletAvant.renderOrder = refletArriere.renderOrder = 3;
 
       // Inclinaison d'une face par rapport au regard, de -1 à 1 sur chaque axe : c'est elle qui fait glisser
       // les reflets et la profondeur de l'effet. On exprime la direction de la caméra dans le repère de la
@@ -367,6 +394,24 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
           materiau.uniforms.uCalme.value = reduit ? 1 : 0;
           mesurerInclinaison(face, materiau);
         }
+        // Feuille holographique. « Penche » : de combien la face avant est tournée par rapport au regard
+        // (0 = bien de face) ; la feuille dort de face et s'éveille quand la carte penche.
+        feuilleAvant.getWorldQuaternion(orientationFace).invert();
+        versCamera.copy(camera.position).sub(carte.position).normalize().applyQuaternion(orientationFace);
+        feuille.uniforms.uPenche.value = Math.hypot(versCamera.x, versCamera.y);
+        // Sa lampe est devant la carte, côté caméra, et se promène lentement (immobile en animations réduites).
+        // Elle est placée avec les axes de la caméra : droite, haut, et vers l'œil.
+        droite.set(1, 0, 0).applyQuaternion(camera.quaternion);
+        haut.set(0, 1, 0).applyQuaternion(camera.quaternion);
+        versOeil.set(0, 0, 1).applyQuaternion(camera.quaternion);
+        const lampeX = reduit ? -0.14 : Math.sin(temps * 0.41) * 0.42;
+        const lampeY = reduit ? 0.24 : 0.12 - Math.sin(temps * 0.33 + 0.6) * 0.3;
+        versCamera
+          .copy(carte.position)
+          .addScaledVector(droite, lampeX * 1.1 * l)
+          .addScaledVector(haut, lampeY * 1.1 * h)
+          .addScaledVector(versOeil, 0.9 * l);
+        (feuille.uniforms.uLampe.value as number[]).splice(0, 3, versCamera.x, versCamera.y, versCamera.z);
         rendu.render(scene, camera);
       });
       setEtat("pret");
@@ -388,6 +433,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         refletDos.dispose();
         effetFace.dispose();
         effetDos.dispose();
+        feuille.dispose();
         rendu.dispose();
         rendu.domElement.remove();
         refCommandes.current = null;
@@ -399,7 +445,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       annule = true;
       nettoyer();
     };
-  }, [illustration, numero, nom, typesTexte, typePrincipal, mesures]);
+  }, [illustration, numero, nom, typesTexte, typePrincipal, mesures, puissance]);
 
   return (
     <div className="flex flex-col gap-4">

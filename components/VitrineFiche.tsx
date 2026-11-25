@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Carte3D from "@/components/Carte3D";
 import { formaterMesure, type Pokemon } from "@/lib/conversion";
+import { LIBELLES_STATS } from "@/lib/stats";
 import { TYPES } from "@/lib/types";
 
 type Props = {
@@ -57,6 +58,8 @@ export default function VitrineFiche({ pokemon, children }: Props) {
           types={pokemon.types.map((type) => TYPES[type].libelle)}
           typePrincipal={pokemon.types[0] ?? "normal"}
           mesures={`${formaterMesure(pokemon.taille, "m")} · ${formaterMesure(pokemon.poids, "kg")}`}
+          // Total des six statistiques (reduce les additionne en partant de 0) : il décide du motif de la feuille.
+          puissance={LIBELLES_STATS.reduce((somme, stat) => somme + pokemon.stats[stat.cle], 0)}
           surPret={surPret}
           surEchec={() => setEchec(true)}
         />
