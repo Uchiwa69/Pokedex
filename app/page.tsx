@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import BarreRecherche from "@/components/BarreRecherche";
-import BoutonHasard from "@/components/BoutonHasard";
 import EtatVide from "@/components/EtatVide";
 import FiltreTypes from "@/components/FiltreTypes";
 import GrillePokemons from "@/components/GrillePokemons";
@@ -26,7 +25,7 @@ export default function PageAccueil({ searchParams }: Props) {
     // des composants serveur, rendus normalement. À la première arrivée, il les affiche dans l'écran d'un
     // Pokédex géant, puis on plonge dedans ; ensuite, il les affiche simplement, en colonne.
     <IntroPokedex>
-      {/* Haut de page centré : titre, phrase d'accroche, recherche, deux actions, puis les types.
+      {/* Haut de page centré : titre, phrase d'accroche, recherche, lien vers l'atelier, puis les types.
           (Choisi parmi quatre propositions comparées dans /labo/hero.) */}
       <div className="flex flex-col items-center gap-6 py-4 text-center sm:py-10">
         <header className="flex flex-col items-center gap-3">
@@ -34,7 +33,7 @@ export default function PageAccueil({ searchParams }: Props) {
           {/* Titre en dégradé : du texte vers l'accent (bg-clip-text découpe le dégradé à la forme des lettres). */}
           <h1 className="bg-linear-to-r from-texte to-accent bg-clip-text font-titre text-4xl font-bold text-transparent sm:text-6xl">Tous les Pokémon</h1>
           <p className="max-w-xl text-sm text-texte-doux sm:text-base">
-            {TOTAL} Pokémon, {NOMS_TYPES.length} types. Cherche par nom ou par numéro, ou laisse faire le hasard.
+            {TOTAL} Pokémon, {NOMS_TYPES.length} types. Cherche par nom ou par numéro.
           </p>
         </header>
 
@@ -46,13 +45,10 @@ export default function PageAccueil({ searchParams }: Props) {
           </Suspense>
         </div>
 
-        {/* Deux actions rapides : une fiche tirée au sort (un bouton), et l'atelier de cartes (un lien). */}
-        <div className="flex flex-wrap justify-center gap-2">
-          <BoutonHasard className="bouton bouton-principal px-5" />
-          <Link href="/atelier" className="bouton bouton-secondaire px-5">
-            Créer une carte
-          </Link>
-        </div>
+        {/* Action rapide : l'atelier de cartes (une navigation, donc un lien). */}
+        <Link href="/atelier" className="bouton bouton-principal px-5">
+          Créer une carte
+        </Link>
 
         {/* Le filtre a son propre <Suspense> : il s'affiche sans attendre la liste des Pokémon.
             En attendant l'adresse, on montre déjà le filtre (sans type actif) : il occupe exactement

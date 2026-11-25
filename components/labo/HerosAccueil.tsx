@@ -7,7 +7,6 @@ import Image from "next/image";
 import Link from "next/link";
 import BadgeType from "@/components/BadgeType";
 import BarreRecherche from "@/components/BarreRecherche";
-import BoutonHasard from "@/components/BoutonHasard";
 import FiltreTypes from "@/components/FiltreTypes";
 import type { Pokemon } from "@/lib/conversion";
 import { TOTAL_POKEMONS } from "@/lib/pokeapi";
@@ -21,7 +20,7 @@ type Props = { vedette: Pokemon };
 // « 1 025 ». toLocaleString sépare les milliers par une espace FINE, presque invisible dans un texte courant :
 // on la remplace par une espace insécable ordinaire.
 const TOTAL = TOTAL_POKEMONS.toLocaleString("fr-FR").replace(/ /g, " ");
-const ACCROCHE = `${TOTAL} Pokémon, ${NOMS_TYPES.length} types. Cherche par nom ou par numéro, ou laisse faire le hasard.`;
+const ACCROCHE = `${TOTAL} Pokémon, ${NOMS_TYPES.length} types. Cherche par nom ou par numéro.`;
 
 // La recherche : BarreRecherche lit l'adresse (useSearchParams), elle a donc besoin d'un Suspense.
 function Recherche() {
@@ -32,12 +31,11 @@ function Recherche() {
   );
 }
 
-// Les deux actions rapides.
+// L'action rapide : le lien vers l'atelier.
 function Actions({ centre = false }: { centre?: boolean }) {
   return (
     <div className={`flex flex-wrap gap-2 ${centre ? "justify-center" : ""}`}>
-      <BoutonHasard className="bouton bouton-principal px-5" />
-      <Link href="/atelier" className="bouton bouton-secondaire px-5">
+      <Link href="/atelier" className="bouton bouton-principal px-5">
         Créer une carte
       </Link>
     </div>
