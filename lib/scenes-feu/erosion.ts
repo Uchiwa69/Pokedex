@@ -199,7 +199,9 @@ void main() {
     float champCombustion = distGueule + idCellule * 0.16 + (bruitMicro - 0.5) * 0.08;
     // Le bord de chaque cellule (distBordCellule petit) brûle plus tôt que son cœur
     float erosionCellule = champCombustion + distBordCellule * 0.55;
-    float seuilErosion = progDesint * (rayonMaxEcran * 1.25 + 0.45) - 0.12;
+    // Réglage du projet : marge réduite (× 1.25 + 0.45 → × 1.0 + 0.2). Avec l'ancienne, tout avait brûlé aux deux
+    // tiers de la désintégration et la fin du défilement ne montrait plus rien.
+    float seuilErosion = progDesint * (rayonMaxEcran * 1.0 + 0.2) - 0.12;
 
     // 1 = matière encore présente, 0 = consumée en cendres
     float masqueMatiere = smoothstep(seuilErosion - 0.015, seuilErosion + 0.025, erosionCellule);
@@ -251,7 +253,7 @@ void main() {
     float fin = 1.0 - smoothstep(0.95, 1.0, uProgression);
     // Ajout du projet (demande de l'utilisateur) : quand tout a brûlé, des braises continuent de monter en
     // fond, derrière l'écran de fin. Elles apparaissent pendant que le reste s'éteint.
-    float restes = particulesAscendantes(pos + vec2(1.7, -uTemps * 0.22), uTemps * 0.6, 11.0, 0.07) * smoothstep(0.86, 1.0, uProgression);
+    float restes = particulesAscendantes(pos + vec2(1.7, -uTemps * 0.22), uTemps * 0.6, 11.0, 0.07) * smoothstep(0.72, 0.83, uProgression);
     vec3 rgbRestes = vec3(1.0, 0.48, 0.09) * restes * 1.2;
     float alphaRestes = clamp(restes * 0.6, 0.0, 1.0);
     gl_FragColor = vec4(rgbFinal * fin + rgbRestes, clamp(alphaFinal * fin + alphaRestes, 0.0, 1.0));

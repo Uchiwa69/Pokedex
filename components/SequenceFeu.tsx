@@ -27,7 +27,9 @@ function fondu(a: number, b: number, x: number) {
 // pour cent du défilement et à la désintégration les 75 restants : elle dure plus longtemps sous la molette
 // (demande de l'utilisateur), sans toucher au shader.
 function allonger(parcouru: number) {
-  return parcouru < 0.25 ? (parcouru / 0.25) * 0.4 : 0.4 + ((parcouru - 0.25) / 0.75) * 0.6;
+  // On s'arrête à 0,83 : c'est là que le dernier morceau finit de brûler. Le bas de la page tombe donc pile sur
+  // la fin de la désintégration, sans molette « dans le vide » avant le pied de page.
+  return parcouru < 0.25 ? (parcouru / 0.25) * 0.4 : 0.4 + ((parcouru - 0.25) / 0.75) * 0.43;
 }
 
 type Props = { children: ReactNode };
@@ -83,7 +85,12 @@ export default function SequenceFeu({ children }: Props) {
           // La course = ce que le conteneur a de plus haut que la page (les 560 % d'écran).
           // 0 quand la page vient de se coller en haut de l'écran, 1 quand elle va se décoller.
           const course = elementConteneur!.offsetHeight - elementPage!.offsetHeight;
-          const parcouru = Math.min(1, Math.max(0, -elementConteneur!.getBoundingClientRect().top / course));
+          const haut = elementConteneur!.getBoundingClientRect().top;
+          // Le pied de page est plus court qu'un écran : le bas de la page arrive AVANT la fin de la course. On
+          // mesure donc la part de la course réellement atteignable, pour que « tout en bas » vaille bien 1.
+          const defilementMax = document.documentElement.scrollHeight - window.innerHeight;
+          const atteignable = Math.min(1, Math.max(0.5, (defilementMax - (haut + window.scrollY)) / course));
+          const parcouru = Math.min(1, Math.max(0, -haut / course / atteignable));
           const progression = allonger(parcouru);
           // On dessine même à la fin (progression = 1) : des braises continuent de monter derrière l'écran de fin.
           dessin.dessiner(progression);

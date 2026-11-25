@@ -228,7 +228,8 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   pause hors écran (IntersectionObserver). Le souffle occupe 25 % du défilement et la désintégration 75 % (fonction
   `allonger`) : l'utilisateur la voulait longue. Rejouable en remontant puis redescendant, jamais en boucle ; pas de bouton
   « Passer » (retiré à sa demande). Écran de fin : « Attrapez-les tous ! » + un lien « Retour à la liste des Pokémon »,
-  72svh pour que le pied de page soit visible dès la fin ; des braises restent en fond.
+  64svh, et la progression est ramenée à la course réellement atteignable : la désintégration finit pile en bas de page,
+  sans défilement « dans le vide » avant le pied de page (demandé deux fois par l'utilisateur) ; des braises restent en fond.
   `lib/scenes-feu/` : `index.ts` (scène three.js), `erosion.ts` (shader fourni par l'utilisateur, généré avec Gemini, ADAPTÉ :
   les ajouts sont marqués « Ajout du projet »), `texte.ts` (titre qui brûle lettre par lettre, `data-lettre` / `data-bloc`).
   Trois images de Dracaufeu GÉNÉRÉES PAR IA dans `public/dracaufeu/` (repos, inspiration, souffle ; .webp détourés par un
