@@ -178,6 +178,11 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   glissement vertical fait défiler la page, l'horizontal tourne l'objet. Sacoche : le détail d'un membre défile
   jusqu'à lui (< 768 px), stats et attaques avant le modèle 3D, un seul emplacement libre affiché. Combat : au
   démarrage la page défile jusqu'à l'arène (< 640 px), arène plus basse, bouton « Quitter » passé en bas.
+- Compatibilité Safari / Firefox (vérifiée avec Playwright : moteurs WebKit et Firefox, pas le vrai Safari) :
+  `TitreParticules` sans halo (`glow={false}` : l'ombre floue du canvas faisait tomber WebKit à 34 images/s) ;
+  `useCri(url, surEchec)` : les cris sont en .ogg, illisible sur les Safari d'avant 2025 → `BoutonCri` l'annonce au
+  lieu de ne rien faire ; champs de saisie à 16 px sur écran tactile (`@media (pointer: coarse)` dans globals.css),
+  sinon iOS zoome la page au focus. Tailwind 4 impose de toute façon Safari 16.4+ / Firefox 128+.
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif

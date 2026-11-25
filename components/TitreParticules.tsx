@@ -72,6 +72,9 @@ export default function TitreParticules({ texte }: { texte: string }) {
               pointerRepel={42}
               repelRadius={120}
               idleDrift={0.8}
+              // Pas de halo lumineux : il est dessiné avec une ombre floue recalculée à chaque image, très
+              // coûteuse dans Safari (l'accueil y tombait à 34 images par seconde, contre 49 sans).
+              glow={false}
             />
           </div>
         ))}

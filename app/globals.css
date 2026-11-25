@@ -291,6 +291,17 @@ html.dark {
   outline-offset: 2px;
 }
 
+/* Écrans tactiles : sur iPhone et iPad, Safari ZOOME toute la page quand on touche un champ dont le texte
+   fait moins de 16 px (nos champs sont en 14 px), et ne dézoome pas ensuite. On passe donc les champs à 16 px
+   sur ces appareils seulement. !important : la règle doit l'emporter sur la classe text-sm des champs. */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 1rem !important;
+  }
+}
+
 /* Transition partagée de l'artwork entre la carte et la fiche (<ViewTransition share="morph">) :
    le navigateur déplace et agrandit l'image d'une page à l'autre. */
 ::view-transition-group(.morph) {
