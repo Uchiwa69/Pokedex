@@ -7,13 +7,9 @@ import IntroPokedex from "@/components/IntroPokedex";
 import Pagination from "@/components/Pagination";
 import SqueletteGrille from "@/components/SqueletteGrille";
 import TitreParticules from "@/components/TitreParticules";
-import { recupererListe, TOTAL_POKEMONS } from "@/lib/pokeapi";
+import { recupererListe } from "@/lib/pokeapi";
 import { validerFiltres } from "@/lib/recherche";
-import { NOMS_TYPES, TYPES } from "@/lib/types";
-
-// « 1 025 ». toLocaleString sépare les milliers par une espace FINE, presque invisible dans un texte courant :
-// on la remplace par une espace insécable ordinaire.
-const TOTAL = TOTAL_POKEMONS.toLocaleString("fr-FR").replace(/ /g, " ");
+import { TYPES } from "@/lib/types";
 
 // searchParams (comme params) est une promesse : ce sont des données de la REQUÊTE,
 // inconnues au build. On les lit donc dans un composant placé sous <Suspense>.
@@ -25,17 +21,14 @@ export default function PageAccueil({ searchParams }: Props) {
     // des composants serveur, rendus normalement. À la première arrivée, il les affiche dans l'écran d'un
     // Pokédex géant, puis on plonge dedans ; ensuite, il les affiche simplement, en colonne.
     <IntroPokedex>
-      {/* Haut de page centré : titre, phrase d'accroche, recherche, puis les types.
+      {/* Haut de page centré : titre, recherche, puis les types.
           (Choisi parmi quatre propositions comparées dans /labo/hero.) */}
       <div className="flex flex-col items-center gap-6 py-4 text-center sm:py-6">
         {/* Le titre a sa propre zone, sur toute la largeur : il est dessiné en particules (TitreParticules),
-            qui ont besoin de place autour d'elles. L'accroche est dessous. */}
+            qui ont besoin de place autour d'elles. */}
         <header className="flex w-full flex-col items-center gap-1">
           <p className="etiquette">Pokédex national</p>
           <TitreParticules texte="Tous les Pokémon" />
-          <p className="max-w-xl text-sm text-texte-doux sm:text-base">
-            {TOTAL} Pokémon, {NOMS_TYPES.length} types. Cherche par nom ou par numéro.
-          </p>
         </header>
 
         {/* BarreRecherche lit l'adresse avec useSearchParams → elle aussi a besoin d'un Suspense.
