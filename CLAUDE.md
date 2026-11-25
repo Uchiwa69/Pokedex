@@ -111,8 +111,9 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   et le reflet : le reflet d'origine de `Carte3D` ne doit pas être modifié (à `uForce` = 0, carte d'origine).
   Feuille holographique (`lib/effets-types/feuille.ts`, adaptée du « HoloCard » de React Bits) : couche de la face
   avant, SOUS l'effet du type (`renderOrder` 1/2/3 : feuille, effet, reflet), en alpha prémultiplié. Fine poussière
-  blanche sur le bord + motif choisi par la PUISSANCE (total des stats, `motifSelonPuissance` : arc-en-ciel, étoiles,
-  rayons, cosmos, or). Refusé par l'utilisateur (« guirlande ») : les hexagones multicolores du bord et le motif
+  blanche sur le bord + motif (arc-en-ciel, étoiles, rayons, cosmos, or). UNIQUEMENT DANS L'ATELIER (choix de
+  l'utilisateur) : sur la fiche, la couche est cachée (`feuilleAvant.visible = false`) et la carte n'a que le reflet
+  et l'effet de son type. Essayés puis retirés : motif selon la puissance, puis selon le stade d'évolution. Refusé par l'utilisateur (« guirlande ») : les hexagones multicolores du bord et le motif
   « paillettes » seul — ne pas les remettre. Elle dort carte de face et s'éveille quand elle penche ; force réglée par `uIntensite` (0.5).
   Shaders fournis par l'utilisateur (générés avec Gemini), corrigés ici : eau (voile uniforme), acier (moiré, `fwidth`).
   Filtres de l'accueil : le mode « éclat » des mêmes fonctions joue le FOND de l'effet (`lib/effets-types/eclat.ts` :

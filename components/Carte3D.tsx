@@ -19,9 +19,6 @@ type Props = {
   types: string[]; // libellés français
   typePrincipal: string; // clé anglaise ("fire"), pour lire la couleur --color-type-fire
   mesures: string;
-  // Total des six statistiques : il choisit le motif de la feuille holographique (plus il est haut, plus
-  // le motif est rare). Absent = le motif le plus discret.
-  puissance?: number;
   // Carte personnalisée (atelier). Absent sur la fiche : la carte reste alors celle d'origine.
   // Quand il change, la carte est mise à jour SUR PLACE (texture redessinée, réglages des shaders),
   // sans recréer la scène 3D : pas de clignotement à chaque modification.
@@ -36,7 +33,7 @@ export type PersoCarte = {
   nom: string; // nom ou surnom écrit sur la carte
   illustration: string | null; // illustration normale ou chromatique
   style: StyleCarte;
-  motif: Motif | null; // motif de la feuille holographique ; null = selon la puissance
+  motif: Motif | null; // motif de la feuille holographique ; null = pas de feuille
   typeEffet: string; // clé anglaise du type : il donne l'effet animé et la couleur de la carte
   attaques: AttaqueCarte[];
 };
@@ -132,7 +129,7 @@ function chargerImage(adresse: string | null) {
 // Petit bouton rond de la barre de commandes (44 px : assez grand pour le doigt).
 const BOUTON_ROND = "flex size-11 items-center justify-center rounded-full text-texte-doux hover:bg-piste hover:text-texte";
 
-export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, puissance = 0, perso, surPret, surEchec }: Props) {
+export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, perso, surPret, surEchec }: Props) {
   const refConteneur = useRef<HTMLDivElement>(null);
   const refCommandes = useRef<Commandes | null>(null);
   // La personnalisation est gardée dans un ref (lue par la scène à sa création), et la fonction qui
@@ -184,7 +181,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         import("three"),
         import("three/examples/jsm/controls/OrbitControls.js"),
         import("@/lib/effets-types"), // les effets par type, chargés à la demande comme three.js
-        import("@/lib/effets-types/feuille"), // la feuille holographique (motif selon la puissance)
+        import("@/lib/effets-types/feuille"), // la feuille holographique (cartes de l'atelier)
         chargerImage(adresseImage),
         document.fonts.load(`700 64px ${policeTitre}`).catch(() => {}),
       ]);
@@ -320,11 +317,13 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       effetDos.uniforms.uQualite.value = qualite;
 
       /* ---------- Feuille holographique : le motif brillant des cartes rares, sur la face avant ---------- */
-      // Le motif (paillettes, étoiles, rayons, or…) dépend de la puissance du Pokémon. La couche est posée
+      // Elle n'existe QUE sur une carte personnalisée dans l'atelier, qui choisit son motif (étoiles, rayons,
+      // or…). Sur la fiche, la couche reste cachée : la carte n'a que le reflet et l'effet de son type.
+      // La couche est posée
       // juste au-dessus de la face, SOUS l'effet du type et le reflet. premultipliedAlpha : three.js mélange
       // alors « carte × (1 − alpha) + couleur », ce qui permet à la feuille de recouvrir la carte par endroits.
       const feuille = new THREE.ShaderMaterial({
-        ...feuilles.assemblerFeuille(feuilles.motifSelonPuissance(puissance)),
+        ...feuilles.assemblerFeuille("arc-en-ciel"),
         transparent: true,
         premultipliedAlpha: true,
         depthWrite: false,
@@ -339,6 +338,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       avant.position.z = epaisseur / 2 + 0.001;
       const feuilleAvant = new THREE.Mesh(geometrieFace, feuille);
       feuilleAvant.position.z = epaisseur / 2 + 0.0015;
+      feuilleAvant.visible = false; // cachée tant que l'atelier n'a pas choisi de motif (un objet caché n'est pas dessiné)
       const effetAvant = new THREE.Mesh(geometrieFace, effetFace);
       effetAvant.position.z = epaisseur / 2 + 0.002;
       const effetArriere = new THREE.Mesh(geometrieFace, effetDos);
@@ -447,7 +447,8 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
           materiau.uniforms.uZonesCalmes.value = zones.textes.flat();
           materiau.uniforms.uZoneIllustration.value = zones.illustration;
         }
-        feuille.uniforms.uMotif.value = feuilles.MOTIFS.indexOf(p.motif ?? feuilles.motifSelonPuissance(puissance));
+        feuilleAvant.visible = p.motif !== null;
+        if (p.motif) feuille.uniforms.uMotif.value = feuilles.MOTIFS.indexOf(p.motif);
       };
       refAppliquer.current = appliquer;
       // Une carte déjà personnalisée (relue dans le navigateur) est appliquée avant le premier affichage.
@@ -526,7 +527,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       annule = true;
       nettoyer();
     };
-  }, [illustration, numero, nom, typesTexte, typePrincipal, mesures, puissance]);
+  }, [illustration, numero, nom, typesTexte, typePrincipal, mesures]);
 
   return (
     <div className="flex flex-col gap-4">

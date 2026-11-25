@@ -5,7 +5,6 @@ import Link from "next/link";
 import Carte3D from "@/components/Carte3D";
 import { useCartes } from "@/stores/cartes";
 import { formaterMesure, type Pokemon } from "@/lib/conversion";
-import { LIBELLES_STATS } from "@/lib/stats";
 import { TYPES } from "@/lib/types";
 
 type Props = {
@@ -62,18 +61,25 @@ export default function VitrineFiche({ pokemon, children }: Props) {
           types={pokemon.types.map((type) => TYPES[type].libelle)}
           typePrincipal={pokemon.types[0] ?? "normal"}
           mesures={`${formaterMesure(pokemon.taille, "m")} · ${formaterMesure(pokemon.poids, "kg")}`}
-          // Total des six statistiques (reduce les additionne en partant de 0) : il décide du motif de la feuille.
-          puissance={LIBELLES_STATS.reduce((somme, stat) => somme + pokemon.stats[stat.cle], 0)}
           surPret={surPret}
           surEchec={() => setEchec(true)}
         />
       </div>
 
-      {/* Vers l'atelier : on y compose sa propre carte (style, surnom, motif, attaques). C'est une navigation,
-          donc un lien. Hors du bloc « inert » : il est utilisable sans attendre la carte 3D. */}
-      <Link href={`/atelier?pokemon=${encodeURIComponent(pokemon.nom)}`} className="bouton bouton-secondaire mx-auto mt-4 flex w-fit px-5 text-sm">
-        {aUneCarte ? "Modifier ma carte" : "Créer sa carte"}
-      </Link>
+      {/* Vers l'atelier : c'est là, et seulement là, qu'on personnalise sa carte (style, feuille holographique,
+          surnom, attaques). C'est une navigation, donc un lien. Hors du bloc « inert » : il est utilisable sans
+          attendre la carte 3D. Bouton principal, large, avec une icône : c'est l'action mise en avant ici. */}
+      <div className="mt-6 flex flex-col items-center gap-2">
+        <Link href={`/atelier?pokemon=${encodeURIComponent(pokemon.nom)}`} className="bouton bouton-principal w-full max-w-xs px-6 font-semibold">
+          {/* Icône décorative : une carte avec une étincelle (la même que l'onglet Atelier). */}
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
+            <rect x="5" y="3" width="14" height="18" rx="2" />
+            <path d="M12 8.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" />
+          </svg>
+          {aUneCarte ? "Modifier ma carte" : "Créer ma carte holographique"}
+        </Link>
+        <p className="text-center text-sm text-texte-doux">Style, motif brillant, surnom et attaques : compose-la dans l&apos;atelier.</p>
+      </div>
     </div>
   );
 }

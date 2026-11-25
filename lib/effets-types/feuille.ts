@@ -5,7 +5,7 @@
 // - c'est une couche de NOTRE carte (entre la face et l'effet du type), pas une carte à part ;
 // - le regard et la lampe viennent de la vraie caméra three.js, au lieu d'un angle d'inclinaison ;
 // - la feuille s'efface sur les textes et s'allège sur l'illustration (zones calmes de commun.ts) ;
-// - le motif dépend de la PUISSANCE du Pokémon (total de ses statistiques), comme la rareté d'une vraie carte ;
+// - elle ne sert que dans l'ATELIER, où l'on choisit son motif ; la carte d'une fiche n'a pas de feuille ;
 // - deux motifs non utilisés (éclats de verre, tourbillon) et le reflet blanc (on a déjà le nôtre) sont retirés.
 
 import { GLSL_COMMUN } from "./commun";
@@ -15,16 +15,8 @@ import { creerUniformes, ZONES_FACE } from "./index";
 export const MOTIFS = ["arc-en-ciel", "paillettes", "etoiles", "rayons", "cosmos", "or"] as const;
 export type Motif = (typeof MOTIFS)[number];
 
-// Total des six statistiques → motif. Repères : Pikachu 320, Dracaufeu 534, oiseaux légendaires 580, Mewtwo 680.
-export function motifSelonPuissance(total: number): Motif {
-  // (Le motif « paillettes » n'est plus attribué seul : ses points multicolores sur toute la carte faisaient
-  // guirlande. Il ne sert plus qu'à l'intérieur du motif « or », teinté de métal.)
-  if (total < 420) return "arc-en-ciel"; // simple voile irisé
-  if (total < 490) return "etoiles";
-  if (total < 535) return "rayons";
-  if (total < 580) return "cosmos";
-  return "or"; // légendaires et Pokémon les plus puissants
-}
+// (Le motif « paillettes » n'est pas proposé seul dans l'atelier : ses points multicolores sur toute la carte
+// faisaient guirlande. Il ne sert qu'à l'intérieur du motif « or », teinté de métal.)
 
 // Programme des sommets. Il calcule, pour chaque coin de la carte, la direction de l'œil et celle de la lampe
 // DANS LE REPÈRE DE LA CARTE (x = largeur, y = hauteur, z = sortant de la face) : inverse(modelMatrix) ramène

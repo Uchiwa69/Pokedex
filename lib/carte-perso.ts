@@ -19,7 +19,7 @@ export type AttaqueCarte = Pick<Attaque, "nom" | "nomFr" | "type" | "puissance">
 export type CartePerso = {
   style: StyleCarte;
   surnom: string; // "" = le nom français du Pokémon
-  motif: Motif | null; // null = le motif du style
+  motif: Motif | "aucun" | null; // null = le motif du style ; "aucun" = pas de feuille holographique
   typeEffet: NomType | null; // null = le type principal du Pokémon
   attaques: AttaqueCarte[]; // 0 à ATTAQUES_MAX
   // Nom français du Pokémon, noté à l'enregistrement : la liste « Mes cartes » de l'atelier peut ainsi
@@ -30,10 +30,10 @@ export type CartePerso = {
 // La carte de départ, tant que rien n'a été personnalisé.
 export const CARTE_DE_BASE: CartePerso = { style: "classique", surnom: "", motif: null, typeEffet: null, attaques: [] };
 
-// Table des styles : libellé, explication, et motif holographique qui va avec (null = selon la puissance
-// du Pokémon, comme sur sa fiche). Choisir un style remet ce motif ; on peut ensuite en changer.
+// Table des styles : libellé, explication, et motif holographique qui va avec (null = pas de feuille, comme
+// sur la fiche). Choisir un style remet ce motif ; on peut ensuite en changer.
 export const STYLES: Record<StyleCarte, { libelle: string; description: string; motif: Motif | null }> = {
-  classique: { libelle: "Classique", description: "La carte de la fiche : illustration encadrée, motif selon la puissance.", motif: null },
+  classique: { libelle: "Classique", description: "La carte de la fiche : illustration encadrée, sans feuille holographique.", motif: null },
   pleine: { libelle: "Full art", description: "L'illustration occupe toute la carte, le texte passe par-dessus.", motif: "rayons" },
   chromatique: { libelle: "Chromatique", description: "Le Pokémon dans ses couleurs rares (« shiny »), sur un semis d'étoiles.", motif: "etoiles" },
   or: { libelle: "Or", description: "Carte dorée : liseré, fond et feuille en métal précieux.", motif: "or" },
@@ -49,6 +49,12 @@ export const LIBELLES_MOTIFS: Partial<Record<Motif, string>> = {
   or: "Or",
 };
 export const MOTIFS_PROPOSES = Object.keys(LIBELLES_MOTIFS) as Motif[];
+
+// Le motif réellement affiché sur une carte : celui choisi, sinon celui de son style ; null = pas de feuille.
+export function motifAffiche(carte: CartePerso): Motif | null {
+  if (carte.motif === "aucun") return null;
+  return carte.motif ?? STYLES[carte.style].motif;
+}
 
 // Couleur de la carte « Or » (à la place de la couleur du type).
 export const TEINTE_OR = "#e0b64c";

@@ -14,6 +14,7 @@ import {
   CARTE_DE_BASE,
   LIBELLES_MOTIFS,
   LONGUEUR_MAX_SURNOM,
+  motifAffiche,
   MOTIFS_PROPOSES,
   NOMS_STYLES,
   STYLES,
@@ -21,7 +22,6 @@ import {
   type CartePerso,
 } from "@/lib/carte-perso";
 import { formaterMesure, type Attaque, type Pokemon } from "@/lib/conversion";
-import { LIBELLES_STATS } from "@/lib/stats";
 import { styleTeinte } from "@/lib/teinte";
 import { TYPES } from "@/lib/types";
 import { useCartes } from "@/stores/cartes";
@@ -62,7 +62,7 @@ export default function AtelierCarte({ pokemon, attaques }: Props) {
       nom: carte.surnom.trim() || pokemon.nomFr,
       illustration: carte.style === "chromatique" ? adresseChromatique(pokemon.artwork) : pokemon.artwork,
       style: carte.style,
-      motif: carte.motif ?? STYLES[carte.style].motif,
+      motif: motifAffiche(carte),
       typeEffet: carte.typeEffet ?? pokemon.types[0] ?? "normal",
       attaques: carte.attaques,
     }),
@@ -125,7 +125,6 @@ export default function AtelierCarte({ pokemon, attaques }: Props) {
             types={pokemon.types.map((type) => TYPES[type].libelle)}
             typePrincipal={pokemon.types[0] ?? "normal"}
             mesures={`${formaterMesure(pokemon.taille, "m")} · ${formaterMesure(pokemon.poids, "kg")}`}
-            puissance={LIBELLES_STATS.reduce((somme, stat) => somme + pokemon.stats[stat.cle], 0)}
             perso={perso}
           />
         </div>
@@ -188,6 +187,9 @@ export default function AtelierCarte({ pokemon, attaques }: Props) {
             <div className="flex flex-wrap gap-2">
               <button type="button" aria-pressed={carte.motif === null} onClick={() => modifier({ motif: null })} className={`${CHOIX} ${carte.motif === null ? CHOIX_ACTIF : CHOIX_INACTIF}`}>
                 Celui du style
+              </button>
+              <button type="button" aria-pressed={carte.motif === "aucun"} onClick={() => modifier({ motif: "aucun" })} className={`${CHOIX} ${carte.motif === "aucun" ? CHOIX_ACTIF : CHOIX_INACTIF}`}>
+                Aucun
               </button>
               {MOTIFS_PROPOSES.map((motif) => (
                 <button key={motif} type="button" aria-pressed={carte.motif === motif} onClick={() => modifier({ motif })} className={`${CHOIX} ${carte.motif === motif ? CHOIX_ACTIF : CHOIX_INACTIF}`}>
