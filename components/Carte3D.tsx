@@ -214,6 +214,11 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       const controles = new OrbitControls(camera, rendu.domElement);
       controles.enableDamping = true;
       controles.enablePan = false; // on tourne et on zoome, mais la carte reste au centre
+      // Au doigt : OrbitControls réserve TOUS les gestes à la carte (touch-action: none). Sur téléphone, la carte
+      // occupe presque tout l'écran : on ne pouvait plus faire défiler la page pour voir la suite de la fiche.
+      // pan-y rend le glissement VERTICAL au navigateur (la page défile) ; le glissement horizontal fait
+      // toujours tourner la carte et le pincement la fait zoomer. À la souris, rien ne change.
+      rendu.domElement.style.touchAction = "pan-y";
       controles.minDistance = 3;
       controles.maxDistance = 9;
 
@@ -531,7 +536,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
           ref={refConteneur}
           role="img"
           aria-label={`Carte holographique de ${nom}, orientable à la souris, au doigt ou avec les boutons ci-dessous`}
-          className="absolute inset-0 touch-none"
+          className="absolute inset-0 touch-pan-y"
         />
         {etat === "erreur" && (
           <p role="alert" className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-texte-doux">
@@ -568,7 +573,9 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
           </svg>
         </button>
       </div>
-      <p className="etiquette text-center">Glisse pour tourner · molette ou pincement pour zoomer</p>
+      {/* Le conseil dépend de l'appareil : pointer-coarse = écran tactile (doigt), pointer-fine = souris. */}
+      <p className="etiquette text-center pointer-coarse:hidden">Glisse pour tourner · molette ou pincement pour zoomer</p>
+      <p className="etiquette hidden text-center pointer-coarse:block">Glisse de côté pour tourner · pince pour zoomer</p>
     </div>
   );
 }

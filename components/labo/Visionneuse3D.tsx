@@ -99,6 +99,9 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
       // Rotation libre à 360°, zoom et déplacement de la caméra (souris, molette, doigts).
       const controles = new OrbitControls(camera, rendu.domElement);
       controles.enableDamping = true; // mouvement amorti, plus agréable
+      // Au doigt, le glissement vertical est rendu au navigateur pour que la page défile (voir Carte3D) :
+      // sinon, sur téléphone, on restait bloqué sur le modèle sans pouvoir atteindre la suite.
+      rendu.domElement.style.touchAction = "pan-y";
 
       // "socle" reçoit l'animation générique ; "pivot" reçoit la mise à l'échelle et le centrage.
       const socle = new THREE.Group();
@@ -342,7 +345,7 @@ export default function Visionneuse3D({ url, nom, roles, animations, ko, compact
       <div className={`verre relative overflow-hidden ${compacte ? "aspect-square max-h-[70svh] w-full" : "h-[26rem] sm:h-[30rem]"}`}>
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_70%,var(--teinte,var(--color-accent)),transparent_62%)] opacity-25" />
         {/* role="img" + libellé : la zone 3D est annoncée comme une image par les lecteurs d'écran. */}
-        <div ref={refConteneur} role="img" aria-label={`Modèle 3D de ${nom}, orientable à la souris ou avec les boutons ci-dessous`} className="absolute inset-0 touch-none" />
+        <div ref={refConteneur} role="img" aria-label={`Modèle 3D de ${nom}, orientable à la souris ou avec les boutons ci-dessous`} className="absolute inset-0 touch-pan-y" />
 
         {chargement.etat === "chargement" && (
           <div role="status" className="absolute inset-x-6 bottom-6 flex flex-col gap-2">

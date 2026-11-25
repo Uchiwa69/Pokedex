@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, Reorder, useReducedMotion } from "motion/react";
 import BadgeType from "@/components/BadgeType";
@@ -146,7 +146,9 @@ function ContenuArene() {
         {Array.from({ length: emplacementsVides }, (_, i) => (
           <li
             key={`vide-${i}`}
-            className="animate-apparition motion-reduce:animate-fondu"
+            // Sur téléphone, un seul emplacement libre est montré (hidden pour les suivants, jusqu'à sm) :
+            // cinq grandes cases vides repoussaient tout le reste de la page très loin.
+            className={`animate-apparition motion-reduce:animate-fondu ${i > 0 ? "hidden sm:block" : ""}`}
             style={{ animationDelay: `${(membres.length + i) * 60}ms` }}
           >
             <Link
@@ -250,6 +252,23 @@ function PanneauDetail({ membre }: { membre: Membre }) {
   // true quand ce Pokémon n'a pas de modèle 3D (voir VitrineMembre) : on affiche alors la scène 2D à la place.
   const [sans3d, setSans3d] = useState(false);
 
+  // Le panneau s'ouvre SOUS la grille de l'équipe. Sur téléphone, il se retrouvait plus bas que l'écran : on
+  // touchait un Pokémon et rien ne semblait se passer. À son apparition, s'il est hors de vue (ou presque),
+  // on fait défiler la page jusqu'à lui. Seulement sur petit écran (moins de 768 px, le seuil « md » de
+  // Tailwind) : sur ordinateur, la page ne bouge pas, comme avant.
+  const animationsReduites = useReducedMotion();
+  const refPanneau = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const panneau = refPanneau.current;
+    if (!panneau || !window.matchMedia("(max-width: 767px)").matches) return;
+    const haut = panneau.getBoundingClientRect().top;
+    if (haut > window.innerHeight - 160 || haut < 0) {
+      panneau.scrollIntoView({ block: "start", behavior: animationsReduites ? "auto" : "smooth" });
+    }
+    // Une seule fois, à l'apparition du panneau (il est recréé à chaque changement de membre : voir « key »).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Les trois blocs de la colonne de droite, rangés dans des constantes pour garder le rendu final lisible.
   const blocSurnom = (
     // Le surnom est validé à la sortie du champ ou avec Entrée (soumission du formulaire).
@@ -312,9 +331,11 @@ function PanneauDetail({ membre }: { membre: Membre }) {
 
   return (
     <section
+      ref={refPanneau}
       aria-label={`Détail de ${surnom}`}
       style={styleTeinte(pokemon.types[0])}
-      className="verre relative flex animate-apparition flex-col gap-6 overflow-hidden p-4 motion-reduce:animate-fondu sm:p-6"
+      // scroll-mt-36 : en défilant jusqu'au panneau, on laisse la place de l'en-tête collant du site.
+      className="verre relative flex scroll-mt-36 animate-apparition flex-col gap-6 overflow-hidden p-4 motion-reduce:animate-fondu sm:p-6"
     >
       <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(145deg,var(--teinte),transparent_55%)] opacity-20" />
 
@@ -345,7 +366,10 @@ function PanneauDetail({ membre }: { membre: Membre }) {
       <div className="relative grid gap-6 md:grid-cols-2">
         {/* max-w-sm : le cadre du modèle est limité à 384 px de côté et centré dans sa colonne.
             Sans cette limite, il prenait toute la demi-largeur du panneau (plus de 500 px) et écrasait le reste. */}
-        <div className="mx-auto w-full max-w-sm">
+        {/* order-last sur téléphone : le modèle passe APRÈS le surnom, les statistiques et les attaques, qui
+            sont ce qu'on vient chercher ; sinon il fallait faire défiler tout un écran pour les atteindre.
+            À partir de md, il reprend sa place à gauche. */}
+        <div className="order-last mx-auto w-full max-w-sm md:order-none">
           {sans3d ? (
             <Scene2D pokemon={pokemon} />
           ) : (

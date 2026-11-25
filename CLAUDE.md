@@ -166,6 +166,11 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   L'effet par type sur canvas reste le repli (attaque inconnue, animations réduites). Images dans `public/showdown/fx`
   (licences dans `public/showdown/LISEZMOI.txt`) ; crédits sur la page À propos.
 - Grille : cascade d'apparition plafonnée aux 6 premières cartes. Images : `minimumCacheTTL` de 31 jours.
+- Téléphone (retouches, sans effet sur ordinateur) : les canvas 3D pilotés par OrbitControls (`Carte3D`,
+  `Visionneuse3D`) sont en `touch-action: pan-y` (à remettre APRÈS `new OrbitControls`, qui impose `none`) : le
+  glissement vertical fait défiler la page, l'horizontal tourne l'objet. Sacoche : le détail d'un membre défile
+  jusqu'à lui (< 768 px), stats et attaques avant le modèle 3D, un seul emplacement libre affiché. Combat : au
+  démarrage la page défile jusqu'à l'arène (< 640 px), arène plus basse, bouton « Quitter » passé en bas.
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif

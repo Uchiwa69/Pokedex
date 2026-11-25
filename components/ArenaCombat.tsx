@@ -219,6 +219,15 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
     };
   }, []);
 
+  // Sur téléphone, quand le combat commence, on fait défiler la page jusqu'à l'arène : l'en-tête et le titre
+  // prenaient la moitié de l'écran, et les boutons d'attaque étaient plus bas que l'écran.
+  // matchMedia : la même condition que le seuil « sm » de Tailwind (640 px). Sur ordinateur, rien ne bouge.
+  const refCombat = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!enCombat || !window.matchMedia("(max-width: 639px)").matches) return;
+    refCombat.current?.scrollIntoView({ block: "start", behavior: animationsReduites ? "auto" : "smooth" });
+  }, [enCombat, animationsReduites]);
+
   // Durées des étapes d'un tour, en millisecondes. Animations réduites : tout est plus court et sans mouvement.
   const durees = animationsReduites
     ? { elan: 0, effet: 400, impact: 300, ko: 300, entree: 300, pause: 400 }
@@ -493,11 +502,14 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
   const tremble = partie.scene?.etape === "impact" && !animationsReduites;
 
   return (
-    <div className="flex flex-col gap-6">
+    // scroll-mt-32 : quand on défile jusqu'ici (téléphone), on laisse la place de l'en-tête collant du site.
+    <div ref={refCombat} className="flex scroll-mt-32 flex-col gap-6">
       {/* Quitter le combat : retour à l'écran de préparation. Pendant le combat, il faut confirmer (le combat
           est perdu) ; une fois le combat terminé, un seul clic suffit. */}
       {/* relative z-10 : le stade déborde vers le haut ; sans cela il passerait par-dessus ces boutons. */}
-      <div className="relative z-10 flex flex-wrap items-center justify-end gap-2">
+      {/* order-last sur téléphone : le bouton passe tout en bas (après le journal), pour que l'arène et les
+          attaques tiennent ensemble à l'écran. À partir de sm, il reprend sa place au-dessus de l'arène. */}
+      <div className="relative z-10 order-last flex flex-wrap items-center justify-end gap-2 sm:order-none">
         {partie.resultat ? (
           <button type="button" onClick={quitter} className={BOUTON_SUR_DECOR}>
             Retour à la préparation
@@ -545,7 +557,8 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
         {/* Sans cadre autour de l'arène, un voile de couleur aurait des bords nets : un masque en dégradé les adoucit. */}
         <div ref={refCalqueFond} aria-hidden="true" className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_45%,transparent_100%)]" />
         {/* relative : la grille des Pokémon passe au-dessus du calque du fond. */}
-        <div className="relative grid min-h-[26rem] grid-cols-2 items-end gap-4 sm:min-h-[34rem]">
+        {/* Téléphone : arène moins haute (19rem) et moins d'écart, pour laisser la place aux attaques. */}
+        <div className="relative grid min-h-[19rem] grid-cols-2 items-end gap-2 sm:min-h-[34rem] sm:gap-4">
           {/* Mon Pokémon : à gauche, de dos, un peu plus bas */}
           <div className="pt-8">
             <CoteArene cote="joueur" lutteur={joueur} equipe={partie.joueurs} scene={partie.scene} ko={partie.ko} />
@@ -614,8 +627,10 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
                     </span>
                     <span className="relative flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="truncate font-titre text-sm font-bold sm:text-base">{attaque.nomFr}</span>
+                      {/* Téléphone : le type seul (la catégorie était coupée : « PHYSIQ… »). */}
                       <span className="etiquette truncate">
-                        {TYPES[attaque.type].libelle} · {LIBELLES_CATEGORIES[attaque.categorie]}
+                        {TYPES[attaque.type].libelle}
+                        <span className="hidden sm:inline"> · {LIBELLES_CATEGORIES[attaque.categorie]}</span>
                       </span>
                     </span>
                     <span className="relative flex shrink-0 flex-col items-center">
@@ -695,7 +710,8 @@ function CoteArene({ cote, lutteur, equipe, scene, ko }: PropsCote) {
       <div className="mx-auto flex w-full max-w-sm flex-col gap-1 rounded-2xl border border-bordure bg-surface p-3">
         <div className="flex items-center justify-between gap-2">
           <p className="min-w-0 truncate font-titre text-sm font-semibold">{lutteur.surnom}</p>
-          <p className="etiquette shrink-0">Niv. {NIVEAU}</p>
+          {/* Le niveau (toujours le même) est masqué sur téléphone : il coupait le nom du Pokémon. */}
+          <p className="etiquette hidden shrink-0 sm:block">Niv. {NIVEAU}</p>
         </div>
         <ul className="flex gap-1" aria-label="Types">
           {lutteur.pokemon.types.map((type) => (
