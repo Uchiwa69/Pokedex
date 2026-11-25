@@ -132,7 +132,13 @@ export default function ScenesElements({ variante, children }: Props) {
               etat === "attente" ? "bg-fond" : ""
             }`}
           >
-            <canvas ref={toile} aria-hidden="true" className="h-full w-full" />
+            {/* Masque : le haut de la scène s'estompe, elle ne commence plus par un bord net sous la liste. */}
+            <canvas
+              ref={toile}
+              aria-hidden="true"
+              className="h-full w-full"
+              style={{ maskImage: "linear-gradient(to bottom, transparent 4%, black 22%)" }}
+            />
 
             {/* Texte : à gauche (Dracaufeu est à droite) ; en haut sur téléphone. Il chauffe puis part en cendres
                 avec la page (lib/scenes-feu/texte.ts) : data-bloc = ordre de départ, data-lettre = une lettre. */}

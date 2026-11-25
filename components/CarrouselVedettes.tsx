@@ -31,8 +31,9 @@ const VEDETTES: Vedette[] = [
 ];
 
 const ARTWORK = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork";
-const LARGEUR = 600;
-const HAUTEUR = 800;
+// Cartes dessinées en 900 × 1200 : plus que leur taille à l'écran, pour rester nettes sous la lentille.
+const LARGEUR = 900;
+const HAUTEUR = 1200;
 const PAS_DEFILEMENT = 140; // pixels de défilement de la page pour passer à la carte suivante
 
 function chargerImage(adresse: string) {
@@ -58,7 +59,7 @@ async function dessinerCarte(vedette: Vedette, couleurs: CSSStyleDeclaration) {
   const teinte = couleurs.getPropertyValue(`--color-type-${vedette.type}`).trim() || "#ef4444";
   ctx.fillStyle = couleurs.getPropertyValue("--color-surface").trim() || "#171a21";
   ctx.fillRect(0, 0, LARGEUR, HAUTEUR);
-  const lueur = ctx.createRadialGradient(LARGEUR / 2, HAUTEUR * 0.46, 20, LARGEUR / 2, HAUTEUR * 0.46, HAUTEUR * 0.62);
+  const lueur = ctx.createRadialGradient(LARGEUR / 2, HAUTEUR * 0.46, 30, LARGEUR / 2, HAUTEUR * 0.46, HAUTEUR * 0.62);
   lueur.addColorStop(0, teinte);
   lueur.addColorStop(1, "transparent");
   ctx.globalAlpha = 0.55;
@@ -68,19 +69,21 @@ async function dessinerCarte(vedette: Vedette, couleurs: CSSStyleDeclaration) {
   // Numéro en filigrane géant, comme sur les cartes de la grille.
   ctx.globalAlpha = 0.1;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 190px sans-serif";
+  ctx.font = "bold 285px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(String(vedette.id).padStart(4, "0"), LARGEUR / 2, 230);
+  ctx.fillText(String(vedette.id).padStart(4, "0"), LARGEUR / 2, 345);
 
   // L'illustration, avec une ombre douce sous elle.
   ctx.globalAlpha = 1;
   ctx.shadowColor = "rgb(0 0 0 / 0.55)";
-  ctx.shadowBlur = 40;
-  ctx.shadowOffsetY = 24;
+  ctx.shadowBlur = 60;
+  ctx.shadowOffsetY = 36;
+  ctx.imageSmoothingQuality = "high"; // l'illustration (475 px) est agrandie : lissage de meilleure qualité
   const cote = LARGEUR * 0.92;
-  ctx.drawImage(illustration, (LARGEUR - cote) / 2, HAUTEUR * 0.5 - cote / 2 + 30, cote, cote);
+  ctx.drawImage(illustration, (LARGEUR - cote) / 2, HAUTEUR * 0.5 - cote / 2 + 45, cote, cote);
 
-  return toile.toDataURL("image/webp", 0.9);
+  // PNG : sans perte (le WebP compressé laissait un léger flou sur les contours).
+  return toile.toDataURL("image/png");
 }
 
 export default function CarrouselVedettes() {
@@ -143,7 +146,12 @@ export default function CarrouselVedettes() {
   return (
     <section aria-label="Pokémon vedettes" className="flex flex-col items-center gap-2">
       {/* Hauteur réservée dès le départ : rien ne saute quand les cartes arrivent. */}
-      <div ref={cadre} className="relative h-[26rem] w-full sm:h-[34rem]">
+      {/* Masque : les cartes s'estompent sur les côtés au lieu d'être coupées net au bord de la colonne. */}
+      <div
+        ref={cadre}
+        className="relative h-[26rem] w-full sm:h-[34rem]"
+        style={{ maskImage: "linear-gradient(to right, transparent, black 14%, black 86%, transparent)" }}
+      >
         {cartes && (
           <FlexCarousel
             items={cartes}

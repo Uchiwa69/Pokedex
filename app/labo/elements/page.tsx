@@ -5,6 +5,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import BarreRecherche from "@/components/BarreRecherche";
 import CarrouselVedettes from "@/components/CarrouselVedettes";
 import GrillePokemons from "@/components/GrillePokemons";
 import ScenesElements from "@/components/ScenesElements";
@@ -37,10 +38,12 @@ export default function PageLaboElements({ searchParams }: Props) {
 }
 
 async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }) {
-  const { v } = await searchParams;
+  const { v, q } = await searchParams;
   // Validation : toute valeur inconnue (?v=nimporte) retombe sur la première variante.
   const active = VARIANTES.find((variante) => variante.cle === v)?.cle ?? "erosion";
-  const liste = await recupererListe("", null, 1);
+  // La recherche vit dans l'adresse (?q=…), comme sur l'accueil : on la valide (texte simple, 50 caractères au plus).
+  const recherche = typeof q === "string" ? q.trim().slice(0, 50) : "";
+  const liste = await recupererListe(recherche, null, 1);
 
   return (
     <div className="flex flex-col gap-4">
@@ -72,8 +75,17 @@ async function Contenu({ searchParams }: { searchParams: Props["searchParams"] }
       </header>
       <CarrouselVedettes />
 
-      {/* La liste (id : cible du lien « Retour à la liste » de l'écran de fin). */}
-      <div id="haut-liste" className="scroll-mt-28" />
+      {/* La recherche puis la liste (id : cible du lien « Retour à la liste » de l'écran de fin). */}
+      <div id="haut-liste" className="mx-auto w-full max-w-2xl scroll-mt-28">
+        <Suspense fallback={<div className="h-12" />}>
+          <BarreRecherche />
+        </Suspense>
+      </div>
+      {recherche && (
+        <p role="status" className="etiquette text-center">
+          {liste.total.toLocaleString("fr-FR")} Pokémon trouvés
+        </p>
+      )}
       <GrillePokemons pokemons={liste.pokemons} />
 
       {/* Fin de page : Dracaufeu brûle l'écran et révèle l'écran de fin (les enfants du composant).
