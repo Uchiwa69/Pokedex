@@ -16,9 +16,10 @@ type Moteur = {
   jouer: (type: NomType, origine: Point, duree: number) => void;
 };
 
-// Force de l'éclat (1 = celle de la carte). Un peu réduite : en plein écran, les types très lumineux
-// (le feu surtout) couvraient trop la page.
-const FORCE_ECLAT = 0.85;
+// Force de l'éclat (1 = celle de la carte).
+const FORCE_ECLAT = 1;
+// Distance, en hauteurs d'écran, que l'onde parcourt avant de commencer à s'éteindre (réglage des shaders).
+const PORTEE_ONDE = 1.15;
 
 let moteur: Moteur | null = null;
 let chargement: Promise<void> | null = null;
@@ -53,7 +54,7 @@ async function creerMoteur(): Promise<Moteur> {
     const teinte = getComputedStyle(document.documentElement).getPropertyValue(`--color-type-${type}`).trim() || "#aab6ff";
     const couleur = new THREE.Color(teinte);
     couleur.convertLinearToSRGB(); // valeurs d'écran, comme pour la carte (voir Carte3D)
-    const uniformes = effets.creerUniformes([couleur.r, couleur.g, couleur.b], effets.ZONES_FACE);
+    const uniformes = { ...effets.creerUniformes([couleur.r, couleur.g, couleur.b], effets.ZONES_FACE), uEchelle: { value: 1 } };
     uniformes.uModeEclat.value = 1;
     uniformes.uAttenuationZones.value = 0;
     uniformes.uQualite.value = qualite;
@@ -98,7 +99,14 @@ async function creerMoteur(): Promise<Moteur> {
       plan.material = materiau;
       uniformes.uProportions.value = largeur / hauteur;
       // Le point de départ, de 0 à 1 ; l'écran compte de haut en bas, le shader de bas en haut.
-      uniformes.uOrigine.value = [origine.x / largeur, 1 - origine.y / hauteur];
+      const ox = origine.x / largeur;
+      const oy = 1 - origine.y / hauteur;
+      uniformes.uOrigine.value = [ox, oy];
+      // Distance de l'origine au coin d'écran le plus éloigné, en hauteurs d'écran (d'où « × proportions »
+      // sur la largeur). Si elle dépasse la portée de l'onde, on réduit l'échelle d'autant.
+      const proportions = largeur / hauteur;
+      const plusLoin = Math.hypot(Math.max(ox, 1 - ox) * proportions, Math.max(oy, 1 - oy));
+      uniformes.uEchelle.value = Math.min(1, PORTEE_ONDE / plusLoin);
       toile.style.display = "block";
 
       const debut = performance.now();

@@ -129,8 +129,14 @@ varying vec2 vUv;
 ${GLSL_COMMUN}
 ${EFFETS_PAR_TYPE[type]}
 
+uniform float uEchelle;
+
 void main() {
-  vec4 effet = effetType(vUv, uProportions, uTemps, uInclinaison, uProgression, uOrigine, uTeinte);
+  // Les fonctions font grandir l'onde jusqu'à environ une hauteur d'écran autour de l'origine. Sur un écran
+  // large, elle s'éteindrait avant les bords : on resserre donc les distances autour de l'origine (uEchelle,
+  // calculée dans eclat.ts) pour que le coin le plus éloigné soit atteint lui aussi.
+  vec2 position = uOrigine + (vUv - uOrigine) * uEchelle;
+  vec4 effet = effetType(position, uProportions, uTemps, uInclinaison, uProgression, uOrigine, uTeinte);
   float force = clamp(effet.a * uForce, 0.0, 1.0);
   // Le navigateur pose le canvas sur la page ainsi : page × (1 − alpha) + couleur. La couleur ajoute donc
   // de la lumière, et l'alpha (volontairement faible : l'intensité au carré) assombrit à peine la page,
