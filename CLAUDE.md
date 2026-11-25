@@ -222,7 +222,7 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Le README n'a plus de captures (choix de l'utilisateur).
 - SUR L'ACCUEIL depuis le 25 novembre 2026 (branche `refonte`) : titre géant, `CarrouselVedettes`, recherche (`#haut-liste`),
   types, grille, pagination, puis `ScenesElements variante="erosion"` et son écran de fin, le tout DANS `IntroPokedex`.
-  Le souffle occupe 30 % du défilement et la désintégration 70 % (fonction `allonger`, course de 440svh) : l'utilisateur
+  Le souffle occupe 25 % du défilement et la désintégration 75 % (fonction `allonger`, course de 560svh ; 440svh jugé encore trop rapide) : l'utilisateur
   la voulait plus longue. `/labo/elements?v=` garde les 5 variantes pour comparer.
 - Séquence « l'écran brûle », `/labo/elements?v=`. Elle se place
   EN FIN DE PAGE, après la liste (choix de l'utilisateur) : elle révèle un écran de fin (gros titre « Attrapez-les tous ! » + un seul lien « Retour à la liste
