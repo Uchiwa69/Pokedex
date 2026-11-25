@@ -24,6 +24,13 @@ export default function IconeNavigation({ nom, className }: { nom: NomIcone; cla
       {nom === "etoile" && <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />}
       {/* Combat : un éclair */}
       {nom === "eclair" && <path d="M13 2L4 14h6l-1 8 9-12h-6z" />}
+      {/* Atelier : une carte avec une étincelle au milieu */}
+      {nom === "carte" && (
+        <>
+          <rect x="5" y="3" width="14" height="18" rx="2" />
+          <path d="M12 8.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" />
+        </>
+      )}
       {/* Quiz : un point d'interrogation dans un cercle */}
       {nom === "question" && (
         <>

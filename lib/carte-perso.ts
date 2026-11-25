@@ -22,6 +22,9 @@ export type CartePerso = {
   motif: Motif | null; // null = le motif du style
   typeEffet: NomType | null; // null = le type principal du Pokémon
   attaques: AttaqueCarte[]; // 0 à ATTAQUES_MAX
+  // Nom français du Pokémon, noté à l'enregistrement : la liste « Mes cartes » de l'atelier peut ainsi
+  // écrire « Dracaufeu » sans recharger le Pokémon (la carte est rangée sous son nom anglais).
+  nomPokemon?: string;
 };
 
 // La carte de départ, tant que rien n'a été personnalisé.

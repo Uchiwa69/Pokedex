@@ -44,7 +44,7 @@ export default function AtelierCarte({ pokemon, attaques }: Props) {
   const carte = enregistree ?? CARTE_DE_BASE;
 
   // Modifie une partie de la carte et l'enregistre (le store applique les règles : 2 attaques au plus…).
-  const modifier = (changement: Partial<CartePerso>) => enregistrer(pokemon.nom, { ...carte, ...changement });
+  const modifier = (changement: Partial<CartePerso>) => enregistrer(pokemon.nom, { ...carte, ...changement, nomPokemon: pokemon.nomFr });
 
   // Où une attaque glissée est en train de passer : "carte", un numéro d'emplacement, ou null.
   const [survol, setSurvol] = useState<"carte" | number | null>(null);

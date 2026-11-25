@@ -71,7 +71,7 @@ export default function VitrineFiche({ pokemon, children }: Props) {
 
       {/* Vers l'atelier : on y compose sa propre carte (style, surnom, motif, attaques). C'est une navigation,
           donc un lien. Hors du bloc « inert » : il est utilisable sans attendre la carte 3D. */}
-      <Link href={`/pokemon/${pokemon.nom}/carte`} className="bouton bouton-secondaire mx-auto mt-4 flex w-fit px-5 text-sm">
+      <Link href={`/atelier?pokemon=${encodeURIComponent(pokemon.nom)}`} className="bouton bouton-secondaire mx-auto mt-4 flex w-fit px-5 text-sm">
         {aUneCarte ? "Modifier ma carte" : "Créer sa carte"}
       </Link>
     </div>

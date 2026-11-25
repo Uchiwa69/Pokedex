@@ -121,8 +121,9 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   repli quand `jouerEclat` renvoie false (moteur pas prêt, pas de WebGL, animations réduites = voile seul).
   Électrik a un éclat propre (éclairs verticaux en ligne brisée). Effet et éclat sont retirés quand l'accueil est mis
   en veille (nettoyage d'un useEffect dans `FiltreTypes`), sinon ils rejouaient au retour d'une fiche.
-- Atelier de carte : `/pokemon/[nom]/carte` (`AtelierCarte`, client), ouvert par le lien « Créer sa carte » sous la
-  carte de la fiche (`VitrineFiche`). Styles classique / full art / chromatique / or, surnom, motif, effet de type,
+- Atelier de carte : `/atelier?pokemon=nom` (onglet « Atelier » du menu). `ChoixPokemonAtelier` (recherche via
+  `/api/recherche` + « Mes cartes ») puis `AtelierCarte` (client). Le lien « Créer sa carte » sous la carte de la
+  fiche (`VitrineFiche`) y mène avec le Pokémon déjà choisi. Styles classique / full art / chromatique / or, surnom, motif, effet de type,
   2 attaques au plus posées par glisser-déposer natif (+ bouton « Ajouter » pour clavier et tactile). Données et
   règles dans `lib/carte-perso.ts`, sauvegarde automatique dans `stores/cartes.ts` (persist, réhydraté par
   `HydratationStores`). `Carte3D` reçoit `perso` et met la carte à jour SUR PLACE (`appliquer` : texture
