@@ -12,7 +12,7 @@ import OngletsFiche from "@/components/OngletsFiche";
 import SqueletteFiche from "@/components/SqueletteFiche";
 import VitrineFiche from "@/components/VitrineFiche";
 import { formaterMesure } from "@/lib/conversion";
-import { recupererPokemon, recupererTousLesNoms } from "@/lib/pokeapi";
+import { recupererPokemon, recupererStade, recupererTousLesNoms } from "@/lib/pokeapi";
 import { LIBELLES_STATS } from "@/lib/stats";
 import { styleTeinte } from "@/lib/teinte";
 
@@ -63,6 +63,9 @@ async function Fiche({ params, searchParams }: Pick<Props, "params" | "searchPar
   // null = ce Pokémon n'existe pas → page 404 (app/not-found.tsx).
   if (!pokemon) notFound();
 
+  // Stade d'évolution (fonction en cache) : il décide, avec la puissance, de la rareté de la carte holographique.
+  const stade = await recupererStade(pokemon.espece);
+
   const numero = String(pokemon.id).padStart(4, "0");
   // Somme des six statistiques (reduce additionne les valeurs une à une, en partant de 0).
   const total = LIBELLES_STATS.reduce((somme, stat) => somme + pokemon.stats[stat.cle], 0);
@@ -74,7 +77,7 @@ async function Fiche({ params, searchParams }: Pick<Props, "params" | "searchPar
         <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
           {/* Vitrine : CarteStatique (rendue par le serveur) montre tout de suite la face de la carte ;
               la carte holographique 3D prend sa place, au même endroit, dès qu'elle est prête. */}
-          <VitrineFiche pokemon={pokemon}>
+          <VitrineFiche pokemon={pokemon} stade={stade}>
             <CarteStatique pokemon={pokemon} />
           </VitrineFiche>
         </div>

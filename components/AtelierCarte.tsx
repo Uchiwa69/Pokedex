@@ -20,7 +20,7 @@ import {
   type AttaqueCarte,
   type CartePerso,
 } from "@/lib/carte-perso";
-import { formaterMesure, type Attaque, type Pokemon } from "@/lib/conversion";
+import { formaterMesure, type Attaque, type Pokemon, type StadeEvolution } from "@/lib/conversion";
 import { LIBELLES_STATS } from "@/lib/stats";
 import { styleTeinte } from "@/lib/teinte";
 import { TYPES } from "@/lib/types";
@@ -28,6 +28,7 @@ import { useCartes } from "@/stores/cartes";
 
 type Props = {
   pokemon: Pokemon;
+  stade: StadeEvolution; // stade d'évolution : il donne la rareté de la carte « classique »
   attaques: Attaque[]; // toutes les attaques que ce Pokémon apprend, chargées par le serveur
 };
 
@@ -36,7 +37,7 @@ const CHOIX = "min-h-11 rounded-2xl border px-4 py-2 text-left text-sm transitio
 const CHOIX_ACTIF = "border-transparent bg-accent text-sur-accent shadow-lueur";
 const CHOIX_INACTIF = "border-bordure bg-surface text-texte hover:bg-piste";
 
-export default function AtelierCarte({ pokemon, attaques }: Props) {
+export default function AtelierCarte({ pokemon, stade, attaques }: Props) {
   // La carte enregistrée pour ce Pokémon, ou la carte de base. Le sélecteur renvoie UNE valeur du store.
   const enregistree = useCartes((etat) => etat.cartes[pokemon.nom]);
   const enregistrer = useCartes((etat) => etat.enregistrer);
@@ -126,6 +127,7 @@ export default function AtelierCarte({ pokemon, attaques }: Props) {
             typePrincipal={pokemon.types[0] ?? "normal"}
             mesures={`${formaterMesure(pokemon.taille, "m")} · ${formaterMesure(pokemon.poids, "kg")}`}
             puissance={LIBELLES_STATS.reduce((somme, stat) => somme + pokemon.stats[stat.cle], 0)}
+            stade={stade}
             perso={perso}
           />
         </div>

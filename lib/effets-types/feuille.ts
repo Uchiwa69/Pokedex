@@ -5,9 +5,10 @@
 // - c'est une couche de NOTRE carte (entre la face et l'effet du type), pas une carte à part ;
 // - le regard et la lampe viennent de la vraie caméra three.js, au lieu d'un angle d'inclinaison ;
 // - la feuille s'efface sur les textes et s'allège sur l'illustration (zones calmes de commun.ts) ;
-// - le motif dépend de la PUISSANCE du Pokémon (total de ses statistiques), comme la rareté d'une vraie carte ;
+// - le motif dépend du STADE D'ÉVOLUTION et de la puissance du Pokémon, comme la rareté d'une vraie carte ;
 // - deux motifs non utilisés (éclats de verre, tourbillon) et le reflet blanc (on a déjà le nôtre) sont retirés.
 
+import type { StadeEvolution } from "@/lib/conversion";
 import { GLSL_COMMUN } from "./commun";
 import { creerUniformes, ZONES_FACE } from "./index";
 
@@ -15,15 +16,29 @@ import { creerUniformes, ZONES_FACE } from "./index";
 export const MOTIFS = ["arc-en-ciel", "paillettes", "etoiles", "rayons", "cosmos", "or"] as const;
 export type Motif = (typeof MOTIFS)[number];
 
-// Total des six statistiques → motif. Repères : Pikachu 320, Dracaufeu 534, oiseaux légendaires 580, Mewtwo 680.
-export function motifSelonPuissance(total: number): Motif {
-  // (Le motif « paillettes » n'est plus attribué seul : ses points multicolores sur toute la carte faisaient
-  // guirlande. Il ne sert plus qu'à l'intérieur du motif « or », teinté de métal.)
-  if (total < 420) return "arc-en-ciel"; // simple voile irisé
-  if (total < 490) return "etoiles";
-  if (total < 535) return "rayons";
-  if (total < 580) return "cosmos";
-  return "or"; // légendaires et Pokémon les plus puissants
+// Rareté d'une carte : son motif, la force de sa feuille et celle de l'effet de son type.
+export type Rarete = { motif: Motif; intensite: number; forceEffet: number };
+
+// La rareté dépend d'abord du STADE D'ÉVOLUTION, puis de la puissance (total des six statistiques), comme
+// sur les vraies cartes : une forme de base est commune, son évolution finale est rare.
+// Avant, seule la puissance comptait, par grandes tranches : Aspicot (195), Coconfort (205) et Dardargnan
+// (395) avaient exactement la même carte.
+//   - forme de base qui évolue encore   → commune : voile irisé à peine visible, effet du type atténué ;
+//   - évolution intermédiaire           → peu commune : voile irisé, effet du type presque entier ;
+//   - évolution finale ou sans évolution → rare : motif selon la puissance (étoiles, rayons, cosmos) ;
+//   - total de 580 ou plus (légendaires) → or, quel que soit le stade.
+// (Le motif « paillettes » n'est pas attribué seul : ses points multicolores sur toute la carte faisaient
+// guirlande. Il ne sert qu'à l'intérieur du motif « or », teinté de métal.)
+export function rareteDeLaCarte(total: number, stade: StadeEvolution): Rarete {
+  if (total >= 580) return { motif: "or", intensite: 0.5, forceEffet: 1 };
+  if (!stade.final) {
+    return stade.rang === 0
+      ? { motif: "arc-en-ciel", intensite: 0.18, forceEffet: 0.6 }
+      : { motif: "arc-en-ciel", intensite: 0.5, forceEffet: 0.8 };
+  }
+  // Repères : Dardargnan 395, Raichu 485, Dracaufeu 534.
+  const motif: Motif = total < 420 ? "etoiles" : total < 500 ? "rayons" : "cosmos";
+  return { motif, intensite: 0.5, forceEffet: 1 };
 }
 
 // Programme des sommets. Il calcule, pour chaque coin de la carte, la direction de l'œil et celle de la lampe

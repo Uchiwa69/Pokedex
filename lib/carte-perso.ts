@@ -33,7 +33,7 @@ export const CARTE_DE_BASE: CartePerso = { style: "classique", surnom: "", motif
 // Table des styles : libellé, explication, et motif holographique qui va avec (null = selon la puissance
 // du Pokémon, comme sur sa fiche). Choisir un style remet ce motif ; on peut ensuite en changer.
 export const STYLES: Record<StyleCarte, { libelle: string; description: string; motif: Motif | null }> = {
-  classique: { libelle: "Classique", description: "La carte de la fiche : illustration encadrée, motif selon la puissance.", motif: null },
+  classique: { libelle: "Classique", description: "La carte de la fiche : illustration encadrée, motif selon la rareté du Pokémon.", motif: null },
   pleine: { libelle: "Full art", description: "L'illustration occupe toute la carte, le texte passe par-dessus.", motif: "rayons" },
   chromatique: { libelle: "Chromatique", description: "Le Pokémon dans ses couleurs rares (« shiny »), sur un semis d'étoiles.", motif: "etoiles" },
   or: { libelle: "Or", description: "Carte dorée : liseré, fond et feuille en métal précieux.", motif: "or" },

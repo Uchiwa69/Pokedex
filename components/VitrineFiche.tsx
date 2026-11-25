@@ -4,12 +4,14 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import Carte3D from "@/components/Carte3D";
 import { useCartes } from "@/stores/cartes";
-import { formaterMesure, type Pokemon } from "@/lib/conversion";
+import { formaterMesure, type Pokemon, type StadeEvolution } from "@/lib/conversion";
 import { LIBELLES_STATS } from "@/lib/stats";
 import { TYPES } from "@/lib/types";
 
 type Props = {
   pokemon: Pokemon;
+  // Stade d'évolution, chargé par le serveur : avec la puissance, il donne la rareté de la carte.
+  stade: StadeEvolution;
   // La copie à plat de la carte (CarteStatique), rendue par le serveur. Elle sert d'affichage d'attente
   // pendant la préparation de la 3D, et de repli si la 3D n'est pas disponible sur l'appareil.
   children: ReactNode;
@@ -23,7 +25,7 @@ const DUREE_RELAIS = 350; // millisecondes
 // La copie à plat est posée au même endroit en attendant. Quand la 3D est prête, elle apparaît en fondu
 // PAR-DESSUS la copie (même image, même position), puis la copie est retirée : on ne voit aucun changement,
 // seulement la carte qui se met à bouger. Rien ne se décale dans la page.
-export default function VitrineFiche({ pokemon, children }: Props) {
+export default function VitrineFiche({ pokemon, stade, children }: Props) {
   // true si une carte personnalisée existe déjà pour ce Pokémon (le sélecteur renvoie un simple booléen).
   const aUneCarte = useCartes((etat) => etat.cartes[pokemon.nom] !== undefined);
   const [prete, setPrete] = useState(false);
@@ -64,6 +66,7 @@ export default function VitrineFiche({ pokemon, children }: Props) {
           mesures={`${formaterMesure(pokemon.taille, "m")} · ${formaterMesure(pokemon.poids, "kg")}`}
           // Total des six statistiques (reduce les additionne en partant de 0) : il décide du motif de la feuille.
           puissance={LIBELLES_STATS.reduce((somme, stat) => somme + pokemon.stats[stat.cle], 0)}
+          stade={stade}
           surPret={surPret}
           surEchec={() => setEchec(true)}
         />

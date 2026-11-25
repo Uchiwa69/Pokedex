@@ -4,7 +4,7 @@ import AtelierCarte from "@/components/AtelierCarte";
 import ChoixPokemonAtelier from "@/components/ChoixPokemonAtelier";
 import EtatVide from "@/components/EtatVide";
 import SqueletteFiche from "@/components/SqueletteFiche";
-import { recupererAttaquesParNiveau, recupererPokemon } from "@/lib/pokeapi";
+import { recupererAttaquesParNiveau, recupererPokemon, recupererStade } from "@/lib/pokeapi";
 
 // Atelier : on y compose sa propre carte holographique (style, surnom, motif, effet, attaques), enregistrée
 // dans le navigateur. Le Pokémon choisi vit dans l'adresse : /atelier?pokemon=pikachu.
@@ -39,18 +39,20 @@ async function Contenu({ searchParams }: Pick<Props, "searchParams">) {
   const nom = typeof recu === "string" ? recu.trim().toLowerCase().slice(0, 40) : "";
   const pokemon = nom ? await recupererPokemon(nom) : null;
   const apprises = pokemon ? await recupererAttaquesParNiveau(pokemon.nom) : [];
+  // Stade d'évolution : il donne la rareté de la carte « classique », comme sur la fiche.
+  const stade = pokemon ? await recupererStade(pokemon.espece) : null;
 
   return (
     <>
       <ChoixPokemonAtelier choisi={pokemon ? pokemon.nom : null} />
 
-      {pokemon ? (
+      {pokemon && stade ? (
         <section aria-labelledby="titre-carte" className="flex flex-col gap-6">
           <h2 id="titre-carte" className="font-titre text-xl font-semibold">
             Carte de {pokemon.nomFr}
           </h2>
           {/* key : changer de Pokémon recrée l'atelier (et sa carte 3D) au lieu de réutiliser l'ancien. */}
-          <AtelierCarte key={pokemon.nom} pokemon={pokemon} attaques={apprises.map((apprise) => apprise.attaque)} />
+          <AtelierCarte key={pokemon.nom} pokemon={pokemon} stade={stade} attaques={apprises.map((apprise) => apprise.attaque)} />
         </section>
       ) : nom ? (
         <EtatVide titre="Pokémon introuvable" message={`Aucun Pokémon ne s'appelle « ${nom} ». Cherche-le par son nom ci-dessus.`} lien={{ href: "/atelier", libelle: "Recommencer" }} />

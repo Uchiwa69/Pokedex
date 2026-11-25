@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { TEINTE_OR, type AttaqueCarte, type StyleCarte } from "@/lib/carte-perso";
 import { dessinerDos, dessinerFace, HAUTEUR, miseEnPage, type DonneesCarte } from "@/lib/carte3d";
+import type { StadeEvolution } from "@/lib/conversion";
 import type { ZonesCarte } from "@/lib/effets-types";
 import type { Motif } from "@/lib/effets-types/feuille";
 import { estUnType } from "@/lib/types";
@@ -22,6 +23,8 @@ type Props = {
   // Total des six statistiques : il choisit le motif de la feuille holographique (plus il est haut, plus
   // le motif est rare). Absent = le motif le plus discret.
   puissance?: number;
+  // Stade d'évolution (forme de base, intermédiaire, finale) : avec la puissance, il donne la rareté de la carte.
+  stade?: StadeEvolution;
   // Carte personnalisée (atelier). Absent sur la fiche : la carte reste alors celle d'origine.
   // Quand il change, la carte est mise à jour SUR PLACE (texture redessinée, réglages des shaders),
   // sans recréer la scène 3D : pas de clignotement à chaque modification.
@@ -132,7 +135,11 @@ function chargerImage(adresse: string | null) {
 // Petit bouton rond de la barre de commandes (44 px : assez grand pour le doigt).
 const BOUTON_ROND = "flex size-11 items-center justify-center rounded-full text-texte-doux hover:bg-piste hover:text-texte";
 
-export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, puissance = 0, perso, surPret, surEchec }: Props) {
+export default function Carte3D({ illustration, numero, nom, types, typePrincipal, mesures, puissance = 0, stade, perso, surPret, surEchec }: Props) {
+  // Le stade est lu en deux valeurs simples : un objet serait « nouveau » à chaque rendu et ferait recréer
+  // la scène 3D pour rien (c'est la liste des dépendances de l'effet qui décide). Inconnu = sans évolution.
+  const rang = stade?.rang ?? 0;
+  const final = stade?.final ?? true;
   const refConteneur = useRef<HTMLDivElement>(null);
   const refCommandes = useRef<Commandes | null>(null);
   // La personnalisation est gardée dans un ref (lue par la scène à sa création), et la fonction qui
@@ -320,15 +327,25 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       effetDos.uniforms.uQualite.value = qualite;
 
       /* ---------- Feuille holographique : le motif brillant des cartes rares, sur la face avant ---------- */
-      // Le motif (paillettes, étoiles, rayons, or…) dépend de la puissance du Pokémon. La couche est posée
+      // Le motif (voile irisé, étoiles, rayons, cosmos, or) dépend de la RARETÉ de la carte : le stade
+      // d'évolution du Pokémon, puis sa puissance (voir rareteDeLaCarte). La couche est posée
       // juste au-dessus de la face, SOUS l'effet du type et le reflet. premultipliedAlpha : three.js mélange
       // alors « carte × (1 − alpha) + couleur », ce qui permet à la feuille de recouvrir la carte par endroits.
+      const rarete = feuilles.rareteDeLaCarte(puissance, { rang, final });
       const feuille = new THREE.ShaderMaterial({
-        ...feuilles.assemblerFeuille(feuilles.motifSelonPuissance(puissance)),
+        ...feuilles.assemblerFeuille(rarete.motif),
         transparent: true,
         premultipliedAlpha: true,
         depthWrite: false,
       });
+      // La rareté règle aussi la force de la feuille et celle de l'effet du type (plus discrets sur une
+      // forme de base que sur une évolution finale).
+      const reglerRarete = (intensite: number, forceEffet: number) => {
+        feuille.uniforms.uIntensite.value = intensite;
+        effetFace.uniforms.uForce.value = forceEffet;
+        effetDos.uniforms.uForce.value = forceEffet;
+      };
+      reglerRarete(rarete.intensite, rarete.forceEffet);
       // Les axes de la caméra, pour placer la lampe de la feuille par rapport à l'écran.
       const droite = new THREE.Vector3();
       const haut = new THREE.Vector3();
@@ -447,7 +464,10 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
           materiau.uniforms.uZonesCalmes.value = zones.textes.flat();
           materiau.uniforms.uZoneIllustration.value = zones.illustration;
         }
-        feuille.uniforms.uMotif.value = feuilles.MOTIFS.indexOf(p.motif ?? feuilles.motifSelonPuissance(puissance));
+        // Motif choisi dans l'atelier : feuille et effet à pleine force. Sinon, ceux de la rareté du Pokémon.
+        feuille.uniforms.uMotif.value = feuilles.MOTIFS.indexOf(p.motif ?? rarete.motif);
+        if (p.motif) reglerRarete(0.5, 1);
+        else reglerRarete(rarete.intensite, rarete.forceEffet);
       };
       refAppliquer.current = appliquer;
       // Une carte déjà personnalisée (relue dans le navigateur) est appliquée avant le premier affichage.
@@ -526,7 +546,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       annule = true;
       nettoyer();
     };
-  }, [illustration, numero, nom, typesTexte, typePrincipal, mesures, puissance]);
+  }, [illustration, numero, nom, typesTexte, typePrincipal, mesures, puissance, rang, final]);
 
   return (
     <div className="flex flex-col gap-4">
