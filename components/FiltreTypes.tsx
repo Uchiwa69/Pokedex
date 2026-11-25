@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useOptimistic, useRef, useState, useTransition, type MouseEvent } from "react";
+import { useCallback, useEffect, useOptimistic, useRef, useState, useTransition, type MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import EffetType from "@/components/EffetType";
-import { jouerEclat, preparerEclat } from "@/lib/effets-types/eclat";
+import { arreterEclat, jouerEclat, preparerEclat } from "@/lib/effets-types/eclat";
 import { GLYPHES } from "@/lib/glyphes";
 import { construireAdresse } from "@/lib/recherche";
 import { styleTeinte } from "@/lib/teinte";
@@ -46,6 +46,16 @@ export default function FiltreTypes({ q, typeActif }: Props) {
 
   const [effet, setEffet] = useState<Effet | null>(null);
   const retirerEffet = useCallback(() => setEffet(null), []);
+  // Quand on quitte l'accueil (clic sur un Pokémon pendant l'effet), Next ne détruit pas la page : il la
+  // met en veille et la réaffiche telle quelle au retour. Sans ce nettoyage, l'effet resté en mémoire
+  // rejouait ses symboles au retour, et l'éclat continuait par-dessus la fiche.
+  // La fonction renvoyée par useEffect est appelée à la mise en veille comme à la destruction.
+  useEffect(() => {
+    return () => {
+      setEffet(null);
+      arreterEclat();
+    };
+  }, []);
 
   function choisir(type: NomType | null, evenement: MouseEvent<HTMLAnchorElement>) {
     // Ctrl+clic, clic du milieu… : on laisse le navigateur ouvrir le lien normalement (nouvel onglet).

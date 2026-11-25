@@ -283,7 +283,7 @@ function PanneauDetail({ membre }: { membre: Membre }) {
       <h3 className="etiquette">Statistiques</h3>
       <ul className="flex flex-col gap-2">
         {LIBELLES_STATS.map((stat, index) => (
-          <BarreStat key={stat.cle} libelle={stat.libelle} valeur={pokemon.stats[stat.cle]} index={index} />
+          <BarreStat key={stat.cle} libelle={stat.libelle} valeur={pokemon.stats[stat.cle]} index={index} teinte />
         ))}
       </ul>
     </div>

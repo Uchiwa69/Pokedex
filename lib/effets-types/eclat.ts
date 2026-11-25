@@ -14,6 +14,7 @@ type Point = { x: number; y: number }; // en pixels dans la fenêtre
 type Moteur = {
   preparer: (type: NomType) => void;
   jouer: (type: NomType, origine: Point, duree: number) => void;
+  arreter: () => void;
 };
 
 // Force de l'éclat (1 = celle de la carte).
@@ -124,6 +125,12 @@ async function creerMoteur(): Promise<Moteur> {
       };
       image = requestAnimationFrame(dessiner);
     },
+
+    arreter() {
+      cancelAnimationFrame(image);
+      rendu.clear();
+      toile.style.display = "none";
+    },
   };
 }
 
@@ -142,6 +149,11 @@ export function preparerEclat(type?: NomType) {
     })
     .catch(() => {}); // pas de WebGL : moteur reste null, l'effet CSS sert de repli
   if (type) chargement.then(() => moteur?.preparer(type));
+}
+
+// Coupe l'éclat en cours, s'il y en a un (quand on quitte l'accueil pendant qu'il joue).
+export function arreterEclat() {
+  moteur?.arreter();
 }
 
 // Joue l'éclat du type depuis « origine ». Renvoie false s'il n'a pas pu partir (moteur pas encore prêt,
