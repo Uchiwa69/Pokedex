@@ -207,7 +207,10 @@ void main() {
     masqueMatiere = mix(1.0, masqueMatiere, step(0.0001, uProgression));
 
     // Carbonisation avancée devant le front d'érosion
-    float zoneCharbon = smoothstep(seuilErosion + 0.24, seuilErosion, erosionCellule) * masqueMatiere;
+    // Correction du projet : la carbonisation n'existe qu'à partir du début de la désintégration. Sans cette
+    // dernière multiplication, une cellule proche de la gueule était déjà grisée sur le visage dès le départ.
+    float zoneCharbon = smoothstep(seuilErosion + 0.24, seuilErosion, erosionCellule) * masqueMatiere
+                      * smoothstep(0.34, 0.40, uProgression);
     couleurScene = mix(couleurScene, vec3(0.04, 0.035, 0.03), zoneCharbon * 0.94);
 
     // Réseau de braises vives sur toutes les arêtes en cours de combustion
