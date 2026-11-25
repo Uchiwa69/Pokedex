@@ -18,6 +18,7 @@
 @theme static {
   /* ---- Jetons sémantiques — thème CLAIR : gris-bleu très pâle, verre blanc, ombres bleutées ---- */
   --color-fond: #eef2f8;
+  --color-cadre: #e2e8f3; /* fond de l'en-tête et du pied de page : le « cadre » du site, un cran plus soutenu que le fond */
   --color-surface: rgb(255 255 255 / 0.72); /* « verre » : blanc translucide */
   --color-surface-pleine: #ffffff; /* surface OPAQUE, pour ce qui flotte au-dessus du contenu (infobulles) */
   --color-bordure: #c3cce2; /* bordure visible (champs, séparateurs) */
@@ -255,6 +256,7 @@
    toute l'interface change sans toucher aux composants. */
 .dark {
   --color-fond: #070a1c;
+  --color-cadre: #03040d; /* même bleu que le fond, mais presque noir : en-tête et pied de page se détachent de la page */
   --color-surface: rgb(255 255 255 / 0.06);
   --color-surface-pleine: #141a3c;
   --color-bordure: #2c3460;

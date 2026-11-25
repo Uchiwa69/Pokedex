@@ -190,6 +190,8 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   `NueeCurseur` (client, contenu serveur passé en `children`) autour de `components/SwarmCursor.tsx`, REPRIS TEL QUEL de React Bits (exclu d'ESLint, ne pas le
   réécrire). Couleurs lues sur les jetons accent / accent-bis, nombre de points réduit pour une bande étroite,
   rien de dessiné en animations réduites. Menu : Tous, Favoris, Sacoche, Combat, Atelier, Quiz (ordre voulu).
+- En-tête et pied de page : fond `bg-cadre` (jeton `--color-cadre`, bleu-noir plus sombre que `fond` ; noir pur
+  écarté car il jure avec le site teinté bleu). L'en-tête reste en verre flouté (`bg-cadre/80`).
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif

@@ -4,7 +4,8 @@ import NueeCurseur from "@/components/NueeCurseur";
 // Pied de page : composant serveur. Seule la nuée de points (NueeCurseur) est un composant client.
 export default function PiedDePage() {
   return (
-    <footer className="border-t border-bordure-verre">
+    // bg-cadre : même fond bleu-noir que l'en-tête, la nuée y ressort mieux.
+    <footer className="border-t border-bordure-verre bg-cadre">
       <NueeCurseur>
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-texte-doux sm:flex-row sm:items-center sm:justify-between">
           <p>
