@@ -231,6 +231,7 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   tels quels, sortie en alpha prémultiplié. Tortank et le jet d'eau : abandonnés (choix de l'utilisateur).
   Animations réduites ou pas de WebGL : pas de séquence.
   Variante erosion : trois images de Dracaufeu GÉNÉRÉES PAR IA (Gemini, fournies par l'utilisateur) dans `public/dracaufeu/`
-  (repos, inspiration, souffle ; fond noir, l'opacité vient de la luminosité dans le shader), fondues selon la progression ;
+  (repos, inspiration, souffle ; .webp détourés par un script hors dépôt), fondues selon la progression ; écran de fin de
+  72svh pour que le pied de page soit visible dès la fin ;
   des braises restent en fond sur l'écran de fin (demande de l'utilisateur). À créditer sur la page À propos quand la
   séquence arrivera sur l'accueil.

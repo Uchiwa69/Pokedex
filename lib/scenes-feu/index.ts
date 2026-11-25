@@ -12,7 +12,7 @@ export const IMAGE_DRACAUFEU =
   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png";
 
 // Images générées par IA (Gemini) à la demande de l'utilisateur : même pose, seule la tête change.
-const IMAGES_EROSION = ["/dracaufeu/repos.jpg", "/dracaufeu/inspiration.jpg", "/dracaufeu/souffle.jpg"];
+const IMAGES_EROSION = ["/dracaufeu/repos.webp", "/dracaufeu/inspiration.webp", "/dracaufeu/souffle.webp"];
 
 export const VARIANTES_FEU = ["plaques", "erosion", "cinema", "pyroclastique", "leger"] as const;
 export type VarianteFeu = (typeof VARIANTES_FEU)[number];
@@ -49,7 +49,7 @@ export type SceneFeu = {
 export async function creerSceneFeu(toile: HTMLCanvasElement, variante: VarianteFeu): Promise<SceneFeu> {
   const [THREE, shaderPixels] = await Promise.all([import("three"), CHARGER_SHADER[variante]()]);
   // La variante retenue (erosion) utilise trois images superposables de Dracaufeu (repos, inspiration, souffle),
-  // rangées dans public/dracaufeu ; les anciennes variantes gardent l'illustration officielle, seule.
+  // détourées et rangées dans public/dracaufeu ; les anciennes variantes gardent l'illustration officielle, seule.
   const adresses = variante === "erosion" ? IMAGES_EROSION : [IMAGE_DRACAUFEU, IMAGE_DRACAUFEU, IMAGE_DRACAUFEU];
   const chargeur = new THREE.TextureLoader();
   const images = await Promise.all(adresses.map((adresse) => chargeur.loadAsync(adresse)));
@@ -62,9 +62,10 @@ export async function creerSceneFeu(toile: HTMLCanvasElement, variante: Variante
   // alpha: true = le canvas peut être transparent. premultipliedAlpha (vrai par défaut) : les shaders écrivent
   // déjà leurs couleurs multipliées par leur opacité.
   const rendu = new THREE.WebGLRenderer({ canvas: toile, alpha: true, antialias: false });
-  // Un pixel de dessin par pixel CSS, même sur un écran dense : flammes et fumée sont des formes douces,
-  // et un téléphone a trois fois moins de pixels à calculer.
-  rendu.setPixelRatio(1);
+  // Téléphone : un pixel de dessin par pixel CSS (trois fois moins de pixels à calculer). Ordinateur : on suit
+  // la densité de l'écran jusqu'à 1,5, sinon les fins liserés de braise sont agrandis et paraissent en escalier.
+  const tactile = window.matchMedia("(pointer: coarse)").matches;
+  rendu.setPixelRatio(tactile ? 1 : Math.min(window.devicePixelRatio, 1.5));
   rendu.setClearColor(0x000000, 0);
 
   const uniformes = {

@@ -8,7 +8,7 @@ export const SHADER_EROSION = /* glsl */ `
 uniform float uProgression;   // 0 -> 1, piloté par le défilement
 uniform float uTemps;         // secondes, animation continue
 uniform float uProportions;   // largeur / hauteur de l'écran
-uniform sampler2D uImage;     // Dracaufeu au repos, sur fond NOIR (image générée, sans transparence)
+uniform sampler2D uImage;     // Dracaufeu au repos (image générée, détourée : alpha droit)
 uniform sampler2D uImage2;    // Dracaufeu qui inspire, gueule entrouverte
 uniform sampler2D uImage3;    // Dracaufeu gueule grande ouverte, incandescente
 uniform vec2 uCentre;         // centre de l'illustration
@@ -150,18 +150,17 @@ void main() {
 
     vec2 uvImage = (pos - centreAnime) / tailleAnimee + 0.5;
     float dansCadre = step(0.0, uvImage.x) * step(uvImage.x, 1.0) * step(0.0, uvImage.y) * step(uvImage.y, 1.0);
-    // Ajout du projet : trois images superposables au lieu d'une. On passe en fondu du repos à l'inspiration,
-    // puis à la gueule ouverte pendant le souffle, et on revient au repos quand le souffle est retombé.
+    // Ajout du projet : trois images superposables (détourées, avec transparence) au lieu d'une. On passe du
+    // repos à l'inspiration, puis à la gueule ouverte pendant le souffle, et on revient au repos ensuite.
+    // Fondus COURTS : la tête n'est pas au même endroit d'une image à l'autre, un fondu long ferait un fantôme.
     vec2 uvBorne = clamp(uvImage, 0.0, 1.0);
-    float versInspiration = smoothstep(0.02, 0.09, uProgression);
-    float versSouffle = smoothstep(0.09, 0.17, uProgression);
-    float retourRepos = smoothstep(0.44, 0.54, uProgression);
-    vec3 rgbDracaufeu = mix(texture2D(uImage, uvBorne).rgb, texture2D(uImage2, uvBorne).rgb, versInspiration);
-    rgbDracaufeu = mix(rgbDracaufeu, texture2D(uImage3, uvBorne).rgb, versSouffle);
-    rgbDracaufeu = mix(rgbDracaufeu, texture2D(uImage, uvBorne).rgb, retourRepos);
-    // Les images ont un fond noir : l'opacité se déduit de la luminosité (noir = transparent).
-    float visible = smoothstep(0.035, 0.11, max(rgbDracaufeu.r, max(rgbDracaufeu.g, rgbDracaufeu.b)));
-    vec4 tex = vec4(rgbDracaufeu, visible);
+    float versInspiration = smoothstep(0.03, 0.06, uProgression);
+    float versSouffle = smoothstep(0.10, 0.13, uProgression);
+    float retourRepos = smoothstep(0.47, 0.50, uProgression);
+    vec4 repos = texture2D(uImage, uvBorne);
+    vec4 tex = mix(repos, texture2D(uImage2, uvBorne), versInspiration);
+    tex = mix(tex, texture2D(uImage3, uvBorne), versSouffle);
+    tex = mix(tex, repos, retourRepos);
     float alphaSprite = tex.a * dansCadre;
 
     float phaseCharge = smoothstep(0.0, 0.14, uProgression) * smoothstep(0.48, 0.18, uProgression);
@@ -170,9 +169,8 @@ void main() {
         smoothstep(tailleAnimee * 0.35, 0.0, distGueule) * phaseCharge * 0.3 +
         smoothstep(tailleAnimee * 0.9, 0.05, distGueule) * phaseSouffle * 0.35
     );
-    // Ajout du projet : éclairage adouci (les nouvelles images ont déjà la gueule incandescente), et l'image est
-    // AJOUTÉE au fond au lieu de le remplacer : le halo sombre autour de la flamme de la queue n'assombrit plus rien.
-    vec3 couleurScene = couleurFond * (1.0 - alphaSprite) + tex.rgb * (0.92 + 0.12 * contreJour) + eclairageFeu * alphaSprite;
+    // Ajout du projet : éclairage adouci (les nouvelles images ont déjà la gueule incandescente).
+    vec3 couleurScene = mix(couleurFond, tex.rgb * (0.92 + 0.12 * contreJour) + eclairageFeu * alphaSprite, alphaSprite);
 
     // Queue animée
     vec2 posQueue = centreAnime + (vec2(0.87, 0.44) - 0.5) * tailleAnimee;
@@ -189,11 +187,12 @@ void main() {
     float idCellule = vor.z;
 
     float progDesint = smoothstep(0.36, 0.92, uProgression);
-    float bruitMicro = fbm(pos * 22.0 - vec2(0.0, uTemps * 0.9), 3);
+    // Réglage du projet : micro-bruit ralenti (0.9 → 0.2) et affaibli plus bas, sinon les bords tremblaient.
+    float bruitMicro = fbm(pos * 22.0 - vec2(0.0, uTemps * 0.2), 3);
 
     // Champ d'érosion combinant distance depuis la gueule, identifiant de cellule et micro-bruit de cendres
     // Réglage du projet : le hasard par cellule est réduit (0.28 → 0.16) pour qu'on voie mieux la brûlure PARTIR de la gueule.
-    float champCombustion = distGueule + idCellule * 0.16 + (bruitMicro - 0.5) * 0.14;
+    float champCombustion = distGueule + idCellule * 0.16 + (bruitMicro - 0.5) * 0.08;
     // Le bord de chaque cellule (distBordCellule petit) brûle plus tôt que son cœur
     float erosionCellule = champCombustion + distBordCellule * 0.55;
     float seuilErosion = progDesint * (rayonMaxEcran * 1.25 + 0.45) - 0.12;
@@ -211,7 +210,7 @@ void main() {
     float frontBraises = smoothstep(0.055, 0.0, abs(erosionCellule - seuilErosion))
                        * smoothstep(0.35, 0.42, uProgression)
                        * smoothstep(0.98, 0.88, uProgression);
-    float puls = 0.6 + 0.6 * bruit(pos * 38.0 + uTemps * 5.0);
+    float puls = 0.6 + 0.6 * bruit(pos * 38.0 + uTemps * 1.5);
     vec3 lumiereCellules = paletteFeu(clamp(frontBraises * puls, 0.0, 1.0)) * frontBraises * 2.2;
 
     // 3. Souffle de flammes (retombe avant 0.46)
