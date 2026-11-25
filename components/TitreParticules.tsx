@@ -1,7 +1,7 @@
 "use client";
 
 // Le grand titre de l'accueil, écrit avec des milliers de petits points qui se rassemblent à l'arrivée,
-// s'écartent du pointeur et éclatent au clic. Le dessin est fait par ParticleText (repris tel quel de React
+// s'écartent du pointeur et éclatent au clic, colorés en dégradé du bleu-violet au cyan. Le dessin est fait par ParticleText (repris tel quel de React
 // Bits) ; ce composant-ci le branche sur notre site : police des titres, couleurs de nos jetons, hauteur.
 //
 // Accessibilité : un canvas n'est pas du texte. Le vrai titre de la page est donc un <h1> ordinaire, masqué
@@ -15,7 +15,14 @@ import ParticleText from "@/components/ParticleText";
 // la page. useSyncExternalStore donne une valeur au serveur (qui n'a pas de page) et une autre au
 // navigateur, sans erreur d'hydratation.
 const sansAbonnement = () => () => {};
-const lireAccent = () => getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim() || "currentColor";
+// Les deux couleurs du dégradé sont renvoyées dans UN texte (« #aab6ff|#67e8f9 ») : useSyncExternalStore
+// compare les valeurs successives, et un texte identique reste « la même valeur », contrairement à un
+// tableau qui serait neuf à chaque lecture.
+function lireCouleurs() {
+  const styles = getComputedStyle(document.documentElement);
+  const lire = (jeton: string) => styles.getPropertyValue(jeton).trim() || "currentColor";
+  return `${lire("--color-accent")}|${lire("--color-accent-bis")}`;
+}
 
 // Petit écran (moins de 640 px, le seuil « sm » de Tailwind) ? On s'abonne au changement, pour suivre un
 // téléphone que l'on tourne ou une fenêtre que l'on redimensionne.
@@ -27,7 +34,8 @@ function abonnerTaille(rappel: () => void) {
 }
 
 export default function TitreParticules({ texte }: { texte: string }) {
-  const accent = useSyncExternalStore(sansAbonnement, lireAccent, () => "currentColor");
+  // Le dégradé du site : du bleu-violet de l'accent au cyan (les mêmes jetons que les barres et les boutons).
+  const [accent, accentBis] = useSyncExternalStore(sansAbonnement, lireCouleurs, () => "currentColor|currentColor").split("|");
   // Sur téléphone, le titre sur une seule ligne donnait des lettres trop petites pour être dessinées en
   // points : il devenait illisible. On l'écrit donc sur DEUX lignes (« Tous les » / « Pokémon »), en plus
   // gros : une zone de particules par ligne.
@@ -51,8 +59,11 @@ export default function TitreParticules({ texte }: { texte: string }) {
               // Taille des lettres. Le composant la réduit tout seul si la ligne dépasse la largeur.
               fontSize={petit ? "17vw" : "clamp(2.5rem, 9vw, 6.5rem)"}
               fontWeight={700} // la plus grasse que notre police des titres (Chakra Petch) charge
-              color="currentColor"
-              highlightColor={accent} // les points déplacés prennent la couleur d'accent
+              // « gradient » : chaque point prend sa couleur selon sa place, de « color » (à gauche) à
+              // « highlightColor » (à droite). L'autre mode, « motion », colorait les points qui bougent.
+              highlightMode="gradient"
+              color={accent}
+              highlightColor={accentBis}
               particleSize={petit ? 1.9 : 2.2} // taille d'un point
               density={4} // un point tous les 4 pixels du texte
               scatter={petit ? 110 : 190} // distance d'où arrivent les points
