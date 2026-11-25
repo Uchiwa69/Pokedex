@@ -217,6 +217,17 @@ export async function recupererEvolutions(nomEspece: string): Promise<Pokemon[]>
   return pokemons.filter((p): p is Pokemon => p !== null);
 }
 
+// Le Pokémon du jour : le numéro du jour (nombre de jours écoulés depuis 1970) donne un numéro de Pokédex.
+// Il change donc chaque jour, et tout le monde voit le même. La réponse est gardée une heure
+// (cacheLife("hours")) : le changement de jour est pris en compte au plus une heure après minuit (heure UTC).
+export async function recupererPokemonDuJour(): Promise<Pokemon | null> {
+  "use cache";
+  cacheLife("hours");
+
+  const jour = Math.floor(Date.now() / 86_400_000); // 86 400 000 millisecondes dans une journée
+  return recupererPokemon(String((jour % TOTAL_POKEMONS) + 1));
+}
+
 // Une attaque (par son nom anglais ou son numéro), ou null si elle n'existe pas.
 export async function recupererAttaque(id: string): Promise<Attaque | null> {
   "use cache";

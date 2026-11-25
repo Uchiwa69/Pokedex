@@ -13,6 +13,19 @@ import { NOMS_TYPES, TYPES, type NomType } from "@/lib/types";
 type Props = {
   q: string;
   typeActif: NomType | null; // le type lu dans l'adresse par le serveur
+  // Disposition des tuiles à partir de sm (sur téléphone, c'est toujours une ligne qui défile) :
+  // « defaut » = à la suite, calées à gauche ; « centre » = centrées ; « etale » = réparties sur toute la largeur.
+  disposition?: keyof typeof DISPOSITIONS;
+};
+
+// Table de correspondance : les classes complètes de chaque disposition (jamais de classe fabriquée à la volée).
+const DISPOSITIONS = {
+  defaut: "sm:flex-wrap",
+  centre: "sm:flex-wrap sm:justify-center",
+  // Grille de 5 colonnes, puis 10 sur grand écran. Il y a 19 tuiles (« Tous » + 18 types) : « Tous » occupe
+  // deux colonnes ([&>li:first-child]:col-span-2), ce qui fait 20 cases, donc des rangées toujours complètes.
+  // Chaque tuile remplit sa case ([&_a]:w-full).
+  etale: "sm:grid sm:grid-cols-5 sm:[&_a]:w-full sm:[&>li:first-child]:col-span-2 lg:grid-cols-10",
 };
 
 // L'effet CSS de repli, quand l'éclat en shader n'a pas pu partir.
@@ -22,7 +35,7 @@ type Effet = { type: NomType; origine: { x: number; y: number }; numero: number 
 // de vérité), mais le composant est « client » pour deux raisons :
 // 1. réagir TOUT DE SUITE au clic : le type choisi est marqué actif sans attendre la réponse du serveur ;
 // 2. jouer l'effet du type sur l'écran.
-export default function FiltreTypes({ q, typeActif }: Props) {
+export default function FiltreTypes({ q, typeActif, disposition = "defaut" }: Props) {
   const router = useRouter();
   // useTransition : enAttente vaut true tant que le serveur n'a pas renvoyé la nouvelle liste.
   const [enAttente, demarrerTransition] = useTransition();
@@ -93,7 +106,7 @@ export default function FiltreTypes({ q, typeActif }: Props) {
   return (
     <nav aria-label="Filtrer par type">
       {/* Sur mobile : une seule ligne qui défile horizontalement. À partir de sm : retour à la ligne. */}
-      <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 py-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+      <ul className={`-mx-4 flex gap-2 overflow-x-auto px-4 py-2 sm:mx-0 sm:overflow-visible sm:px-0 ${DISPOSITIONS[disposition]}`}>
         <li className="shrink-0">
           <Link
             href={construireAdresse({ q, type: null, page: 1 })}
