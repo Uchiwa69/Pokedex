@@ -23,6 +23,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { motion, transform, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
+import Projecteurs from "@/components/Projecteurs";
 
 type Props = {
   // La vraie page (titre, recherche, grille…), rendue par le serveur et transmise ici.
@@ -557,6 +558,16 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
     >
       {/* sticky top-0 : ce bloc reste collé en haut de l'écran tant qu'on défile dans la zone. */}
       <div ref={cadre} className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
+        {/* Projecteurs : deux faisceaux doux qui descendent des coins de la scène vers l'appareil, derrière lui.
+            Ils suivent l'opacité de la lumière de scène : ils s'éteignent avec elle quand on plonge dans l'écran.
+            Le masque les fond sur les côtés (la scène a la largeur de la colonne : sans lui, ils seraient coupés
+            net), en haut (sinon une ligne nette marquait le bord de la scène) et vers le bas. opacity-60 sur téléphone : l'écran est étroit, les deux faisceaux se recouvrent. */}
+        <motion.div className="absolute inset-0" style={{ opacity: lumiereOpacite }}>
+          <div className="absolute inset-0 overflow-hidden opacity-60 [mask-composite:intersect] [mask-image:linear-gradient(to_bottom,transparent,black_7rem,black_60%,transparent),linear-gradient(to_right,transparent,black_4rem,black_calc(100%-4rem),transparent)] sm:opacity-100">
+            <Projecteurs />
+          </div>
+        </motion.div>
+
         {/* Lumière de scène. Un cadre invisible, de la taille et à la place de l'appareil, porte un calque bien
             plus grand que lui : une lueur derrière l'appareil et une tache de lumière au sol. (Un faisceau en cône a
             été essayé puis retiré : ses bords dessinaient deux bandes obliques de chaque côté.) */}

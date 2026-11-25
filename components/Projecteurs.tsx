@@ -1,6 +1,7 @@
 "use client";
 
-// Deux projecteurs très doux, en haut à gauche et en haut à droite, qui balaient lentement le haut de la page.
+// Deux projecteurs très doux, en haut à gauche et en haut à droite, qui balaient lentement la scène de
+// l'introduction, derrière le Pokédex (voir ScenePokedex dans IntroPokedex.tsx).
 // Adapté du composant « Spotlight New » d'Aceternity UI (ui.aceternity.com) : mêmes formes, mêmes tailles et
 // même rythme ; les couleurs viennent de nos jetons, et le mouvement s'arrête en animations réduites.
 // Purement décoratif : il ne capte aucun clic et il est caché aux lecteurs d'écran.
