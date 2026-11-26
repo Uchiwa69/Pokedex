@@ -124,6 +124,9 @@ export default function CarrouselVedettes() {
     function suivre() {
       const ecart = window.scrollY - dernier;
       dernier = window.scrollY;
+      // Pendant l'introduction du Pokédex, la page est fixe (classe "fixed" posée par IntroPokedex) : le défilement
+      // sert à l'introduction, pas au carrousel. On arrive ainsi sur la première carte.
+      if (zone!.closest(".fixed")) return;
       // Inutile s'il est sorti de l'écran, ou si la page a sauté d'un coup (lien d'ancre, touche Fin).
       const place = zone!.getBoundingClientRect();
       if (place.bottom < 0 || place.top > window.innerHeight || Math.abs(ecart) > 400) {

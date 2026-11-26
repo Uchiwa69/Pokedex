@@ -266,3 +266,7 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   `retenirEnHaut` (dans `IntroPokedex`) remet la page à 0 à chaque défilement tant que le geste dure (au moins
   `RETENUE_MIN`, au plus `RETENUE_MAX`). `preventDefault` ne marche PAS ici : le navigateur refuse d'annuler une
   molette déjà lancée, d'où la correction après coup sur l'événement `scroll`.
+- Tunnel de lumière pendant la plongée dans le Pokédex (shader maison, inspiré de loin du site de Lusion) : essayé puis
+  RETIRÉ le 26 novembre 2026 (« rien à voir avec Lusion, on perd de vue la destination ») — ne pas le remettre. La
+  plongée d'origine (la vraie page qui grandit dans l'écran) est conservée. Le code de sites tiers fourni par
+  l'utilisateur ne doit pas être copié. Le carrousel ne tourne plus pendant l'introduction (on arrive sur Pikachu).
