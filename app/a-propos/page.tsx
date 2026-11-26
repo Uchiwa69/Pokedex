@@ -45,7 +45,9 @@ export default function PageAPropos() {
           <a href="https://ui.aceternity.com" target="_blank" rel="noreferrer" className="font-medium text-accent underline">
             Aceternity UI
           </a>
-          . Le carrousel de l&apos;accueil est le composant « Flex Carousel », qui s&apos;appuie sur la bibliothèque ogl.
+          . Le carrousel de l&apos;accueil est le composant « Flex Carousel », qui s&apos;appuie sur la bibliothèque ogl. La
+          Pokéball 3D de l&apos;accueil est modélisée en code avec React Three Fiber et drei, et suit le défilement grâce à
+          GSAP ; l&apos;idée d&apos;un objet 3D qui change de pose au défilement vient du site « Rewind » d&apos;un camarade.
         </p>
         {/* Transparence : ces trois images ne sont pas des illustrations officielles. */}
         <p>

@@ -10,6 +10,8 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
 
 - **Introduction en 3D** : un Pokédex géant s'ouvre au défilement, puis on plonge dans son écran, où s'affiche le
   site. Jouée une fois par visite, jamais en animations réduites.
+- **Pokéball 3D** sur l'accueil : modélisée en code (React Three Fiber), elle accompagne le défilement, à côté du
+  titre en haut de page, puis ouverte et lumineuse sous « Attrapez-les tous ! », où elle se referme.
 - **Carrousel des vedettes** sous le titre : douze Pokémon dans un carrousel à lentille déformante (WebGL), qui
   tourne avec le défilement de la page, au glisser et aux flèches du clavier.
 - **Fin de page « Attrapez-les tous ! »** : après la liste, Dracaufeu ouvre la gueule, crache son feu, et l'écran
@@ -50,7 +52,7 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
 | État client | Zustand (`persist` + réhydratation après l'hydratation React) |
 | Thème | next-themes (thème sombre forcé) |
 | Animations | motion (`motion/react`) et CSS, `prefers-reduced-motion` respecté |
-| 3D | three.js, chargé à la demande : carte holographique, effets de type (shaders GLSL), introduction, fin de page ; ogl pour le carrousel |
+| 3D | three.js, chargé à la demande : carte holographique, effets de type (shaders GLSL), introduction, fin de page ; React Three Fiber, drei et GSAP pour la Pokéball ; ogl pour le carrousel |
 | Tests | vitest (fonctions pures de `lib/combat.ts` et de `lib/labo/effets2d.ts`) |
 | Données | PokéAPI v2 (lecture seule, sans clé) |
 | Hébergement | Vercel |

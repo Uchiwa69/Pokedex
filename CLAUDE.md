@@ -246,3 +246,11 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - ATTENTION `npm install` : il supprime le paquet `shaders`, installé à la main pour la page locale `/labo/fond` (dossiers
   `effets/` et `app/labo/fond/` exclus par `.git/info/exclude`) et absent de package.json → le build casse. Le remettre
   avec `npm install shaders --no-save`.
+- Pokéball 3D de l'accueil (26 novembre 2026, inspirée du site « Rewind » d'un camarade ; l'utilisateur a autorisé ses
+  bibliothèques : `@react-three/fiber`, `@react-three/drei`, `gsap` ajoutés à package.json ; Lenis NON installé).
+  `lib/pokeball/pose.ts` = objet `pose` partagé + une pose par moment (fractions d'écran, large / étroit) ;
+  `components/CompagnonPokeball.tsx` (client) relie le défilement à la pose avec GSAP ScrollTrigger (`scrub`) et attend la
+  fin de `IntroPokedex` (il guette la classe `fixed` de son parent) ; `components/three/ScenePokeball.tsx` = la Pokéball
+  modélisée en code (demi-sphères, bande, bouton, couvercle à charnière, halo), chargée par `next/dynamic` sans rendu
+  serveur, en pause quand elle est invisible. Calque fixe `-z-10` DERRIÈRE le contenu, `pointer-events-none`. Elle est à
+  droite du titre, sort par le haut en 360 px, revient ouverte à travers la brûlure et se referme en bas de page.

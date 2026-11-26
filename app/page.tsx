@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import BarreRecherche from "@/components/BarreRecherche";
 import CarrouselVedettes from "@/components/CarrouselVedettes";
+import CompagnonPokeball from "@/components/CompagnonPokeball";
 import EtatVide from "@/components/EtatVide";
 import FiltreTypes from "@/components/FiltreTypes";
 import GrillePokemons from "@/components/GrillePokemons";
@@ -22,6 +23,9 @@ export default function PageAccueil({ searchParams }: Props) {
     // des composants serveur, rendus normalement. À la première arrivée, il les affiche dans l'écran d'un
     // Pokédex géant, puis on plonge dedans ; ensuite, il les affiche simplement, en colonne.
     <IntroPokedex>
+      {/* La Pokéball 3D qui accompagne la page (composant client, décoratif, derrière le contenu). */}
+      <CompagnonPokeball />
+
       {/* Haut de page : le titre en très gros (le seul h1 de la page), le carrousel des vedettes, puis la
           recherche et les types. */}
       <div className="flex flex-col items-center gap-4 pb-4 text-center">
