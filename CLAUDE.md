@@ -259,3 +259,6 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   l'image, queue qui s'embrase, lueur orange sur le décor et sur les lettres du titre. CAPTURE : `SequenceFeu` passe la
   pose de la Pokéball au shader (`uPokeball`, `uAspiration` = ouverture × fondu) ; des traits de lumière convergent vers
   elle et ce qui reste de Dracaufeu rougit. La durée des flammes n'a pas changé.
+- Générique de fin défilant (crédits du projet en fond de l'écran de fin) : essayé puis RETIRÉ à la demande de
+  l'utilisateur le 26 novembre 2026 — ne pas le remettre. Il voulait à l'origine les paroles du générique de Pokémon :
+  refusé (texte protégé).
