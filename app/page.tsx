@@ -4,6 +4,7 @@ import CarrouselVedettes from "@/components/CarrouselVedettes";
 import CompagnonPokeball from "@/components/CompagnonPokeball";
 import EtatVide from "@/components/EtatVide";
 import FiltreTypes from "@/components/FiltreTypes";
+import GeneriqueFin from "@/components/GeneriqueFin";
 import GrillePokemons from "@/components/GrillePokemons";
 import IntroPokedex from "@/components/IntroPokedex";
 import Pagination from "@/components/Pagination";
@@ -75,7 +76,9 @@ export default function PageAccueil({ searchParams }: Props) {
       {/* Fin de page : Dracaufeu brûle l'écran au défilement et révèle l'écran de fin (les enfants du composant).
           Composant client ; l'écran de fin, lui, reste rendu par le serveur. */}
       <SequenceFeu>
-        <section aria-labelledby="titre-fin" className="flex h-[64svh] flex-col items-center justify-center gap-8 text-center">
+        <section aria-labelledby="titre-fin" className="relative isolate flex h-[64svh] flex-col items-center justify-center gap-8 text-center">
+          {/* Générique de fin en fond (relative + isolate : il reste derrière le titre, dans cette section). */}
+          <GeneriqueFin />
           <h2 id="titre-fin" className="font-titre text-5xl font-bold tracking-tight sm:text-7xl lg:text-8xl">
             Attrapez-les tous !
           </h2>

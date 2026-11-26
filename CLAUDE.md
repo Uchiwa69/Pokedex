@@ -259,3 +259,7 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   l'image, queue qui s'embrase, lueur orange sur le décor et sur les lettres du titre. CAPTURE : `SequenceFeu` passe la
   pose de la Pokéball au shader (`uPokeball`, `uAspiration` = ouverture × fondu) ; des traits de lumière convergent vers
   elle et ce qui reste de Dracaufeu rougit. La durée des flammes n'a pas changé.
+- Générique de fin (26 novembre 2026) : `components/GeneriqueFin.tsx` (serveur, animation CSS `animate-generique` dans
+  globals.css) fait défiler les CRÉDITS DU PROJET en fond de l'écran « Attrapez-les tous ! ». L'utilisateur voulait les
+  paroles du générique de Pokémon : refusé (texte protégé), ne pas les ajouter. Liste écrite deux fois pour une boucle
+  invisible ; décoratif (`aria-hidden`), absent en animations réduites.
