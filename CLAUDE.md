@@ -262,3 +262,7 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Générique de fin défilant (crédits du projet en fond de l'écran de fin) : essayé puis RETIRÉ à la demande de
   l'utilisateur le 26 novembre 2026 — ne pas le remettre. Il voulait à l'origine les paroles du générique de Pokémon :
   refusé (texte protégé).
+- Arrivée après l'introduction (26 novembre 2026) : l'élan de la molette faisait descendre la page de plusieurs écrans.
+  `retenirEnHaut` (dans `IntroPokedex`) remet la page à 0 à chaque défilement tant que le geste dure (au moins
+  `RETENUE_MIN`, au plus `RETENUE_MAX`). `preventDefault` ne marche PAS ici : le navigateur refuse d'annuler une
+  molette déjà lancée, d'où la correction après coup sur l'événement `scroll`.

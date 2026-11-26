@@ -52,6 +52,12 @@ type Rectangle = { gauche: number; haut: number; largeur: number; hauteur: numbe
 // L'en-tête du site reste masqué jusqu'à cet avancement (la plongée a commencé, l'écran grossit déjà).
 const SEUIL_ENTETE = 0.36;
 
+// Arrivée dans le site : un geste est considéré comme terminé après cette durée sans événement (millisecondes),
+// et la page n'est jamais retenue plus longtemps que RETENUE_MAX.
+const PAUSE_FIN_DE_GESTE = 260;
+const RETENUE_MIN = 600; // retenue minimale : juste après l'introduction, le navigateur est occupé et les événements tardent
+const RETENUE_MAX = 1800;
+
 // Clé du sessionStorage : retient, le temps de la visite, que l'introduction a déjà été vue.
 // (sessionStorage est vidé à la fermeture de l'onglet : à la visite suivante, elle rejoue.)
 const CLE_VUE = "pokedex-intro-vue";
@@ -182,6 +188,41 @@ export default function IntroPokedex({ children }: Props) {
     }
   }, [introAffichee, opacite, taille, x, y, decoupe, clics]);
 
+  // Arrivée dans le site : la plongée se termine souvent en plein geste (molette lancée, doigt qui glisse), et
+  // l'élan faisait descendre la page de plusieurs écrans. On RETIENT donc la page tout en haut tant que ce geste
+  // dure, jusqu'à une courte pause ; ensuite le défilement redevient normal.
+  function retenirEnHaut() {
+    let pause: ReturnType<typeof setTimeout>;
+    function liberer() {
+      clearTimeout(pause);
+      clearTimeout(limite);
+      window.removeEventListener("scroll", remonter);
+      window.removeEventListener("wheel", prolonger);
+      window.removeEventListener("touchmove", prolonger);
+      window.removeEventListener("touchend", liberer);
+    }
+    // Le navigateur refuse d'annuler une molette déjà lancée (preventDefault est ignoré en cours de geste).
+    // On corrige donc après coup : dès que la page a bougé, elle est remise tout en haut.
+    function remonter() {
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+    }
+    // Chaque nouvel événement du geste repousse la libération.
+    const debut = performance.now();
+    function prolonger() {
+      clearTimeout(pause);
+      // Plus rien depuis un instant = le geste est fini. Mais jamais avant RETENUE_MIN depuis le début.
+      const resteMinimum = RETENUE_MIN - (performance.now() - debut);
+      pause = setTimeout(liberer, Math.max(PAUSE_FIN_DE_GESTE, resteMinimum));
+    }
+    window.addEventListener("scroll", remonter);
+    window.addEventListener("wheel", prolonger, { passive: true });
+    window.addEventListener("touchmove", prolonger, { passive: true });
+    window.addEventListener("touchend", liberer); // le doigt quitte l'écran : fini
+    pause = setTimeout(liberer, RETENUE_MIN);
+    // Sécurité : quoi qu'il arrive, la page est rendue au visiteur au bout de RETENUE_MAX.
+    const limite = setTimeout(liberer, RETENUE_MAX);
+  }
+
   // « Blocage » en haut de page : une fois dans le site, remonter s'arrête en haut de la page, comme sur
   // n'importe quel site. Pour revoir l'introduction à l'envers, il faut d'abord S'ARRÊTER tout en haut, puis
   // INSISTER longuement avec la molette (ou le pavé tactile). Un coup de molette, ou l'élan d'une remontée
@@ -235,7 +276,10 @@ export default function IntroPokedex({ children }: Props) {
           valeurs={{ opacite, taille, x, y, decoupe, clics }}
           // Fin de la plongée : on referme l'introduction. La page devient une page normale, dont le haut est
           // le vrai haut du site : la pagination, le logo ou « Tous » n'y ramènent plus le Pokédex.
-          surFin={() => changerEtat("page")}
+          surFin={() => {
+            changerEtat("page");
+            retenirEnHaut();
+          }}
         />
       )}
 
