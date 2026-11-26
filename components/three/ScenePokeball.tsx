@@ -134,7 +134,9 @@ export default function ScenePokeball({ actif }: { actif: boolean }) {
       dpr={[1, 1.75]}
       camera={{ position: [0, 0, 6], fov: 35 }}
       gl={{ antialias: true, alpha: true }}
-      style={{ position: "absolute", inset: 0 }}
+      // pointerEvents: none — React Three Fiber rend son canvas cliquable par défaut : il interceptait alors les
+      // clics sur le pied de page (liens « À propos » et « PokéAPI » inaccessibles en bas de l'accueil).
+      style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
     >
       <ambientLight intensity={0.35} />
       <directionalLight position={[3, 4, 5]} intensity={1.5} />

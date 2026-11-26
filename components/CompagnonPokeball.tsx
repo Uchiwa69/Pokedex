@@ -73,6 +73,10 @@ export default function CompagnonPokeball() {
         .to(pose, { ...poses.fermee, ease: "none", duration: 0.15 }, 0.85);
     });
 
+    // Au retour sur l'accueil, le navigateur remet la page là où on l'avait laissée APRÈS ce branchement : on
+    // recalcule donc les repères à l'image suivante, sinon la Pokéball restait affichée à sa pose de départ.
+    const recalage = requestAnimationFrame(() => ScrollTrigger.refresh());
+
     // La hauteur de la page change (recherche, filtre, pagination) : les repères de défilement sont recalculés.
     const guetteurTaille = new ResizeObserver(() => ScrollTrigger.refresh());
     guetteurTaille.observe(document.body);
@@ -86,6 +90,7 @@ export default function CompagnonPokeball() {
 
     // Nettoyage : animations, repères et écouteurs sont retirés quand on quitte l'accueil.
     return () => {
+      cancelAnimationFrame(recalage);
       media.revert();
       guetteurTaille.disconnect();
       window.removeEventListener("pointermove", suivrePointeur);

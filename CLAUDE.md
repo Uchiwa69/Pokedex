@@ -270,3 +270,10 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   RETIRÉ le 26 novembre 2026 (« rien à voir avec Lusion, on perd de vue la destination ») — ne pas le remettre. La
   plongée d'origine (la vraie page qui grandit dans l'écran) est conservée. Le code de sites tiers fourni par
   l'utilisateur ne doit pas être copié. Le carrousel ne tourne plus pendant l'introduction (on arrive sur Pikachu).
+- Bugs du retour sur l'accueil corrigés le 26 novembre 2026 (Next met l'accueil en veille quand on le quitte et
+  relance les effets au retour) : `CarrouselVedettes` ne dessine ses 12 cartes qu'UNE fois par visite (promesse gardée
+  dans une variable de module), en JPEG 0,93 via `toDataURL` puis adresse `blob:` courte (NE PAS utiliser `toBlob` : le
+  navigateur n'encode alors qu'au repos, le carrousel mettait 7 s à apparaître ; NE PAS passer de longues adresses
+  `data:` à FlexCarousel, il les recopie à chaque rendu) ; l'entrée « rise » ne se joue qu'à la première arrivée ;
+  `CompagnonPokeball` rappelle `ScrollTrigger.refresh()` à l'image suivante ; le canvas React Three Fiber est en
+  `pointerEvents: none` (il bloquait les liens du pied de page).

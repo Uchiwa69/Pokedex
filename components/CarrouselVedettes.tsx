@@ -82,27 +82,57 @@ async function dessinerCarte(vedette: Vedette, couleurs: CSSStyleDeclaration) {
   const cote = LARGEUR * 0.92;
   ctx.drawImage(illustration, (LARGEUR - cote) / 2, HAUTEUR * 0.5 - cote / 2 + 45, cote, cote);
 
-  // PNG : sans perte (le WebP compressé laissait un léger flou sur les contours).
-  return toile.toDataURL("image/png");
+  // JPEG de haute qualité (0,93) : la carte est opaque, donc pas besoin de transparence, et le JPEG pèse dix fois
+  // moins que le PNG (1,6 Mo au lieu de 16 pour les 12 cartes).
+  // toDataURL encode TOUT DE SUITE. (toBlob a été essayé : le navigateur n'encode alors que lorsqu'il est inoccupé,
+  // et avec les scènes 3D qui tournent, le carrousel mettait jusqu'à 7 secondes à apparaître.)
+  const donnees = toile.toDataURL("image/jpeg", 0.93);
+  // On range ensuite l'image dans la mémoire du navigateur pour ne manipuler qu'une adresse courte (« blob:… ») :
+  // le carrousel recopie et compare les adresses à chaque rendu, et un long texte le faisait saccader.
+  const fichier = await (await fetch(donnees)).blob();
+  return URL.createObjectURL(fichier);
 }
 
-export default function CarrouselVedettes() {
-  const [cartes, setCartes] = useState<FlexCarouselItem[] | null>(null);
-  const [actif, setActif] = useState(0);
-  const cadre = useRef<HTMLDivElement>(null);
+// Les 12 cartes sont dessinées UNE SEULE FOIS par visite du site, puis gardées ici, dans la promesse (variable de module :
+// elle survit quand on quitte l'accueil). Avant, elles étaient redessinées à chaque retour sur l'accueil, pendant que
+// le carrousel rejouait son entrée : c'est ce qui le faisait « bugger » au retour.
+let dessinEnCours: Promise<FlexCarouselItem[]> | null = null;
 
-  // Les cartes sont dessinées une fois, dans le navigateur (useEffect : canvas et images n'existent pas côté serveur).
-  useEffect(() => {
-    let annule = false;
+function preparerCartes() {
+  dessinEnCours ??= (async () => {
     const couleurs = getComputedStyle(document.documentElement);
-    Promise.all(
+    const pretes = await Promise.all(
       VEDETTES.map(async (vedette) => ({
         src: await dessinerCarte(vedette, couleurs),
         alt: vedette.nomFr,
         title: vedette.nomFr,
         subtitle: `N° ${String(vedette.id).padStart(4, "0")}`,
       })),
-    )
+    );
+    return pretes;
+  })();
+  // En cas d'échec (image indisponible), on oublie la tentative : la prochaine visite de l'accueil réessaiera.
+  dessinEnCours.catch(() => {
+    dessinEnCours = null;
+  });
+  return dessinEnCours;
+}
+
+export default function CarrouselVedettes() {
+  const [cartes, setCartes] = useState<FlexCarouselItem[] | null>(null);
+  const [actif, setActif] = useState(0);
+  const cadre = useRef<HTMLDivElement>(null);
+  // L'animation d'entrée (les cartes qui montent) ne se joue qu'à la première arrivée. Quand on QUITTE l'accueil,
+  // Next met la page en veille et exécute les nettoyages d'effets : on en profite pour passer à « none ». Au
+  // retour, le carrousel se réaffiche directement, sans rejouer son entrée.
+  const [entree, setEntree] = useState<"rise" | "none">("rise");
+  useEffect(() => () => setEntree("none"), []);
+
+  // Les cartes sont préparées dans le navigateur (useEffect : canvas et images n'existent pas côté serveur).
+  // preparerCartes ne dessine qu'à la première visite : ensuite, elle rend aussitôt les cartes gardées en mémoire.
+  useEffect(() => {
+    let annule = false;
+    preparerCartes()
       .then((pretes) => {
         if (!annule) setCartes(pretes);
       })
@@ -160,7 +190,7 @@ export default function CarrouselVedettes() {
           <FlexCarousel
             items={cartes}
             preset="liquid"
-            intro="rise"
+            intro={entree}
             cardHeight={0.5}
             gap={12}
             squeeze={0.2}
