@@ -241,7 +241,8 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   Pokémon dans un canvas 2D (lueur du type, numéro, illustration) puis la passe en image ; `captureWheel={false}` et
   `className="overscroll-auto!"` pour que la molette fasse défiler la page (sinon elle reste bloquée sur le carrousel) ; il
   tourne quand même avec le défilement : une fausse touche fléchée lui est envoyée tous les 190 px (NE PAS changer cette vitesse : l'utilisateur la trouve bien). Pour qu'il tourne plus longtemps, il est
-  ÉPINGLÉ (`sticky`) dans app/page.tsx et suivi d'un bloc vide de 120svh : c'est cette hauteur qu'on règle ; un vrai lien « Voir la fiche de … » suit la carte centrale.
+  ÉPINGLÉ (`sticky`) dans app/page.tsx AVEC la recherche et les types (l'utilisateur veut voir la suite de la page en bas
+  pendant ce temps, pas un écran vide), et le bloc est suivi d'un vide de 55svh (120 jugé trop long) : c'est cette hauteur qu'on règle ; un vrai lien « Voir la fiche de … » suit la carte centrale.
 - ATTENTION `npm install` : il supprime le paquet `shaders`, installé à la main pour la page locale `/labo/fond` (dossiers
   `effets/` et `app/labo/fond/` exclus par `.git/info/exclude`) et absent de package.json → le build casse. Le remettre
   avec `npm install shaders --no-save`.

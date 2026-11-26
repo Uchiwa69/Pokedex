@@ -30,33 +30,37 @@ export default function PageAccueil({ searchParams }: Props) {
           <NombreTotal />
         </header>
 
-        {/* Composant client : il dessine ses cartes dans le navigateur et tourne avec le défilement.
-            Il est ÉPINGLÉ (sticky) sous l'en-tête et suivi d'un bloc vide : pendant qu'on parcourt ce bloc, le
-            carrousel reste à l'écran et continue de tourner, puis la page reprend avec la recherche et les cartes.
+        {/* Le carrousel, la recherche et les types forment UN bloc ÉPINGLÉ (sticky) sous l'en-tête, suivi d'un bloc
+            vide : pendant qu'on parcourt ce vide, le bloc reste à l'écran et le carrousel continue de tourner, avec
+            la recherche et les types déjà visibles dessous. Ensuite la page reprend et les cartes arrivent.
             Un bloc vide et pas un padding : un élément collant ne glisse que dans le contenu de son parent. */}
         <div className="w-full">
-          <div className="sticky top-28 lg:top-16 motion-reduce:static">
-            <CarrouselVedettes />
+          <div className="sticky top-28 flex flex-col items-center gap-4 lg:top-16 motion-reduce:static">
+            {/* Composant client : il dessine ses cartes dans le navigateur et tourne avec le défilement. */}
+            <div className="w-full">
+              <CarrouselVedettes />
+            </div>
+
+            {/* BarreRecherche lit l'adresse avec useSearchParams → elle aussi a besoin d'un Suspense.
+                max-w-2xl : le champ ne s'étire pas sur toute la largeur. Le repli a la hauteur du champ.
+                id : cible du lien « Retour à la liste » de l'écran de fin ; scroll-mt : l'en-tête ne la cache pas. */}
+            <div id="haut-liste" className="w-full max-w-2xl scroll-mt-28 text-left">
+              <Suspense fallback={<div className="h-12" />}>
+                <BarreRecherche />
+              </Suspense>
+            </div>
+
+            {/* Le filtre a son propre <Suspense> : il s'affiche sans attendre la liste des Pokémon.
+                En attendant l'adresse, on montre déjà le filtre (sans type actif) : il occupe exactement
+                la même place, donc rien ne se décale. */}
+            <div className="w-full">
+              <Suspense fallback={<FiltreTypes q="" typeActif={null} disposition="grille" />}>
+                <Filtre searchParams={searchParams} />
+              </Suspense>
+            </div>
           </div>
-          <div aria-hidden="true" className="h-[120svh] motion-reduce:hidden" />
-        </div>
-
-        {/* BarreRecherche lit l'adresse avec useSearchParams → elle aussi a besoin d'un Suspense.
-            max-w-2xl : le champ ne s'étire pas sur toute la largeur. Le repli a la hauteur du champ.
-            id : cible du lien « Retour à la liste » de l'écran de fin ; scroll-mt : l'en-tête ne la cache pas. */}
-        <div id="haut-liste" className="w-full max-w-2xl scroll-mt-28 text-left">
-          <Suspense fallback={<div className="h-12" />}>
-            <BarreRecherche />
-          </Suspense>
-        </div>
-
-        {/* Le filtre a son propre <Suspense> : il s'affiche sans attendre la liste des Pokémon.
-            En attendant l'adresse, on montre déjà le filtre (sans type actif) : il occupe exactement
-            la même place, donc rien ne se décale. */}
-        <div className="w-full">
-          <Suspense fallback={<FiltreTypes q="" typeActif={null} disposition="grille" />}>
-            <Filtre searchParams={searchParams} />
-          </Suspense>
+          {/* La durée pendant laquelle le bloc reste épinglé : c'est ce nombre qu'on règle. */}
+          <div aria-hidden="true" className="h-[55svh] motion-reduce:hidden" />
         </div>
       </div>
 

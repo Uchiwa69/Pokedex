@@ -145,11 +145,12 @@ export default function CarrouselVedettes() {
 
   return (
     <section aria-label="Pokémon vedettes" className="flex flex-col items-center gap-2">
-      {/* Hauteur réservée dès le départ : rien ne saute quand les cartes arrivent. */}
+      {/* Hauteur réservée dès le départ : rien ne saute quand les cartes arrivent. Elle est plafonnée à une part
+          de l'écran (svh), pour que la recherche et les types tiennent dessous quand le bloc est épinglé. */}
       {/* Masque : les cartes s'estompent sur les côtés au lieu d'être coupées net au bord de la colonne. */}
       <div
         ref={cadre}
-        className="relative h-[26rem] w-full sm:h-[34rem]"
+        className="relative h-[min(26rem,46svh)] w-full sm:h-[min(34rem,52svh)]"
         style={{ maskImage: "linear-gradient(to right, transparent, black 14%, black 86%, transparent)" }}
       >
         {cartes && (
