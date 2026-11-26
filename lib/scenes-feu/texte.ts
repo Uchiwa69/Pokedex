@@ -52,7 +52,8 @@ export function preparerTexte(racine: HTMLElement) {
       const dy = -t * (65 + (i % 3) * 18);
       lettre.style.opacity = String(1 - t);
       lettre.style.transform = `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0) rotate(${(angle * 48 * t).toFixed(1)}deg) scale(${(1 + picChaleur * 0.12 - t * 0.35).toFixed(3)})`;
-      lettre.style.filter = `blur(${(t * 9).toFixed(2)}px) sepia(${borner(picChaleur * 0.9 + t).toFixed(2)}) brightness(${(1 + picChaleur * 1.4).toFixed(2)})`;
+      // La dernière partie (drop-shadow) : une lueur orange autour de la lettre, le feu éclaire aussi le texte.
+      lettre.style.filter = `blur(${(t * 9).toFixed(2)}px) sepia(${borner(picChaleur * 0.9 + t).toFixed(2)}) brightness(${(1 + picChaleur * 1.4).toFixed(2)}) drop-shadow(0 0 ${(picChaleur * 12).toFixed(1)}px rgba(255, 120, 40, 0.75))`;
     });
   };
 }

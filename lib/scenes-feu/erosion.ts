@@ -19,6 +19,10 @@ uniform vec3 uFond;           // couleur de fond sombre (#0F1115)
 uniform float uQualite;           // 0.5 sur mobile, 1.0 sur ordinateur
 uniform float uIntensiteSecousse; // 0.014 conseillé
 
+// Ajout du projet : la capture. Position de la Pokéball 3D (mêmes unités que l'écran) et force de l'aspiration (0 à 1).
+uniform vec2 uPokeball;
+uniform float uAspiration;
+
 varying vec2 vUv;
 
 float hachage1(vec2 p) {
@@ -129,7 +133,12 @@ void main() {
     vec2 secousse = vec2(bruit(vec2(uTemps * 32.0, 1.7)) - 0.5,
                          bruit(vec2(2.3, uTemps * 32.0)) - 0.5) * uIntensiteSecousse * envSecousse * step(0.001, uProgression);
 
-    vec2 pos = posEcran + secousse;
+    // Ajout du projet : mouvement de CAMÉRA. Elle avance lentement vers la gueule pendant la charge (+10 %), recule
+    // d'un coup quand le souffle part (le zoom tombe à 0,96), puis revient à 1 avant la désintégration.
+    // Zoomer = diviser les distances autour d'un point fixe, ici la gueule.
+    float zoomCamera = 1.0 + 0.10 * smoothstep(0.0, 0.11, uProgression) - 0.14 * smoothstep(0.11, 0.15, uProgression)
+                     + 0.04 * smoothstep(0.15, 0.34, uProgression);
+    vec2 pos = posGueule + (posEcran + secousse - posGueule) / zoomCamera;
     float distGueule = length(pos - posGueule);
     float rayonMaxEcran = length(vec2(uProportions * 0.5, 0.5) + abs(posGueule)) + 0.35;
 
@@ -141,16 +150,29 @@ void main() {
     float contreJour = smoothstep(uTaille * 1.35, 0.0, length(pos - uCentre));
     contreJour *= contreJour;
     couleurFond += vec3(0.24, 0.07, 0.015) * contreJour;
+    // Ajout du projet : le feu ÉCLAIRE le décor. Une lueur orange monte autour de la gueule pendant le souffle,
+    // vacille légèrement, puis retombe.
+    float lueurSouffle = smoothstep(0.08, 0.20, uProgression) * smoothstep(0.52, 0.34, uProgression);
+    couleurFond += vec3(0.55, 0.17, 0.03) * lueurSouffle * smoothstep(2.0, 0.0, distGueule) * (0.85 + 0.15 * sin(uTemps * 13.0));
 
     vec2 posSol = (pos - (uCentre + vec2(0.02, -uTaille * 0.44))) / vec2(uTaille * 0.42, uTaille * 0.07);
     couleurFond *= (1.0 - smoothstep(1.0, 0.1, length(posSol)) * 0.65);
 
     float respiration = sin(uTemps * 2.1) * 0.0045 * (1.0 - smoothstep(0.15, 0.45, uProgression));
     vec2 centreAnime = uCentre + vec2(0.0, respiration);
+    // Ajout du projet : Dracaufeu RÉAGIT. Le recul : tout le corps part en arrière (à l'opposé de la gueule) au
+    // moment où le souffle jaillit, puis revient.
+    float recul = smoothstep(0.11, 0.15, uProgression) * (1.0 - smoothstep(0.20, 0.46, uProgression));
+    centreAnime += vec2(0.02, -0.008) * uTaille * recul;
     float inspiration = sin(clamp(uProgression / 0.22, 0.0, 1.0) * 3.14159265) * 0.035;
     float tailleAnimee = uTaille * (1.0 + inspiration);
 
     vec2 uvImage = (pos - centreAnime) / tailleAnimee + 0.5;
+    // Les ailes : pendant le souffle, les bords de l'image (là où sont les ailes) se soulèvent et battent. Le
+    // milieu, où se trouvent le corps et la tête, ne bouge pas (poids nul près du centre).
+    float souffleCorps = smoothstep(0.10, 0.16, uProgression) * smoothstep(0.50, 0.36, uProgression);
+    float versLesAiles = smoothstep(0.30, 0.50, abs(uvImage.x - 0.5));
+    uvImage.y -= souffleCorps * (0.7 + 0.3 * sin(uTemps * 6.0)) * 0.028 * versLesAiles;
     float dansCadre = step(0.0, uvImage.x) * step(uvImage.x, 1.0) * step(0.0, uvImage.y) * step(uvImage.y, 1.0);
     // Ajout du projet : trois images superposables (détourées, avec transparence) au lieu d'une. On passe du
     // repos à l'inspiration, puis à la gueule ouverte pendant le souffle, et on revient au repos ensuite.
@@ -175,13 +197,16 @@ void main() {
     // Tramage : un grain invisible (moins d'un niveau de couleur) qui casse les « marches » des dégradés sombres.
     couleurFond += (hachage1(gl_FragCoord.xy) - 0.5) / 255.0 * 1.6;
     vec3 couleurScene = mix(couleurFond, tex.rgb * (0.92 + 0.12 * contreJour) + eclairageFeu * alphaSprite, alphaSprite);
+    // Ajout du projet (capture) : quand la Pokéball s'ouvre, ce qui reste de Dracaufeu vire à la lumière rouge.
+    couleurScene = mix(couleurScene, vec3(1.0, 0.22, 0.16), alphaSprite * uAspiration * 0.75);
 
     // Queue animée
     vec2 posQueue = centreAnime + (vec2(0.87, 0.44) - 0.5) * tailleAnimee;
-    vec2 deltaQueue = (pos - posQueue) / tailleAnimee;
+    // Ajout du projet : la flamme de la queue grossit et blanchit pendant le souffle.
+    vec2 deltaQueue = (pos - posQueue) / (tailleAnimee * (1.0 + 0.6 * souffleCorps));
     float turbQueue = fbm(pos * 14.0 - vec2(0.0, uTemps * 5.5), 3);
     float intensiteQueue = smoothstep(0.11, 0.015, length(vec2(deltaQueue.x * 1.6, (deltaQueue.y - 0.02) * 0.85)) + (turbQueue - 0.5) * 0.075);
-    couleurScene += paletteFeu(intensiteQueue * 1.1) * intensiteQueue * 0.55 + vec3(1.0, 0.35, 0.05) * smoothstep(0.26, 0.0, length(deltaQueue)) * 0.32;
+    couleurScene += paletteFeu(intensiteQueue * (1.1 + 0.5 * souffleCorps)) * intensiteQueue * (0.55 + 0.9 * souffleCorps) + vec3(1.0, 0.35, 0.05) * smoothstep(0.26, 0.0, length(deltaQueue)) * (0.32 + 0.3 * souffleCorps);
 
     // 2. DÉSINTÉGRATION VARIANTE 2B : ÉROSION DE L'INTÉRIEUR VERS L'EXTÉRIEUR DES CELLULES
     // Les fissures brûlent d'abord, puis chaque îlot carbonisé rétrécit jusqu'à disparaître en cendres
@@ -258,6 +283,23 @@ void main() {
     float restes = particulesAscendantes(pos + vec2(1.7, -uTemps * 0.22), uTemps * 0.6, 11.0, 0.07) * smoothstep(0.80, 0.91, uProgression);
     vec3 rgbRestes = vec3(1.0, 0.48, 0.09) * restes * 1.2;
     float alphaRestes = clamp(restes * 0.6, 0.0, 1.0);
-    gl_FragColor = vec4(rgbFinal * fin + rgbRestes, clamp(alphaFinal * fin + alphaRestes, 0.0, 1.0));
+
+    // Ajout du projet : LA CAPTURE. Des traits de lumière convergent vers la Pokéball ouverte. On passe en
+    // coordonnées polaires autour d'elle (distance, angle) : l'angle est découpé en secteurs, et dans certains
+    // secteurs un point lumineux glisse vers le centre (la phase avance avec le temps, donc le point se rapproche).
+    vec2 versBalle = posEcran - uPokeball;
+    float distBalle = length(versBalle);
+    float angleBalle = atan(versBalle.y, versBalle.x) * 14.0 / 3.14159265;
+    float hasardSecteur = hachage1(vec2(floor(angleBalle), 3.0));
+    float phase = fract(distBalle * 1.3 + uTemps * (0.7 + hasardSecteur * 0.6) + hasardSecteur);
+    // Tête arrondie (premier smoothstep) puis traînée qui s'efface (le deuxième) ; le troisième l'affine en largeur.
+    float trait = smoothstep(0.0, 0.05, phase) * smoothstep(0.34, 0.05, phase) * smoothstep(0.14, 0.0, abs(fract(angleBalle) - 0.5)) * step(0.45, hasardSecteur);
+    // Visible entre le bord de la Pokéball et environ une hauteur d'écran autour d'elle.
+    float aspiration = trait * smoothstep(1.3, 0.15, distBalle) * smoothstep(0.02, 0.12, distBalle) * uAspiration;
+    float haloBalle = exp(-distBalle * 9.0) * 0.5 * uAspiration;
+    vec3 rgbCapture = vec3(1.0, 0.5, 0.2) * aspiration * 1.6 + vec3(1.0, 0.3, 0.2) * haloBalle;
+    float alphaCapture = clamp(aspiration + haloBalle * 0.6, 0.0, 1.0);
+
+    gl_FragColor = vec4(rgbFinal * fin + rgbRestes + rgbCapture, clamp(alphaFinal * fin + alphaRestes + alphaCapture, 0.0, 1.0));
 }
 `;

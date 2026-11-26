@@ -13,6 +13,7 @@
 // Animations réduites, ou pas de WebGL : pas de séquence, la page s'affiche directement.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { pose } from "@/lib/pokeball/pose";
 import { preparerTexte } from "@/lib/scenes-feu/texte";
 
 const TITRE = "Dracaufeu";
@@ -106,7 +107,9 @@ export default function SequenceFeu({ children }: Props) {
           affichee = affichee < 0 ? cible : affichee + (cible - affichee) * (1 - Math.exp(-ecoule / INERTIE));
           const progression = affichee;
           // On dessine même à la fin (progression = 1) : des braises continuent de monter derrière l'écran de fin.
-          dessin.dessiner(progression);
+          // La capture : la Pokéball 3D (components/CompagnonPokeball.tsx) partage sa pose ; quand elle est ouverte
+          // et visible, le shader dessine des traits de lumière qui convergent vers elle.
+          dessin.dessiner(progression, { fx: pose.fx, fy: pose.fy, force: pose.ouverture * pose.fondu });
           // Les textes : on écrit directement leur opacité, sans état React (60 rendus par seconde sinon).
           if (invite.current) invite.current.style.opacity = String(1 - fondu(0.02, 0.1, progression));
           mettreAJourTexte?.(progression);

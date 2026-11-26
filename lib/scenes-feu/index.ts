@@ -22,7 +22,8 @@ void main() {
 `;
 
 export type SceneFeu = {
-  dessiner: (progression: number) => void;
+  // capture : où est la Pokéball 3D (fractions d'écran, comme dans lib/pokeball/pose.ts) et à quel point elle aspire.
+  dessiner: (progression: number, capture: { fx: number; fy: number; force: number }) => void;
   redimensionner: (largeur: number, hauteur: number) => void;
   liberer: () => void;
 };
@@ -61,6 +62,8 @@ export async function creerSceneFeu(toile: HTMLCanvasElement): Promise<SceneFeu>
     uFond: { value: [0, 0, 0] },
     uCentre: { value: [0, 0] },
     uTaille: { value: 0.6 },
+    uPokeball: { value: [0, 0] },
+    uAspiration: { value: 0 },
   };
   const materiau = new THREE.ShaderMaterial({
     vertexShader: SHADER_SOMMETS,
@@ -83,8 +86,11 @@ export async function creerSceneFeu(toile: HTMLCanvasElement): Promise<SceneFeu>
   uniformes.uFond.value = [couleur.r, couleur.g, couleur.b];
 
   return {
-    dessiner(progression) {
+    dessiner(progression, capture) {
       uniformes.uProgression.value = progression;
+      // Fractions d'écran → unités du shader (1 = la hauteur de l'écran, d'où « × proportions » sur la largeur).
+      uniformes.uPokeball.value = [capture.fx * uniformes.uProportions.value, capture.fy];
+      uniformes.uAspiration.value = capture.force;
       uniformes.uTemps.value = (performance.now() - naissance) / 1000;
       rendu.render(scene, camera);
     },

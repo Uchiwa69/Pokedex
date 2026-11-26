@@ -254,3 +254,8 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   modélisée en code (demi-sphères, bande, bouton, couvercle à charnière, halo), chargée par `next/dynamic` sans rendu
   serveur, en pause quand elle est invisible. Calque fixe `-z-10` DERRIÈRE le contenu, `pointer-events-none`. Elle est à
   droite du titre, sort par le haut en 360 px, revient ouverte à travers la brûlure et se referme en bas de page.
+- Cinématique de Dracaufeu enrichie (26 novembre 2026), tout dans `erosion.ts` (blocs « Ajout du projet ») : caméra qui
+  avance vers la gueule puis recule au souffle (`zoomCamera`), recul du corps et battement des ailes par déformation de
+  l'image, queue qui s'embrase, lueur orange sur le décor et sur les lettres du titre. CAPTURE : `SequenceFeu` passe la
+  pose de la Pokéball au shader (`uPokeball`, `uAspiration` = ouverture × fondu) ; des traits de lumière convergent vers
+  elle et ce qui reste de Dracaufeu rougit. La durée des flammes n'a pas changé.
