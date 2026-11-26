@@ -190,7 +190,9 @@ void main() {
     float distBordCellule = vor.x;
     float idCellule = vor.z;
 
-    float progDesint = smoothstep(0.36, 0.92, uProgression);
+    // Réglage du projet : avance RÉGULIÈRE (clamp) au lieu d'un départ et d'une fin ralentis (smoothstep) : la
+    // brûlure progresse à vitesse constante sous la molette, c'est plus fluide.
+    float progDesint = clamp((uProgression - 0.36) / 0.56, 0.0, 1.0);
     // Réglage du projet : micro-bruit ralenti (0.9 → 0.2) et affaibli plus bas, sinon les bords tremblaient.
     float bruitMicro = fbm(pos * 22.0 - vec2(0.0, uTemps * 0.2), 3);
 
@@ -253,7 +255,7 @@ void main() {
     float fin = 1.0 - smoothstep(0.95, 1.0, uProgression);
     // Ajout du projet (demande de l'utilisateur) : quand tout a brûlé, des braises continuent de monter en
     // fond, derrière l'écran de fin. Elles apparaissent pendant que le reste s'éteint.
-    float restes = particulesAscendantes(pos + vec2(1.7, -uTemps * 0.22), uTemps * 0.6, 11.0, 0.07) * smoothstep(0.72, 0.83, uProgression);
+    float restes = particulesAscendantes(pos + vec2(1.7, -uTemps * 0.22), uTemps * 0.6, 11.0, 0.07) * smoothstep(0.80, 0.91, uProgression);
     vec3 rgbRestes = vec3(1.0, 0.48, 0.09) * restes * 1.2;
     float alphaRestes = clamp(restes * 0.6, 0.0, 1.0);
     gl_FragColor = vec4(rgbFinal * fin + rgbRestes, clamp(alphaFinal * fin + alphaRestes, 0.0, 1.0));

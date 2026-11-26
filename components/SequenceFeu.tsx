@@ -23,14 +23,17 @@ function fondu(a: number, b: number, x: number) {
   return t * t * (3 - 2 * t);
 }
 
-// Le shader joue le souffle de 0 à 0,4 et la désintégration de 0,4 à 1. On donne au souffle les 25 premiers
-// pour cent du défilement et à la désintégration les 75 restants : elle dure plus longtemps sous la molette
-// (demande de l'utilisateur), sans toucher au shader.
+// Le shader joue le souffle de 0 à 0,4 puis la désintégration. On donne au souffle les 30 premiers pour cent du
+// défilement (140 % d'écran : sa durée d'origine, que l'utilisateur ne veut pas changer) et à la désintégration
+// les 70 restants.
 function allonger(parcouru: number) {
-  // On s'arrête à 0,83 : c'est là que le dernier morceau finit de brûler. Le bas de la page tombe donc pile sur
+  // On s'arrête à 0,91 : c'est là que le dernier morceau finit de brûler. Le bas de la page tombe donc pile sur
   // la fin de la désintégration, sans molette « dans le vide » avant le pied de page.
-  return parcouru < 0.25 ? (parcouru / 0.25) * 0.4 : 0.4 + ((parcouru - 0.25) / 0.75) * 0.43;
+  return parcouru < 0.3 ? (parcouru / 0.3) * 0.4 : 0.4 + ((parcouru - 0.3) / 0.7) * 0.51;
 }
+
+// Durée, en secondes, que met l'image à rattraper la molette (voir « boucle »).
+const INERTIE = 0.22;
 
 type Props = { children: ReactNode };
 
@@ -81,7 +84,11 @@ export default function SequenceFeu({ children }: Props) {
         // Le texte animé : ses éléments sont repérés une fois, puis mis à jour à chaque image.
         const mettreAJourTexte = texte.current ? preparerTexte(texte.current) : null;
 
-        function boucle() {
+        // Fluidité : une molette avance par à-coups (un cran = 100 px d'un seul coup). Au lieu de sauter à la
+        // nouvelle valeur, la progression AFFICHÉE la rattrape en douceur, un peu plus à chaque image.
+        let affichee = -1; // -1 = pas encore de valeur : la première image se place directement
+        let precedent = 0; // heure de l'image précédente, pour connaître le temps écoulé
+        function boucle(maintenant: number) {
           // La course = ce que le conteneur a de plus haut que la page (les 470 % d'écran).
           // 0 quand la page vient de se coller en haut de l'écran, 1 quand elle va se décoller.
           const course = elementConteneur!.offsetHeight - elementPage!.offsetHeight;
@@ -91,7 +98,13 @@ export default function SequenceFeu({ children }: Props) {
           const defilementMax = document.documentElement.scrollHeight - window.innerHeight;
           const atteignable = Math.min(1, Math.max(0.5, (defilementMax - (haut + window.scrollY)) / course));
           const parcouru = Math.min(1, Math.max(0, -haut / course / atteignable));
-          const progression = allonger(parcouru);
+          const cible = allonger(parcouru);
+          const ecoule = Math.min(0.1, (maintenant - precedent) / 1000);
+          precedent = maintenant;
+          // 1 - exp(-temps / INERTIE) : la part de l'écart rattrapée pendant cette image (indépendante du nombre
+          // d'images par seconde de l'écran).
+          affichee = affichee < 0 ? cible : affichee + (cible - affichee) * (1 - Math.exp(-ecoule / INERTIE));
+          const progression = affichee;
           // On dessine même à la fin (progression = 1) : des braises continuent de monter derrière l'écran de fin.
           dessin.dessiner(progression);
           // Les textes : on écrit directement leur opacité, sans état React (60 rendus par seconde sinon).

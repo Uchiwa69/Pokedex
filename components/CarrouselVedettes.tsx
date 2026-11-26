@@ -34,7 +34,7 @@ const ARTWORK = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprite
 // Cartes dessinées en 900 × 1200 : plus que leur taille à l'écran, pour rester nettes sous la lentille.
 const LARGEUR = 900;
 const HAUTEUR = 1200;
-const PAS_DEFILEMENT = 240; // pixels de défilement de la page pour passer à la carte suivante
+const PAS_DEFILEMENT = 320; // pixels de défilement de la page pour passer à la carte suivante
 
 function chargerImage(adresse: string) {
   return new Promise<HTMLImageElement>((reussi, echoue) => {

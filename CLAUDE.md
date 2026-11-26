@@ -223,7 +223,7 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Accueil (depuis le 25 novembre 2026) : titre géant, `CarrouselVedettes`, recherche (`#haut-liste`), types, grille,
   pagination, puis `SequenceFeu` et son écran de fin, le tout DANS `IntroPokedex`.
 - Fin de page « l'écran brûle » : `components/SequenceFeu.tsx` (client) enveloppe l'écran de fin (ses `children`, rendus
-  par le serveur) : celui-ci est `sticky` et suivi d'un bloc vide de 470svh (560 jugé un peu lent) (PAS un padding : un élément collant ne glisse
+  par le serveur) : celui-ci est `sticky` et suivi d'un bloc vide de 470svh (PAS un padding : un élément collant ne glisse
   que dans le contenu de son parent) ; un canvas transparent par-dessus, progression 0→1 lue à chaque image, boucle en
   pause hors écran (IntersectionObserver). Le souffle occupe 25 % du défilement et la désintégration 75 % (fonction
   `allonger`) : l'utilisateur la voulait longue. Rejouable en remontant puis redescendant, jamais en boucle ; pas de bouton
@@ -240,7 +240,7 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   dépendance npm `ogl` (acceptée implicitement : c'est son composant). `CarrouselVedettes` (client) dessine une carte par
   Pokémon dans un canvas 2D (lueur du type, numéro, illustration) puis la passe en image ; `captureWheel={false}` et
   `className="overscroll-auto!"` pour que la molette fasse défiler la page (sinon elle reste bloquée sur le carrousel) ; il
-  tourne quand même avec le défilement : une fausse touche fléchée lui est envoyée tous les 240 px (140 puis 190 jugés trop rapides) ; un vrai lien « Voir la fiche de … » suit la carte centrale.
+  tourne quand même avec le défilement : une fausse touche fléchée lui est envoyée tous les 320 px (140, 190 puis 240 jugés trop rapides) ; un vrai lien « Voir la fiche de … » suit la carte centrale.
 - ATTENTION `npm install` : il supprime le paquet `shaders`, installé à la main pour la page locale `/labo/fond` (dossiers
   `effets/` et `app/labo/fond/` exclus par `.git/info/exclude`) et absent de package.json → le build casse. Le remettre
   avec `npm install shaders --no-save`.
