@@ -5,7 +5,7 @@
 // (choix de l'utilisateur) : children est alors l'écran de fin, haut d'un écran. Dans la suite, « la page » = children.
 // Le dessin est fait par un shader (lib/scenes-feu/), sur un canvas transparent posé par-dessus la page.
 //
-// Principe : la page est « collante » (sticky) dans un conteneur plus haut qu'elle de 410 % de l'écran (un bloc vide la suit). Tant
+// Principe : la page est « collante » (sticky) dans un conteneur plus haut qu'elle de 360 % de l'écran (un bloc vide la suit). Tant
 // qu'on parcourt ce supplément, la page reste en place sous le canvas ; on mesure seulement OÙ on en est
 // (de 0 à 1) et on donne ce nombre au shader. Remonter rejoue donc la séquence à l'envers. Ensuite la page
 // défile normalement.
@@ -24,13 +24,13 @@ function fondu(a: number, b: number, x: number) {
   return t * t * (3 - 2 * t);
 }
 
-// Le shader joue le souffle de 0 à 0,4 puis la désintégration. On donne au souffle les 34 premiers pour cent du
+// Le shader joue le souffle de 0 à 0,4 puis la désintégration. On donne au souffle les 39 premiers pour cent du
 // défilement (140 % d'écran : sa durée d'origine, que l'utilisateur ne veut pas changer) et à la désintégration
-// les 66 restants (270 % d'écran).
+// les 61 restants (220 % d'écran).
 function allonger(parcouru: number) {
   // On s'arrête à 0,91 : c'est là que le dernier morceau finit de brûler. Le bas de la page tombe donc pile sur
   // la fin de la désintégration, sans molette « dans le vide » avant le pied de page.
-  return parcouru < 0.34 ? (parcouru / 0.34) * 0.4 : 0.4 + ((parcouru - 0.34) / 0.66) * 0.51;
+  return parcouru < 0.39 ? (parcouru / 0.39) * 0.4 : 0.4 + ((parcouru - 0.39) / 0.61) * 0.51;
 }
 
 // Durée, en secondes, que met l'image à rattraper la molette (voir « boucle »).
@@ -90,7 +90,7 @@ export default function SequenceFeu({ children }: Props) {
         let affichee = -1; // -1 = pas encore de valeur : la première image se place directement
         let precedent = 0; // heure de l'image précédente, pour connaître le temps écoulé
         function boucle(maintenant: number) {
-          // La course = ce que le conteneur a de plus haut que la page (les 410 % d'écran).
+          // La course = ce que le conteneur a de plus haut que la page (les 360 % d'écran).
           // 0 quand la page vient de se coller en haut de l'écran, 1 quand elle va se décoller.
           const course = elementConteneur!.offsetHeight - elementPage!.offsetHeight;
           const haut = elementConteneur!.getBoundingClientRect().top;
@@ -212,7 +212,7 @@ export default function SequenceFeu({ children }: Props) {
       </div>
       {/* Le supplément de hauteur qui sert de course à la séquence. Un bloc vide, et pas une marge intérieure
           (padding) : un élément collant ne peut glisser que dans le CONTENU de son parent. */}
-      {avecSequence && <div aria-hidden="true" className="h-[410svh] motion-reduce:hidden" />}
+      {avecSequence && <div aria-hidden="true" className="h-[360svh] motion-reduce:hidden" />}
     </div>
   );
 }
