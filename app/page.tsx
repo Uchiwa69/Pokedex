@@ -30,9 +30,15 @@ export default function PageAccueil({ searchParams }: Props) {
           <NombreTotal />
         </header>
 
-        {/* Composant client : il dessine ses cartes dans le navigateur et tourne avec le défilement. */}
+        {/* Composant client : il dessine ses cartes dans le navigateur et tourne avec le défilement.
+            Il est ÉPINGLÉ (sticky) sous l'en-tête et suivi d'un bloc vide : pendant qu'on parcourt ce bloc, le
+            carrousel reste à l'écran et continue de tourner, puis la page reprend avec la recherche et les cartes.
+            Un bloc vide et pas un padding : un élément collant ne glisse que dans le contenu de son parent. */}
         <div className="w-full">
-          <CarrouselVedettes />
+          <div className="sticky top-28 lg:top-16 motion-reduce:static">
+            <CarrouselVedettes />
+          </div>
+          <div aria-hidden="true" className="h-[120svh] motion-reduce:hidden" />
         </div>
 
         {/* BarreRecherche lit l'adresse avec useSearchParams → elle aussi a besoin d'un Suspense.
