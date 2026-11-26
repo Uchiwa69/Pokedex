@@ -223,7 +223,7 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
 - Accueil (depuis le 25 novembre 2026) : titre géant, `CarrouselVedettes`, recherche (`#haut-liste`), types, grille,
   pagination, puis `SequenceFeu` et son écran de fin, le tout DANS `IntroPokedex`.
 - Fin de page « l'écran brûle » : `components/SequenceFeu.tsx` (client) enveloppe l'écran de fin (ses `children`, rendus
-  par le serveur) : celui-ci est `sticky` et suivi d'un bloc vide de 470svh (PAS un padding : un élément collant ne glisse
+  par le serveur) : celui-ci est `sticky` et suivi d'un bloc vide de 410svh (PAS un padding : un élément collant ne glisse
   que dans le contenu de son parent) ; un canvas transparent par-dessus, progression 0→1 lue à chaque image, boucle en
   pause hors écran (IntersectionObserver). Le souffle occupe 25 % du défilement et la désintégration 75 % (fonction
   `allonger`) : l'utilisateur la voulait longue. Rejouable en remontant puis redescendant, jamais en boucle ; pas de bouton
