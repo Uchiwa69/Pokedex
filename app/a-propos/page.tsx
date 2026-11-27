@@ -54,6 +54,11 @@ export default function PageAPropos() {
           Les trois images de Dracaufeu de la séquence de fin de l&apos;accueil ont été générées par une intelligence
           artificielle (Gemini) ; les shaders de cette séquence ont été écrits avec son aide puis adaptés.
         </p>
+        {/* Crédits du fond de l'écran de fin (code repris d'un effet sous licence MIT). */}
+        <p>
+          L&apos;anneau d&apos;astéroïdes de l&apos;écran de fin (roches, ciel de nébuleuse, poussières) vient de
+          l&apos;effet « Astéroïdes » d&apos;Effects Library, sous licence MIT.
+        </p>
         <p>
           Pokémon est une marque de Nintendo / Game Freak / The Pokémon Company. Projet étudiant non commercial.
         </p>

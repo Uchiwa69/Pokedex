@@ -1,7 +1,7 @@
 // Version 2B « érosion » : même souffle, puis chaque cellule carbonisée rétrécit jusqu'à disparaître en cendres.
 // Dracaufeu y est intégré à la scène : fond brumeux, contre-jour, ombre au sol, respiration, flamme de la queue.
 // Shader fourni par l'utilisateur (généré avec Gemini), ADAPTÉ au projet (les ajouts sont marqués « Ajout du projet ») : trois images
-// de Dracaufeu en fondu, gueule et queue recalées sur ces images, braises qui restent à la fin. Sortie en alpha prémultiplié : (0,0,0,0) = on voit la vraie page derrière.
+// de Dracaufeu en fondu, gueule et queue recalées sur ces images, plus de braises à la fin (l'anneau d'astéroïdes les remplace). Sortie en alpha prémultiplié : (0,0,0,0) = on voit la vraie page derrière.
 
 export const SHADER_EROSION = /* glsl */ `
 // --- UNIFORMS IMPOSÉS ---
@@ -278,11 +278,8 @@ void main() {
     alphaFinal = clamp(alphaFinal + alphaEmissif * (1.0 - alphaFinal), 0.0, 1.0);
 
     float fin = 1.0 - smoothstep(0.95, 1.0, uProgression);
-    // Ajout du projet (demande de l'utilisateur) : quand tout a brûlé, des braises continuent de monter en
-    // fond, derrière l'écran de fin. Elles apparaissent pendant que le reste s'éteint.
-    float restes = particulesAscendantes(pos + vec2(1.7, -uTemps * 0.22), uTemps * 0.6, 11.0, 0.07) * smoothstep(0.80, 0.91, uProgression);
-    vec3 rgbRestes = vec3(1.0, 0.48, 0.09) * restes * 1.2;
-    float alphaRestes = clamp(restes * 0.6, 0.0, 1.0);
+    // (Les braises qui restaient en fond une fois tout brûlé ont été retirées à la demande de l'utilisateur : derrière
+    // l'écran de fin, il y a maintenant l'anneau d'astéroïdes de lib/asteroides/.)
 
     // Ajout du projet : LA CAPTURE. Des traits de lumière convergent vers la Pokéball ouverte. On passe en
     // coordonnées polaires autour d'elle (distance, angle) : l'angle est découpé en secteurs, et dans certains
@@ -300,6 +297,6 @@ void main() {
     vec3 rgbCapture = vec3(1.0, 0.5, 0.2) * aspiration * 1.6 + vec3(1.0, 0.3, 0.2) * haloBalle;
     float alphaCapture = clamp(aspiration + haloBalle * 0.6, 0.0, 1.0);
 
-    gl_FragColor = vec4(rgbFinal * fin + rgbRestes + rgbCapture, clamp(alphaFinal * fin + alphaRestes + alphaCapture, 0.0, 1.0));
+    gl_FragColor = vec4(rgbFinal * fin + rgbCapture, clamp(alphaFinal * fin + alphaCapture, 0.0, 1.0));
 }
 `;

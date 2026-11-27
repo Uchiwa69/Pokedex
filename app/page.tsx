@@ -73,9 +73,13 @@ export default function PageAccueil({ searchParams }: Props) {
       </Suspense>
 
       {/* Fin de page : Dracaufeu brûle l'écran au défilement et révèle l'écran de fin (les enfants du composant).
-          Composant client ; l'écran de fin, lui, reste rendu par le serveur. */}
+          Composant client ; l'écran de fin, lui, reste rendu par le serveur. Derrière lui : l'anneau d'astéroïdes et
+          la Pokéball (CompagnonPokeball), qui se place au milieu, entre le titre (en haut) et le bouton (en bas). */}
       <SequenceFeu>
-        <section aria-labelledby="titre-fin" className="flex h-[64svh] flex-col items-center justify-center gap-8 text-center">
+        <section
+          aria-labelledby="titre-fin"
+          className="flex h-[64svh] flex-col items-center justify-between pt-32 text-center lg:pt-24"
+        >
           <h2 id="titre-fin" className="font-titre text-5xl font-bold tracking-tight sm:text-7xl lg:text-8xl">
             Attrapez-les tous !
           </h2>

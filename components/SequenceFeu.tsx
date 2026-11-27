@@ -106,7 +106,7 @@ export default function SequenceFeu({ children }: Props) {
           // d'images par seconde de l'écran).
           affichee = affichee < 0 ? cible : affichee + (cible - affichee) * (1 - Math.exp(-ecoule / INERTIE));
           const progression = affichee;
-          // On dessine même à la fin (progression = 1) : des braises continuent de monter derrière l'écran de fin.
+          // On dessine même à la fin (progression = 1) : les traits de lumière de la capture continuent de converger.
           // La capture : la Pokéball 3D (components/CompagnonPokeball.tsx) partage sa pose ; quand elle est ouverte
           // et visible, le shader dessine des traits de lumière qui convergent vers elle.
           dessin.dessiner(progression, { fx: pose.fx, fy: pose.fy, force: pose.ouverture * pose.fondu });

@@ -213,6 +213,14 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   serveur. Menu : Tous, Favoris, Sacoche, Combat, Atelier, Quiz (ordre voulu).
 - En-tête et pied de page : fond `bg-cadre` (jeton `--color-cadre` : même couleur que la page en sombre, blanc en
   clair). L'en-tête reste flouté (`bg-cadre/85`).
+- Fond de l'écran de fin (27 novembre 2026, demande de l'utilisateur) : l'anneau d'ASTÉROÏDES remplace le fond noir et
+  ses braises (bloc « restes » retiré de `erosion.ts`). Effet « Astéroïdes » fourni par l'utilisateur (zip, licence MIT,
+  `lib/asteroides/LICENSE`) : `lib/asteroides/core|environments|particles/` REPRIS TELS QUELS (les `.d.ts` à côté = types
+  ajoutés) ; `lib/asteroides/scene.ts` = code du projet (sans l'objectif cinéma ni le cœur rouge ni les 8 blocs de la démo).
+  `FondAsteroides` (client) dans un calque fixe `-z-20` monté par `CompagnonPokeball` DERRIÈRE la Pokéball ; visibilité et
+  centre dans `fondFin` (lib/pokeball/pose.ts, animé par la même timeline GSAP). L'anneau est centré sur la Pokéball par
+  `setViewOffset` ; son trou est plus grand qu'elle, donc aucune roche ne passe devant. Pokéball de fin AU MILIEU (fy 0.08),
+  titre en haut, bouton en bas (`justify-between`). Crédit sur la page À propos.
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif
