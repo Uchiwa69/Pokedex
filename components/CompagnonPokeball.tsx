@@ -117,8 +117,9 @@ export default function CompagnonPokeball() {
 
   return (
     <>
-      {/* Le fond de l'écran de fin, derrière la Pokéball (il pose son propre calque, en -z-20). */}
-      {pret && <FondAsteroides />}
+      {/* Le fond de l'écran de fin, derrière la Pokéball (il pose son propre calque, en -z-20). Rendu dans <body> :
+          dans la page (z-10), son -z-20 restait AU-DESSUS du pied de page, qui disparaissait sous les astéroïdes. */}
+      {pret && client && createPortal(<FondAsteroides />, document.body)}
       <span ref={ancre} hidden />
       {/* Calque fixe, DERRIÈRE le contenu de la page (-z-10), purement décoratif : il ne capte aucun clic et il est
           caché aux lecteurs d'écran. motion-reduce:hidden : absent en animations réduites.
