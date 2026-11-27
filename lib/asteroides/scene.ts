@@ -161,7 +161,17 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
 
       ciel.update(camera);
       curseur.update(ecoule);
-      updateSceneUniforms({ time: temps, camera, cursor: curseur, height: taille.y * rendu.getPixelRatio(), pixelRatio: rendu.getPixelRatio() });
+      // focus = distance de mise au point, comme dans la démo de l'effet (distance de la caméra au centre, moins 4).
+      // Les poussières s'en servent pour leur flou (bokeh) : sans elle, elle restait à 10, tous les grains étaient
+      // « hors de la mise au point » et apparaissaient environ 5 fois trop gros et pâles.
+      updateSceneUniforms({
+        time: temps,
+        camera,
+        cursor: curseur,
+        height: taille.y * rendu.getPixelRatio(),
+        pixelRatio: rendu.getPixelRatio(),
+        focus: camera.position.length() - 4,
+      });
       rendu.render(scene, camera);
     },
 
