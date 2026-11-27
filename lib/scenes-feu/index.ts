@@ -88,6 +88,12 @@ export async function creerSceneFeu(toile: HTMLCanvasElement): Promise<SceneFeu>
   const scene = new THREE.Scene();
   scene.add(new THREE.Mesh(geometrie, materiau));
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  // Le shader est compilé EN ARRIÈRE-PLAN (compileAsync) avant le premier dessin. Sans cela, la première image
+  // le compilait d'un coup et figeait la page plus de 400 ms au moment où l'on arrivait sur la séquence.
+  await rendu.compileAsync(scene, camera);
+  // Les trois images de Dracaufeu sont envoyées à la carte graphique TOUT DE SUITE (au chargement de la page, quand
+  // rien ne bouge), et non à la première image de la séquence, où l'envoi figeait encore l'écran ~200 ms.
+  for (const image of images) rendu.initTexture(image);
   const naissance = performance.now();
 
   // La couleur de la page est lue sur le jeton --color-fond (app/globals.css), une fois : le site n'a qu'un thème.

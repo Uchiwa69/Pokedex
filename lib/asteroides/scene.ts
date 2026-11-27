@@ -24,6 +24,8 @@ export type FondAsteroides = {
   // etat : centre de l'anneau en fractions d'écran, apparition et ouverture de la Pokéball (lib/pokeball/pose.ts).
   dessiner: (etat: EtatFondFin) => void;
   redimensionner: (largeur: number, hauteur: number) => void;
+  // Compile les shaders en arrière-plan (sans figer la page) : à attendre avant le premier dessin.
+  preparer: () => Promise<void>;
   liberer: () => void;
 };
 
@@ -161,6 +163,10 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
       curseur.update(ecoule);
       updateSceneUniforms({ time: temps, camera, cursor: curseur, height: taille.y * rendu.getPixelRatio(), pixelRatio: rendu.getPixelRatio() });
       rendu.render(scene, camera);
+    },
+
+    async preparer() {
+      await rendu.compileAsync(scene, camera);
     },
 
     redimensionner(largeur, hauteur) {

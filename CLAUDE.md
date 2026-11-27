@@ -243,6 +243,14 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   `Carte3D` (cadence, sauf pendant une capture ou une vidéo). `FlexCarousel` (repris tel quel) a déjà son budget.
   Vérifié dans WebKit (Playwright 1.65 = WebKit 2388) en Retina ×2 : rendu identique. Le retour à l'introduction
   résiste déjà à l'élan du trackpad (arrêt en haut exigé).
+- Fluidité (27 novembre 2026, mesures Long Animation Frames) : tout ce qui est lourd est préparé AVANT d'être vu, au
+  calme. Feu : `compileAsync` + `initTexture` des 3 images à la création (1re image 413 → 94 ms). Pokéball R3F :
+  montée dès un moment inoccupé pendant l'introduction (`prechauffe`), `Prechauffage` compile puis dessine une image
+  invisible ; son calque est rendu dans `<body>` par `createPortal` (DANS la page agrandie de l'intro, il prenait sa
+  taille et le redimensionnement figeait l'écran 300 ms). Astéroïdes : code lu au calme après l'arrivée, scène créée
+  quand la séquence est à moins de 1,5 écran (IntersectionObserver + requestIdleCallback), shaders compilés en
+  arrière-plan (`preparer`). Restent ~2 images lentes pendant la plongée de l'intro (rendu du navigateur, pas du JS,
+  déjà présentes avant).
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif
@@ -294,7 +302,8 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   refusé (texte protégé).
 - Arrivée après l'introduction (26 novembre 2026) : l'élan de la molette faisait descendre la page de plusieurs écrans.
   `retenirEnHaut` (dans `IntroPokedex`) remet la page à 0 à chaque défilement tant que le geste dure (au moins
-  `RETENUE_MIN`, au plus `RETENUE_MAX`). `preventDefault` ne marche PAS ici : le navigateur refuse d'annuler une
+  `RETENUE_MIN`, au plus `RETENUE_MAX` = 1 s). Introduction raccourcie le 27 novembre 2026 : zone de 250svh (360 jugée
+  longue, ~11 crans de molette → ~6), même chorégraphie. `preventDefault` ne marche PAS ici : le navigateur refuse d'annuler une
   molette déjà lancée, d'où la correction après coup sur l'événement `scroll`.
 - Tunnel de lumière pendant la plongée dans le Pokédex (shader maison, inspiré de loin du site de Lusion) : essayé puis
   RETIRÉ le 26 novembre 2026 (« rien à voir avec Lusion, on perd de vue la destination ») — ne pas le remettre. La

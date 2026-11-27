@@ -6,7 +6,9 @@
 //
 // Pas de boucle d'animation ici : c'est SequenceFeu qui appelle fondFin.dessiner() à chaque image (seulement quand
 // la séquence de feu est à l'écran), après avoir écrit fondFin.visibilite. Le fond suit donc exactement la brûlure.
-// La scène (roches, volume de bruit) est préparée quand on arrive sur la séquence, puis gardée.
+// La scène (roches, volume de bruit, shaders) est préparée À L'AVANCE : quand la séquence de feu approche (à moins
+// d'un écran et demi) et que le navigateur est inoccupé. Préparée au dernier moment, elle faisait sauter une image
+// en plein défilement. Elle est ensuite gardée.
 
 import { useEffect, useRef } from "react";
 import { fondFin } from "@/lib/pokeball/pose";
@@ -24,6 +26,42 @@ export default function FondAsteroides() {
     let chargement = false; // l'import est lancé (une seule fois)
     let annule = false;
 
+    function charger() {
+      if (chargement) return;
+      chargement = true;
+      import("@/lib/asteroides/scene")
+        .then(async (module) => {
+          if (annule) return;
+          const nouvelle = module.creerFondAsteroides(elementToile!);
+          nouvelle.redimensionner(window.innerWidth, window.innerHeight);
+          await nouvelle.preparer(); // shaders compilés en arrière-plan avant le premier dessin
+          if (annule) {
+            nouvelle.liberer();
+            return;
+          }
+          scene = nouvelle;
+        })
+        // Pas de WebGL 2 : pas de fond, l'écran de fin reste simplement sombre.
+        .catch(() => {});
+    }
+    // Préparation anticipée : la séquence approche, et on attend un moment calme (pas de Safari : simple délai).
+    const sequence = document.querySelector("[data-sequence]");
+    const guetteur = new IntersectionObserver(
+      ([entree]) => {
+        if (!entree.isIntersecting) return;
+        guetteur.disconnect();
+        if ("requestIdleCallback" in window) requestIdleCallback(charger, { timeout: 1500 });
+        else setTimeout(charger, 200);
+      },
+      { rootMargin: "150% 0px 150% 0px" },
+    );
+    if (sequence) guetteur.observe(sequence);
+    // Le code de la scène (roches, ciel, shaders) est téléchargé et lu dès un moment calme après l'arrivée : le lire
+    // pendant le défilement coûtait ~150 ms d'un coup. La scène, elle, n'est créée que lorsque la séquence approche.
+    const lireLeCode = () => void import("@/lib/asteroides/scene").catch(() => {});
+    const inoccupe = typeof requestIdleCallback === "function";
+    const attente = inoccupe ? requestIdleCallback(lireLeCode, { timeout: 4000 }) : setTimeout(lireLeCode, 2000);
+
     function ajuster() {
       scene?.redimensionner(window.innerWidth, window.innerHeight);
     }
@@ -32,18 +70,8 @@ export default function FondAsteroides() {
       // Opacité écrite directement (pas d'état React : elle change à chaque image). Invisible = caché pour de bon.
       elementCalque.style.opacity = String(fondFin.visibilite);
       elementCalque.style.visibility = fondFin.visibilite > 0.01 ? "visible" : "hidden";
-      // Préparée dès que la séquence est à l'écran (pendant Dracaufeu) : elle est prête quand l'écran brûle.
-      if (enVue && !chargement) {
-        chargement = true;
-        import("@/lib/asteroides/scene")
-          .then((module) => {
-            if (annule) return;
-            scene = module.creerFondAsteroides(elementToile);
-            ajuster();
-          })
-          // Pas de WebGL 2 : pas de fond, l'écran de fin reste simplement sombre.
-          .catch(() => {});
-      }
+      // Filet de sécurité : si la préparation anticipée n'a pas eu lieu, elle part dès que la séquence est là.
+      if (enVue) charger();
       // Rien à calculer tant que le fond est invisible.
       if (fondFin.visibilite > 0.01) scene?.dessiner(fondFin);
     };
@@ -51,6 +79,9 @@ export default function FondAsteroides() {
 
     return () => {
       annule = true;
+      guetteur.disconnect();
+      if (inoccupe) cancelIdleCallback(attente as number);
+      else clearTimeout(attente);
       fondFin.dessiner = null;
       window.removeEventListener("resize", ajuster);
       scene?.liberer();

@@ -145,14 +145,36 @@ function Pokeball() {
   );
 }
 
-// `actif` vaut faux quand la Pokéball est invisible : la scène ne dessine alors plus rien (frameloop « never »).
+// Préchauffage : à l'arrivée de la scène, ses shaders sont compilés en arrière-plan (compileAsync), puis UNE image
+// est dessinée (invisible) pour calculer les reflets de l'environnement. La première vraie image est ensuite légère.
+function Prechauffage() {
+  const gl = useThree((etat) => etat.gl);
+  const scene = useThree((etat) => etat.scene);
+  const camera = useThree((etat) => etat.camera);
+  const invalidate = useThree((etat) => etat.invalidate);
+  useEffect(() => {
+    let annule = false;
+    gl.compileAsync(scene, camera)
+      .then(() => {
+        if (!annule) invalidate();
+      })
+      .catch(() => {});
+    return () => {
+      annule = true;
+    };
+  }, [gl, scene, camera, invalidate]);
+  return null;
+}
+
+// `actif` vaut faux quand la Pokéball est invisible : la scène ne dessine plus rien, sauf l'image de préchauffage
+// (frameloop « demand » : une image seulement quand on la demande).
 export default function ScenePokeball({ actif }: { actif: boolean }) {
   // Densité de pixels : jusqu'à 1,75 pour une Pokéball nette, mais le canvas couvre TOUT l'écran : sur un grand
   // écran Retina, on reste dans un budget de 3,5 millions de pixels (lib/qualite.ts).
   const densite = useMemo(() => ratioPixels(window.innerWidth, window.innerHeight, 1.75, 3_500_000), []);
   return (
     <Canvas
-      frameloop={actif ? "demand" : "never"}
+      frameloop="demand"
       dpr={densite}
       camera={{ position: [0, 0, 6], fov: 35 }}
       gl={{ antialias: true, alpha: true }}
@@ -172,6 +194,7 @@ export default function ScenePokeball({ actif }: { actif: boolean }) {
         <Lightformer form="ring" intensity={1.8} position={[2, 2, 6]} scale={2} />
       </Environment>
       <Pokeball />
+      <Prechauffage />
       {actif && <Cadence60 />}
     </Canvas>
   );

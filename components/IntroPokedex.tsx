@@ -57,7 +57,7 @@ const SEUIL_ENTETE = 0.36;
 // et la page n'est jamais retenue plus longtemps que RETENUE_MAX.
 const PAUSE_FIN_DE_GESTE = 260;
 const RETENUE_MIN = 600; // retenue minimale : juste après l'introduction, le navigateur est occupé et les événements tardent
-const RETENUE_MAX = 1800;
+const RETENUE_MAX = 1000; // 1,8 s auparavant : l'arrivée paraissait longue
 
 // Clé du sessionStorage : retient, le temps de la visite, que l'introduction a déjà été vue.
 // (sessionStorage est vidé à la fermeture de l'onglet : à la visite suivante, elle rejoue.)
@@ -601,7 +601,9 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
       ref={zone}
       aria-hidden="true"
       data-intro-debut={debut ? "oui" : "non"}
-      className="pointer-events-none relative -mt-6 h-[360svh]"
+      // 250svh de défilement (360 auparavant, jugé un peu long : ~11 crans de molette, ~6 maintenant). Toutes les
+      // étapes de la chorégraphie sont des fractions de cette course : elles suivent sans autre réglage.
+      className="pointer-events-none relative -mt-6 h-[250svh]"
     >
       {/* sticky top-0 : ce bloc reste collé en haut de l'écran tant qu'on défile dans la zone. */}
       <div ref={cadre} className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
