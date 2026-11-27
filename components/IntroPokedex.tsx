@@ -57,7 +57,9 @@ const SEUIL_ENTETE = 0.36;
 // et la page n'est jamais retenue plus longtemps que RETENUE_MAX.
 const PAUSE_FIN_DE_GESTE = 260;
 const RETENUE_MIN = 600; // retenue minimale : juste après l'introduction, le navigateur est occupé et les événements tardent
-const RETENUE_MAX = 1000; // 1,8 s auparavant : l'arrivée paraissait longue
+// Sécurité seulement : la retenue s'arrête d'elle-même dès que le geste est fini ou qu'un nouveau geste commence.
+// 2,5 s : l'inertie du pavé tactile d'un Mac dure souvent 1,5 à 2 s (avec 1 s, sa fin faisait glisser la page).
+const RETENUE_MAX = 2500;
 // Un cran de molette arrivé après ce silence (millisecondes) n'est plus l'élan du geste précédent : c'est le
 // visiteur qui redemande à défiler. On rend alors la page aussitôt (sinon ce cran était « perdu » : la page
 // descendait puis remontait d'un coup, une saccade). L'élan d'une molette libre ou d'un pavé tactile envoie, lui,
@@ -226,12 +228,19 @@ export default function IntroPokedex({ children }: Props) {
     }
     // Chaque nouvel événement du geste repousse la libération.
     const debut = performance.now();
+    // Plus petit pas de molette vu depuis l'arrivée : l'inertie ne fait que ralentir, ses pas diminuent.
+    let plusPetitPas = Infinity;
     function prolonger(evenement: Event) {
       if (evenement instanceof WheelEvent) {
         const ecart = evenement.timeStamp - derniereMolette.current;
         derniereMolette.current = evenement.timeStamp;
-        // Nouveau cran après un silence : le geste d'arrivée est fini, ce cran fait défiler la page normalement.
-        if (ecart > ECART_NOUVEAU_GESTE) {
+        const pas = Math.abs(evenement.deltaY);
+        // Un pas nettement plus grand que pendant le ralentissement = les doigts relancent un nouveau geste
+        // sur le pavé tactile (sans silence entre les deux, l'écart de temps ne suffit pas à le voir).
+        const relance = pas > Math.max(8, plusPetitPas * 3);
+        plusPetitPas = Math.min(plusPetitPas, pas);
+        // Nouveau cran après un silence, ou geste relancé : celui d'arrivée est fini, la page défile normalement.
+        if (ecart > ECART_NOUVEAU_GESTE || relance) {
           liberer();
           return;
         }
@@ -245,7 +254,7 @@ export default function IntroPokedex({ children }: Props) {
       pause = setTimeout(liberer, Math.max(PAUSE_FIN_DE_GESTE, resteMinimum));
     }
     window.addEventListener("scroll", remonter);
-    // passive: false : pour pouvoir annuler l'élan de la molette (une seconde au plus, voir RETENUE_MAX).
+    // passive: false : pour pouvoir annuler l'élan de la molette (jamais plus de RETENUE_MAX).
     window.addEventListener("wheel", prolonger, { passive: false });
     window.addEventListener("touchmove", prolonger, { passive: true });
     window.addEventListener("touchend", liberer); // le doigt quitte l'écran : fini
