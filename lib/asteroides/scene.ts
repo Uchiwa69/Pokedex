@@ -80,7 +80,9 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
     key: "basalte",
   });
   const anneau = new AsteroidField({
-    count: tactile ? 320 : 520,
+    // 20 % de roches en moins (520 / 320 auparavant) : l'anneau était le plus gros coût de la fin
+    // de l'accueil ; la différence ne se voit presque pas (choix de l'utilisateur, 27 novembre 2026).
+    count: tactile ? 256 : 416,
     seed: 9,
     material: basalte,
     sizeMin: 0.15,
@@ -112,7 +114,7 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
   // Des poussières rouges en disque, qui tournent avec l'anneau et fuient le curseur.
   const poussiere = new CursorDust({
     mode: "swirl",
-    count: 900,
+    count: 720, // 900 auparavant : 20 % de poussières en moins, comme les roches
     seed: 21,
     spread: [7.5, 1.6, 7.5],
     size: 0.03,
