@@ -1,14 +1,13 @@
 // Fond de l'écran de fin : un anneau d'astéroïdes qui tourne autour de la Pokéball, dans un ciel de nébuleuse.
 // Les briques (roches, matière basalte, champ en orbite, ciel, poussières) viennent de l'effet « Astéroïdes »
 // fourni par l'utilisateur (licence MIT, fichier LICENSE) : dossiers core/, environments/ et particles/, REPRIS TELS
-// QUELS. Ce fichier-ci est le code du projet : il assemble la scène (reprise de la démo de l'effet) et la cale sur
-// la Pokéball 3D. Différence avec la démo : pas d'« objectif cinéma » (post-traitement lourd), la tonalité est faite
-// par three.js ; le cœur rouge et les huit gros blocs sont retirés : la Pokéball prend la place du cœur.
+// QUELS. Ce fichier-ci est le code du projet : il assemble la scène (reprise de la démo de l'effet). Différences avec
+// la démo : pas d'« objectif cinéma » (post-traitement lourd), la tonalité est faite par three.js ; le cœur rouge et
+// les huit gros blocs sont retirés : la Pokéball de lave (pokeball-lave.ts) prend la place du cœur, DANS la scène,
+// donc les roches passent vraiment devant et derrière elle, et la lumière rouge part d'elle.
 //
-// La Pokéball est dessinée par une AUTRE scène (components/three/ScenePokeball.tsx), sur un calque posé devant
-// celui-ci. Pour que les roches tournent autour d'elle, on décale l'image de la caméra (setViewOffset) : le centre
-// de l'anneau tombe pile sous la Pokéball. La caméra le regarde d'un peu au-dessus, le trou de l'anneau est plus
-// grand que la Pokéball : aucune roche ne passe devant elle, il n'y a donc rien à « cacher » entre les deux calques.
+// L'anneau n'est pas au milieu de l'écran mais entre le titre et le bouton de l'écran de fin : on décale l'image de
+// la caméra (setViewOffset) pour que son centre tombe à cette place.
 
 import * as THREE from "three";
 import { bakeNoiseVolume } from "./core/scene-kit/noiseVolume.js";
@@ -17,10 +16,12 @@ import { AsteroidField } from "./environments/asteroids/AsteroidField.js";
 import { createStoneMaterial } from "./environments/asteroids/stoneMaterial.js";
 import { NebulaSky, SKY_PRESETS, applySkyPreset } from "./environments/nebula-sky/NebulaSky.js";
 import { CursorDust } from "./particles/cursor-dust/CursorDust.js";
+import { creerPokeballLave } from "./pokeball-lave";
+import type { EtatFondFin } from "@/lib/pokeball/pose";
 
 export type FondAsteroides = {
-  // centre : où est la Pokéball, en fractions d'écran (comme lib/pokeball/pose.ts : 0 = milieu, 0,5 = bord).
-  dessiner: (centre: { fx: number; fy: number }) => void;
+  // etat : centre de l'anneau en fractions d'écran, apparition et ouverture de la Pokéball (lib/pokeball/pose.ts).
+  dessiner: (etat: EtatFondFin) => void;
   redimensionner: (largeur: number, hauteur: number) => void;
   liberer: () => void;
 };
@@ -86,8 +87,8 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
   });
   scene.add(anneau.group);
 
-  // Les lumières : une source rouge au centre (elle éclaire l'intérieur de l'anneau, comme si elle venait de la
-  // Pokéball), une lumière froide en hauteur, un peu de lumière ambiante.
+  // Les lumières : une source rouge au centre (la Pokéball de lave éclaire l'intérieur de l'anneau), une lumière
+  // froide en hauteur, un peu de lumière ambiante.
   const lueurCentre = new THREE.PointLight("#ff2410", 520, 24, 2);
   scene.add(lueurCentre);
   // La même lueur se diffuse dans le ciel autour du centre.
@@ -113,12 +114,16 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
   });
   scene.add(poussiere.points);
 
+  // La Pokéball de lave, au centre (rayon 2,4 : le trou de l'anneau commence vers 7,5).
+  const pokeball = creerPokeballLave(2.4);
+  scene.add(pokeball.objet);
+
   const taille = new THREE.Vector2();
   const naissance = performance.now();
   let precedent = naissance;
 
   return {
-    dessiner(centre) {
+    dessiner(etat) {
       const maintenant = performance.now();
       const temps = (maintenant - naissance) / 1000;
       const ecoule = Math.min(1 / 20, (maintenant - precedent) / 1000);
@@ -136,8 +141,12 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
       camera.lookAt(0, 0, 0);
       // Décalage de l'image : le centre de l'anneau passe du milieu de l'écran à la place de la Pokéball.
       // (fx vers la droite → l'image glisse vers la gauche, d'où le signe moins ; fy vers le haut → vers le bas.)
-      camera.setViewOffset(taille.x, taille.y, -centre.fx * taille.x, centre.fy * taille.y, taille.x, taille.y);
+      camera.setViewOffset(taille.x, taille.y, -etat.fx * taille.x, etat.fy * taille.y, taille.x, taille.y);
       camera.updateMatrixWorld();
+
+      pokeball.mettreAJour(camera, temps, etat.apparition, etat.ouverture);
+      // La lumière rouge vient de la Pokéball : plus forte quand elle est ouverte, et elle palpite comme le magma.
+      lueurCentre.intensity = 520 * etat.apparition * (0.45 + 0.55 * etat.ouverture) * (1 + Math.sin(temps * 2.2) * 0.08);
 
       ciel.update(camera);
       curseur.update(ecoule);
@@ -157,6 +166,7 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
       basalte.dispose();
       ciel.dispose();
       poussiere.dispose();
+      pokeball.liberer();
       fogUniforms.tNoise.value?.dispose();
       rendu.dispose();
     },

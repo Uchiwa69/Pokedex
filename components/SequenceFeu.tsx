@@ -13,7 +13,7 @@
 // Animations réduites, ou pas de WebGL : pas de séquence, la page s'affiche directement.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { fondFin, pose } from "@/lib/pokeball/pose";
+import { fondFin } from "@/lib/pokeball/pose";
 import { preparerTexte } from "@/lib/scenes-feu/texte";
 
 const TITRE = "Dracaufeu";
@@ -108,10 +108,11 @@ export default function SequenceFeu({ children }: Props) {
           // d'images par seconde de l'écran).
           affichee = affichee < 0 ? cible : affichee + (cible - affichee) * (1 - Math.exp(-ecoule / INERTIE));
           const progression = affichee;
-          // On dessine même à la fin (progression = 1) : les traits de lumière de la capture continuent de converger.
-          // La capture : la Pokéball 3D (components/CompagnonPokeball.tsx) partage sa pose ; quand elle est ouverte
-          // et visible, le shader dessine des traits de lumière qui convergent vers elle.
-          dessin.dessiner(progression, { fx: pose.fx, fy: pose.fy, force: pose.ouverture * pose.fondu });
+          // La Pokéball de lave : elle apparaît, ouverte, à travers la brûlure, puis se referme tout en bas de la
+          // page (la capture). Les traits de lumière du shader convergent vers elle tant qu'elle est ouverte.
+          fondFin.apparition = fondu(0.46, 0.62, progression);
+          fondFin.ouverture = 1 - fondu(0.8, 0.9, progression);
+          dessin.dessiner(progression, { fx: fondFin.fx, fy: fondFin.fy, force: fondFin.ouverture * fondFin.apparition });
           // Le fond d'astéroïdes : invisible tant que Dracaufeu occupe l'écran (le haut du canvas est en fondu
           // transparent, il s'y verrait), il s'allume quand l'écran commence à se désintégrer (0,36 dans le shader).
           fondFin.visibilite = fondu(0.38, 0.46, progression);

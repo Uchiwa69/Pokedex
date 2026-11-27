@@ -217,10 +217,15 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   ses braises (bloc « restes » retiré de `erosion.ts`). Effet « Astéroïdes » fourni par l'utilisateur (zip, licence MIT,
   `lib/asteroides/LICENSE`) : `lib/asteroides/core|environments|particles/` REPRIS TELS QUELS (les `.d.ts` à côté = types
   ajoutés) ; `lib/asteroides/scene.ts` = code du projet (sans l'objectif cinéma ni le cœur rouge ni les 8 blocs de la démo).
-  `FondAsteroides` (client) dans un calque fixe `-z-20` monté par `CompagnonPokeball` DERRIÈRE la Pokéball ; visibilité et
-  centre dans `fondFin` (lib/pokeball/pose.ts, animé par la même timeline GSAP). L'anneau est centré sur la Pokéball par
-  `setViewOffset` ; son trou est plus grand qu'elle, donc aucune roche ne passe devant. Pokéball de fin AU MILIEU (fy 0.08),
-  titre en haut, bouton en bas (`justify-between`). Crédit sur la page À propos.
+  `FondAsteroides` (client, calque fixe `-z-20` monté par `CompagnonPokeball`) n'a PAS de boucle : `SequenceFeu` écrit
+  `fondFin` (lib/pokeball/pose.ts : visibilite, apparition, ouverture) d'après la progression de la brûlure puis appelle
+  `fondFin.dessiner`. Le fond s'allume avec la désintégration (0,38→0,46), pas avant (il se voyait derrière Dracaufeu) ;
+  l'écran de fin aussi ; le fondu transparent du haut du canvas de feu se referme dès que la séquence démarre.
+  Au centre : POKÉBALL DE LAVE (`lib/asteroides/pokeball-lave.ts`), deux images GÉNÉRÉES PAR IA (Gemini) ouverte / fermée
+  dans `public/pokeball-lave/`, sur un panneau face caméra DANS la scène (roches devant / derrière), boule opaque + lueur
+  ajoutée (fond noir non détouré), fondu ouverte → fermée en bas de page (la capture). La Pokéball 3D (R3F) ne sert plus
+  qu'en haut de l'accueil (poses titre / sortie). Centre de l'anneau = fondFin.fx/fy (0 / 0.08) par `setViewOffset` :
+  titre en haut, bouton en bas (`justify-between`). Crédits sur la page À propos.
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif

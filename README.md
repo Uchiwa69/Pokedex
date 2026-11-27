@@ -16,7 +16,8 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
   tourne avec le défilement de la page, au glisser et aux flèches du clavier.
 - **Fin de page « Attrapez-les tous ! »** : après la liste, Dracaufeu ouvre la gueule, crache son feu, et l'écran
   se consume au défilement (shader GLSL) ; la séquence se rejoue en remontant puis en redescendant. Derrière
-  l'écran de fin : un anneau d'astéroïdes en 3D (effet sous licence MIT) qui tourne autour de la Pokéball.
+  l'écran de fin : un anneau d'astéroïdes en 3D (effet sous licence MIT) qui tourne autour d'une Pokéball de lave
+  (images générées par IA), qui se referme tout en bas de la page.
 - **Liste des 1 025 Pokémon** en grille paginée (20 par page), avec noms français.
 - **Recherche par nom français ou anglais, ou par numéro**, même incomplet, sans tenir compte des accents ni des
   majuscules (« evoli » trouve Évoli, « char » trouve Charizard, « 25 » trouve Pikachu). Recherche, **filtre par type** et **pagination** sont

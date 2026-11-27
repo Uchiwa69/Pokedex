@@ -22,7 +22,7 @@ void main() {
 `;
 
 export type SceneFeu = {
-  // capture : où est la Pokéball 3D (fractions d'écran, comme dans lib/pokeball/pose.ts) et à quel point elle aspire.
+  // capture : où est la Pokéball de lave (fractions d'écran, comme dans lib/pokeball/pose.ts) et à quel point elle aspire.
   dessiner: (progression: number, capture: { fx: number; fy: number; force: number }) => void;
   redimensionner: (largeur: number, hauteur: number) => void;
   liberer: () => void;

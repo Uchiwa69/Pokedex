@@ -57,7 +57,8 @@ export default function PageAPropos() {
         {/* Crédits du fond de l'écran de fin (code repris d'un effet sous licence MIT). */}
         <p>
           L&apos;anneau d&apos;astéroïdes de l&apos;écran de fin (roches, ciel de nébuleuse, poussières) vient de
-          l&apos;effet « Astéroïdes » d&apos;Effects Library, sous licence MIT.
+          l&apos;effet « Astéroïdes » d&apos;Effects Library, sous licence MIT. Les deux images de la Pokéball de lave,
+          en son centre, ont été générées par une intelligence artificielle (Gemini).
         </p>
         <p>
           Pokémon est une marque de Nintendo / Game Freak / The Pokémon Company. Projet étudiant non commercial.

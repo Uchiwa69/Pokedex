@@ -11,7 +11,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { POSES_ETROITE, POSES_LARGE, fondFin, pointeur, pose } from "@/lib/pokeball/pose";
+import { POSES_ETROITE, POSES_LARGE, pointeur, pose } from "@/lib/pokeball/pose";
 
 // La scène 3D n'existe que dans le navigateur (ssr: false) et son code n'est téléchargé qu'à ce moment-là.
 const ScenePokeball = dynamic(() => import("./three/ScenePokeball"), { ssr: false });
@@ -56,9 +56,6 @@ export default function CompagnonPokeball() {
     media.add({ large: "(min-width: 768px)", etroit: "(max-width: 767px)" }, (contexte) => {
       const poses = contexte.conditions?.large ? POSES_LARGE : POSES_ETROITE;
       Object.assign(pose, poses.titre);
-      // Le centre de l'anneau d'astéroïdes = la place de la Pokéball à la fin de la page.
-      fondFin.fx = poses.ouverte.fx;
-      fondFin.fy = poses.ouverte.fy;
       appliquer();
 
       // scrub : l'animation n'a pas de durée propre, c'est le défilement qui l'avance (et la recule).
@@ -69,13 +66,7 @@ export default function CompagnonPokeball() {
         { ...poses.titre },
         { ...poses.sortie, ease: "none", immediateRender: false, onUpdate: appliquer, scrollTrigger: { start: 0, end: 360, scrub: 0.8 } },
       );
-
-      // Fin de page : une suite d'étapes posées sur la séquence de Dracaufeu ([data-sequence]), de son début
-      // jusqu'au bas de la page. Les positions (0.55, 0.85) sont des fractions de ce trajet.
-      gsap
-        .timeline({ onUpdate: appliquer, scrollTrigger: { trigger: "[data-sequence]", start: "top top", end: "max", scrub: 0.8 } })
-        .fromTo(pose, { ...poses.entree }, { ...poses.ouverte, ease: "none", immediateRender: false, duration: 0.25 }, 0.55)
-        .to(pose, { ...poses.fermee, ease: "none", duration: 0.15 }, 0.85);
+      // En fin de page, c'est la Pokéball de lave qui prend le relais (FondAsteroides) : celle-ci reste effacée.
     });
 
     // Au retour sur l'accueil, le navigateur remet la page là où on l'avait laissée APRÈS ce branchement : on
