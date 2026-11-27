@@ -58,6 +58,11 @@ const SEUIL_ENTETE = 0.36;
 const PAUSE_FIN_DE_GESTE = 260;
 const RETENUE_MIN = 600; // retenue minimale : juste après l'introduction, le navigateur est occupé et les événements tardent
 const RETENUE_MAX = 1000; // 1,8 s auparavant : l'arrivée paraissait longue
+// Un cran de molette arrivé après ce silence (millisecondes) n'est plus l'élan du geste précédent : c'est le
+// visiteur qui redemande à défiler. On rend alors la page aussitôt (sinon ce cran était « perdu » : la page
+// descendait puis remontait d'un coup, une saccade). L'élan d'une molette libre ou d'un pavé tactile envoie, lui,
+// des événements serrés (moins de 20 ms d'écart).
+const ECART_NOUVEAU_GESTE = 180;
 
 // Clé du sessionStorage : retient, le temps de la visite, que l'introduction a déjà été vue.
 // (sessionStorage est vidé à la fermeture de l'onglet : à la visite suivante, elle rejoue.)
@@ -192,6 +197,18 @@ export default function IntroPokedex({ children }: Props) {
   // Arrivée dans le site : la plongée se termine souvent en plein geste (molette lancée, doigt qui glisse), et
   // l'élan faisait descendre la page de plusieurs écrans. On RETIENT donc la page tout en haut tant que ce geste
   // dure, jusqu'à une courte pause ; ensuite le défilement redevient normal.
+  // Heure du dernier événement de molette (horodatage de l'événement, pas de son traitement : juste après
+  // l'introduction, le navigateur est occupé et les événements arrivent en paquet, avec du retard).
+  const derniereMolette = useRef(0);
+  useEffect(() => {
+    if (!introAffichee) return;
+    const noter = (evenement: WheelEvent) => {
+      derniereMolette.current = evenement.timeStamp;
+    };
+    window.addEventListener("wheel", noter, { passive: true });
+    return () => window.removeEventListener("wheel", noter);
+  }, [introAffichee]);
+
   function retenirEnHaut() {
     let pause: ReturnType<typeof setTimeout>;
     function liberer() {
@@ -209,14 +226,27 @@ export default function IntroPokedex({ children }: Props) {
     }
     // Chaque nouvel événement du geste repousse la libération.
     const debut = performance.now();
-    function prolonger() {
+    function prolonger(evenement: Event) {
+      if (evenement instanceof WheelEvent) {
+        const ecart = evenement.timeStamp - derniereMolette.current;
+        derniereMolette.current = evenement.timeStamp;
+        // Nouveau cran après un silence : le geste d'arrivée est fini, ce cran fait défiler la page normalement.
+        if (ecart > ECART_NOUVEAU_GESTE) {
+          liberer();
+          return;
+        }
+        // Élan du geste d'arrivée : on l'annule quand le navigateur le permet (pas de saccade), sinon remonter()
+        // corrige après coup.
+        if (evenement.cancelable) evenement.preventDefault();
+      }
       clearTimeout(pause);
       // Plus rien depuis un instant = le geste est fini. Mais jamais avant RETENUE_MIN depuis le début.
       const resteMinimum = RETENUE_MIN - (performance.now() - debut);
       pause = setTimeout(liberer, Math.max(PAUSE_FIN_DE_GESTE, resteMinimum));
     }
     window.addEventListener("scroll", remonter);
-    window.addEventListener("wheel", prolonger, { passive: true });
+    // passive: false : pour pouvoir annuler l'élan de la molette (une seconde au plus, voir RETENUE_MAX).
+    window.addEventListener("wheel", prolonger, { passive: false });
     window.addEventListener("touchmove", prolonger, { passive: true });
     window.addEventListener("touchend", liberer); // le doigt quitte l'écran : fini
     pause = setTimeout(liberer, RETENUE_MIN);
