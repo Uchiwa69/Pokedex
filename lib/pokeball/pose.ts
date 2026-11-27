@@ -53,7 +53,14 @@ export const pose: PosePokeball = { ...POSES_LARGE.titre };
 // Position du pointeur, de -1 à 1 : la Pokéball se tourne légèrement vers lui.
 export const pointeur = { x: 0, y: 0 };
 
-// Le fond de l'écran de fin (anneau d'astéroïdes, lib/asteroides/scene.ts), lui aussi piloté par le défilement :
-// visibilite va de 0 à 1 pendant que l'écran commence à brûler ; fx et fy = le centre de l'anneau, c'est-à-dire la
-// place de la Pokéball à la fin (fractions d'écran, comme la pose).
-export const fondFin = { visibilite: 0, fx: 0, fy: 0 };
+// Le fond de l'écran de fin (anneau d'astéroïdes, lib/asteroides/scene.ts).
+// - visibilite (0 à 1) : écrite par SequenceFeu à chaque image, d'après la MÊME progression que la brûlure ;
+// - fx, fy : le centre de l'anneau = la place de la Pokéball à la fin (écrits par CompagnonPokeball) ;
+// - dessiner : fourni par FondAsteroides, appelé par SequenceFeu juste après avoir changé visibilite. Ainsi le fond
+//   n'a pas de boucle à lui : il ne vit que pendant la séquence de feu (enVue = la séquence est à l'écran).
+export const fondFin: { visibilite: number; fx: number; fy: number; dessiner: ((enVue: boolean) => void) | null } = {
+  visibilite: 0,
+  fx: 0,
+  fy: 0,
+  dessiner: null,
+};

@@ -3,52 +3,68 @@
 // Le fond de l'écran de fin : un anneau d'astéroïdes autour de la Pokéball (lib/asteroides/scene.ts). Il remplace
 // le fond noir et ses braises : la brûlure de Dracaufeu (SequenceFeu) le révèle en consumant l'écran.
 // Monté par CompagnonPokeball, sur un calque fixe posé DERRIÈRE celui de la Pokéball (-z-20 contre -z-10).
-// `actif` vaut faux tant que le fond est invisible : rien n'est dessiné (aucune image calculée).
+//
+// Pas de boucle d'animation ici : c'est SequenceFeu qui appelle fondFin.dessiner() à chaque image (seulement quand
+// la séquence de feu est à l'écran), après avoir écrit fondFin.visibilite. Le fond suit donc exactement la brûlure.
+// La scène (roches, volume de bruit) est préparée quand on arrive sur la séquence, puis gardée.
 
 import { useEffect, useRef } from "react";
 import { fondFin } from "@/lib/pokeball/pose";
+import type { FondAsteroides as Scene } from "@/lib/asteroides/scene";
 
-export default function FondAsteroides({ actif }: { actif: boolean }) {
+export default function FondAsteroides() {
+  const calque = useRef<HTMLDivElement>(null);
   const toile = useRef<HTMLCanvasElement>(null);
-  // La scène, créée une fois puis gardée (elle est coûteuse à préparer : roches, volume de bruit).
-  const scene = useRef<import("@/lib/asteroides/scene").FondAsteroides | null>(null);
 
-  // 1. Création de la scène (three.js et l'effet ne sont téléchargés qu'à ce moment-là).
   useEffect(() => {
-    const element = toile.current;
-    if (!element) return;
+    const elementCalque = calque.current;
+    const elementToile = toile.current;
+    if (!elementCalque || !elementToile) return;
+    let scene: Scene | null = null;
+    let chargement = false; // l'import est lancé (une seule fois)
     let annule = false;
+
     function ajuster() {
-      scene.current?.redimensionner(window.innerWidth, window.innerHeight);
+      scene?.redimensionner(window.innerWidth, window.innerHeight);
     }
-    import("@/lib/asteroides/scene")
-      .then((module) => {
-        if (annule) return;
-        scene.current = module.creerFondAsteroides(element);
-        ajuster();
-      })
-      // Pas de WebGL 2 : pas de fond, l'écran de fin reste simplement sombre.
-      .catch(() => {});
+
+    fondFin.dessiner = (enVue) => {
+      // Opacité écrite directement (pas d'état React : elle change à chaque image). Invisible = caché pour de bon.
+      elementCalque.style.opacity = String(fondFin.visibilite);
+      elementCalque.style.visibility = fondFin.visibilite > 0.01 ? "visible" : "hidden";
+      // Préparée dès que la séquence est à l'écran (pendant Dracaufeu) : elle est prête quand l'écran brûle.
+      if (enVue && !chargement) {
+        chargement = true;
+        import("@/lib/asteroides/scene")
+          .then((module) => {
+            if (annule) return;
+            scene = module.creerFondAsteroides(elementToile);
+            ajuster();
+          })
+          // Pas de WebGL 2 : pas de fond, l'écran de fin reste simplement sombre.
+          .catch(() => {});
+      }
+      // Rien à calculer tant que le fond est invisible.
+      if (fondFin.visibilite > 0.01) scene?.dessiner(fondFin);
+    };
     window.addEventListener("resize", ajuster);
+
     return () => {
       annule = true;
+      fondFin.dessiner = null;
       window.removeEventListener("resize", ajuster);
-      scene.current?.liberer();
-      scene.current = null;
+      scene?.liberer();
     };
   }, []);
 
-  // 2. La boucle d'animation, seulement quand le fond est visible.
-  useEffect(() => {
-    if (!actif) return;
-    let image = 0;
-    function boucle() {
-      scene.current?.dessiner(fondFin);
-      image = requestAnimationFrame(boucle);
-    }
-    image = requestAnimationFrame(boucle);
-    return () => cancelAnimationFrame(image);
-  }, [actif]);
-
-  return <canvas ref={toile} aria-hidden="true" className="h-full w-full" />;
+  return (
+    <div
+      ref={calque}
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 -z-20 motion-reduce:hidden"
+      style={{ opacity: 0, visibility: "hidden" }}
+    >
+      <canvas ref={toile} className="h-full w-full" />
+    </div>
+  );
 }

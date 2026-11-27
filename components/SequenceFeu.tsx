@@ -13,7 +13,7 @@
 // Animations réduites, ou pas de WebGL : pas de séquence, la page s'affiche directement.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { pose } from "@/lib/pokeball/pose";
+import { fondFin, pose } from "@/lib/pokeball/pose";
 import { preparerTexte } from "@/lib/scenes-feu/texte";
 
 const TITRE = "Dracaufeu";
@@ -41,6 +41,7 @@ type Props = { children: ReactNode };
 export default function SequenceFeu({ children }: Props) {
   const conteneur = useRef<HTMLDivElement>(null);
   const page = useRef<HTMLDivElement>(null);
+  const ecranFin = useRef<HTMLDivElement>(null);
   const voile = useRef<HTMLDivElement>(null);
   const toile = useRef<HTMLCanvasElement>(null);
   const texte = useRef<HTMLDivElement>(null);
@@ -89,6 +90,7 @@ export default function SequenceFeu({ children }: Props) {
         // nouvelle valeur, la progression AFFICHÉE la rattrape en douceur, un peu plus à chaque image.
         let affichee = -1; // -1 = pas encore de valeur : la première image se place directement
         let precedent = 0; // heure de l'image précédente, pour connaître le temps écoulé
+        let fonduHautEcrit = -1; // dernière valeur du fondu du haut écrite dans le style du canvas
         function boucle(maintenant: number) {
           // La course = ce que le conteneur a de plus haut que la page (les 360 % d'écran).
           // 0 quand la page vient de se coller en haut de l'écran, 1 quand elle va se décoller.
@@ -110,6 +112,21 @@ export default function SequenceFeu({ children }: Props) {
           // La capture : la Pokéball 3D (components/CompagnonPokeball.tsx) partage sa pose ; quand elle est ouverte
           // et visible, le shader dessine des traits de lumière qui convergent vers elle.
           dessin.dessiner(progression, { fx: pose.fx, fy: pose.fy, force: pose.ouverture * pose.fondu });
+          // Le fond d'astéroïdes : invisible tant que Dracaufeu occupe l'écran (le haut du canvas est en fondu
+          // transparent, il s'y verrait), il s'allume quand l'écran commence à se désintégrer (0,36 dans le shader).
+          fondFin.visibilite = fondu(0.38, 0.46, progression);
+          // L'écran de fin (titre, bouton) apparaît en même temps : avant, il transparaissait au-dessus de Dracaufeu.
+          if (ecranFin.current) ecranFin.current.style.opacity = String(fondFin.visibilite);
+          fondFin.dessiner?.(true);
+          // Le fondu transparent du haut du canvas ne sert qu'à l'arrivée depuis la liste : dès que la séquence
+          // démarre, il se referme (sinon on voyait au travers l'écran de fin, puis les astéroïdes, derrière Dracaufeu).
+          // Écrit seulement quand la valeur change (au centième près).
+          const fonduHaut = Math.round((1 - fondu(0, 0.06, progression)) * 100) / 100;
+          if (fonduHaut !== fonduHautEcrit) {
+            fonduHautEcrit = fonduHaut;
+            elementToile!.style.maskImage =
+              fonduHaut > 0 ? `linear-gradient(to bottom, transparent ${4 * fonduHaut}%, black ${22 * fonduHaut}%)` : "none";
+          }
           // Les textes : on écrit directement leur opacité, sans état React (60 rendus par seconde sinon).
           if (invite.current) invite.current.style.opacity = String(1 - fondu(0.02, 0.1, progression));
           mettreAJourTexte?.(progression);
@@ -120,6 +137,9 @@ export default function SequenceFeu({ children }: Props) {
         // elle ne coûte rien tant qu'on parcourt la liste.
         const guetteurVue = new IntersectionObserver(([entree]) => {
           cancelAnimationFrame(image);
+          // Hors de la séquence, le fond d'astéroïdes est éteint.
+          fondFin.visibilite = 0;
+          fondFin.dessiner?.(false);
           if (entree.isIntersecting) {
             // On recale le voile à chaque arrivée : la colonne a pu bouger depuis (introduction du Pokédex).
             ajuster();
@@ -151,7 +171,11 @@ export default function SequenceFeu({ children }: Props) {
   return (
     <div ref={conteneur} data-sequence>
       <div ref={page} className={avecSequence ? "sticky top-0 motion-reduce:static" : ""}>
-        {children}
+        {/* opacity-0 : l'écran de fin attend la désintégration (la boucle écrit ensuite son opacité). Animations
+            réduites ou séquence indisponible : il est affiché tout de suite. */}
+        <div ref={ecranFin} className={avecSequence ? "opacity-0 motion-reduce:opacity-100" : ""}>
+          {children}
+        </div>
 
         {avecSequence && (
           <div
@@ -161,7 +185,8 @@ export default function SequenceFeu({ children }: Props) {
               etat === "attente" ? "bg-fond" : ""
             }`}
           >
-            {/* Masque : le haut de la scène s'estompe, elle ne commence plus par un bord net sous la liste. */}
+            {/* Masque : le haut de la scène s'estompe, elle ne commence plus par un bord net sous la liste. Il est
+                retiré par la boucle dès que la séquence démarre. */}
             <canvas
               ref={toile}
               aria-hidden="true"

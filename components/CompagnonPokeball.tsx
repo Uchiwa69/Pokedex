@@ -25,11 +25,6 @@ export default function CompagnonPokeball() {
   const [pret, setPret] = useState(false);
   // Faux quand la Pokéball est invisible : la scène 3D est alors mise en pause.
   const [actif, setActif] = useState(true);
-  // Le fond de l'écran de fin : son calque, s'il est visible, et s'il a déjà été monté (il est préparé à sa
-  // première apparition seulement, puis gardé : remonter la page ne le recrée pas).
-  const calqueFond = useRef<HTMLDivElement>(null);
-  const [fondActif, setFondActif] = useState(false);
-  const [fondMonte, setFondMonte] = useState(false);
 
   // 1. Attendre la fin de l'introduction. Pendant qu'elle joue, IntroPokedex met la page en « position: fixed »
   //    (classe `fixed`) ; on guette donc la classe de cet élément, notre parent.
@@ -54,10 +49,6 @@ export default function CompagnonPokeball() {
     function appliquer() {
       if (calque.current) calque.current.style.opacity = String(pose.fondu);
       setActif(pose.fondu > 0.01);
-      if (calqueFond.current) calqueFond.current.style.opacity = String(fondFin.visibilite);
-      const fondVisible = fondFin.visibilite > 0.01;
-      setFondActif(fondVisible);
-      if (fondVisible) setFondMonte(true);
     }
 
     // matchMedia de GSAP : les animations sont recréées avec les bonnes poses si l'écran change de catégorie.
@@ -83,9 +74,6 @@ export default function CompagnonPokeball() {
       // jusqu'au bas de la page. Les positions (0.55, 0.85) sont des fractions de ce trajet.
       gsap
         .timeline({ onUpdate: appliquer, scrollTrigger: { trigger: "[data-sequence]", start: "top top", end: "max", scrub: 0.8 } })
-        // Le fond d'astéroïdes apparaît pendant que l'écran est encore couvert par Dracaufeu (avant 0,39, où la
-        // désintégration commence) : les trous de la brûlure le montrent déjà en place.
-        .fromTo(fondFin, { visibilite: 0 }, { visibilite: 1, ease: "none", immediateRender: false, duration: 0.2 }, 0.12)
         .fromTo(pose, { ...poses.entree }, { ...poses.ouverte, ease: "none", immediateRender: false, duration: 0.25 }, 0.55)
         .to(pose, { ...poses.fermee, ease: "none", duration: 0.15 }, 0.85);
     });
@@ -116,15 +104,8 @@ export default function CompagnonPokeball() {
 
   return (
     <>
-      {/* Le fond de l'écran de fin, derrière la Pokéball (-z-20). Invisible (opacité 0) en dehors de la fin de page. */}
-      <div
-        ref={calqueFond}
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-20 motion-reduce:hidden"
-        style={{ opacity: 0, visibility: pret && fondActif ? "visible" : "hidden" }}
-      >
-        {pret && fondMonte && <FondAsteroides actif={fondActif} />}
-      </div>
+      {/* Le fond de l'écran de fin, derrière la Pokéball (il pose son propre calque, en -z-20). */}
+      {pret && <FondAsteroides />}
       {/* Calque fixe, DERRIÈRE le contenu de la page (-z-10), purement décoratif : il ne capte aucun clic et il est
           caché aux lecteurs d'écran. motion-reduce:hidden : absent en animations réduites. */}
       <div
