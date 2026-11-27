@@ -150,6 +150,9 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   EXPORT PNG (bouton « Exporter la carte », seulement si `perso`) : choix de l'utilisateur = la carte TELLE QU'ON LA VOIT
   (reflets, feuille, effet), pas la face à plat. `capturer` de `Carte3D` : textures remontées à `FINESSE_EXPORT`, image
   suivante rendue à `HAUTEUR_EXPORT` px (setPixelRatio), recopiée aussitôt dans un canvas 2D, recadrée sur l'opacité.
+  EXPORT VIDÉO (choix de l'utilisateur plutôt qu'un .glb, qui perdrait les effets) : `filmer` = `captureStream` +
+  `MediaRecorder` (VP9 → VP8 → WebM → MP4), tour complet de 6 s adouci par un cosinus, 1080 px de haut, fond du site,
+  caméra reculée à 5,8 ; message si le navigateur ne sait pas filmer.
 - Atelier de carte : `/atelier?pokemon=nom` (onglet « Atelier » du menu). `ChoixPokemonAtelier` (recherche via
   `/api/recherche` + « Mes cartes ») puis `AtelierCarte` (client). Le lien « Créer sa carte » sous la carte de la
   fiche (`VitrineFiche`) y mène avec le Pokémon déjà choisi. Styles classique / full art / chromatique / or, surnom, motif, effet de type,

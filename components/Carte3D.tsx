@@ -44,7 +44,20 @@ type Commandes = {
   tourner: (degres: number) => void;
   // Atelier : l'image de la carte telle qu'on la voit (reflets, feuille, effet du type), en haute définition.
   capturer: () => Promise<Blob | null>;
+  // Atelier : une vidéo de la carte qui fait un tour complet ; null si le navigateur ne sait pas l'enregistrer.
+  filmer: () => Promise<{ video: Blob; extension: string } | null>;
 };
+
+// Vidéo (atelier) : durée du tour, hauteur visée de l'image, et formats essayés dans l'ordre (WebM pour Chrome et
+// Firefox, MP4 pour Safari). VP9 donne une meilleure image que VP8 à poids égal.
+const DUREE_VIDEO = 6000;
+const HAUTEUR_VIDEO = 1080;
+const FORMATS_VIDEO = [
+  { type: "video/webm;codecs=vp9", extension: "webm" },
+  { type: "video/webm;codecs=vp8", extension: "webm" },
+  { type: "video/webm", extension: "webm" },
+  { type: "video/mp4", extension: "mp4" },
+];
 
 // Export (atelier) : hauteur de l'image calculée, en pixels, et finesse des textures des faces pour qu'elles
 // restent nettes à cette taille (la carte occupe environ 87 % de la hauteur).
@@ -196,16 +209,33 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
   }, [animationsReduites]);
 
   const [etat, setEtat] = useState<"chargement" | "pret" | "erreur">("chargement");
-  const [exportEnCours, setExportEnCours] = useState(false);
+  // Export en cours : "image", "video" ou null. Les deux boutons sont désactivés pendant ce temps.
+  const [exportEnCours, setExportEnCours] = useState<"image" | "video" | null>(null);
+  const [messageExport, setMessageExport] = useState("");
 
-  // Atelier : télécharge l'image de la carte. Le navigateur télécharge un lien dont l'attribut « download » donne
-  // le nom du fichier ; son adresse est une adresse temporaire (blob:) qui pointe sur l'image en mémoire.
+  // Atelier : l'image de la carte telle qu'on la voit.
   async function exporter() {
-    setExportEnCours(true);
+    setExportEnCours("image");
+    setMessageExport("");
     const image = await refCommandes.current?.capturer();
-    setExportEnCours(false);
-    if (!image) return;
-    const adresse = URL.createObjectURL(image);
+    setExportEnCours(null);
+    if (image) telecharger(image, "png");
+  }
+
+  // Atelier : la vidéo de la carte qui fait un tour sur elle-même.
+  async function filmer() {
+    setExportEnCours("video");
+    setMessageExport("");
+    const resultat = await refCommandes.current?.filmer();
+    setExportEnCours(null);
+    if (resultat) telecharger(resultat.video, resultat.extension);
+    else setMessageExport("Ce navigateur ne sait pas enregistrer de vidéo : essaie avec Chrome, Edge ou Firefox.");
+  }
+
+  // Télécharge un fichier créé dans la page. Le navigateur télécharge un lien dont l'attribut « download » donne
+  // le nom du fichier ; son adresse est une adresse temporaire (blob:) qui pointe sur le fichier en mémoire.
+  function telecharger(fichier: Blob, extension: string) {
+    const adresse = URL.createObjectURL(fichier);
     const lien = document.createElement("a");
     lien.href = adresse;
     // Nom du fichier : « carte-dracaufeu.png » (sans accents ni espaces, acceptés partout).
@@ -214,7 +244,7 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       .replace(/[\u0300-\u036f]/g, "") // retire les accents (séparés des lettres par normalize)
       .replace(/[^a-zA-Z0-9]+/g, "-")
       .toLowerCase();
-    lien.download = `carte-${nomFichier || "pokemon"}.png`;
+    lien.download = `carte-${nomFichier || "pokemon"}.${extension}`;
     lien.click();
     // L'adresse temporaire est libérée un peu plus tard (le téléchargement doit avoir commencé).
     setTimeout(() => URL.revokeObjectURL(adresse), 10_000);
@@ -457,6 +487,24 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
 
       // Rotation demandée par le bouton « Retourner » : la carte la rejoint en douceur.
       let rotationCible = 0;
+      // Les textures des faces sont dessinées à la taille de la carte À L'ÉCRAN : pour un export (image ou vidéo),
+      // on les redessine une fois en grand. dispose() : la carte graphique les recrée à leur nouvelle taille.
+      const monterFinesse = async () => {
+        if (finesse >= FINESSE_EXPORT) return;
+        finesse = FINESSE_EXPORT;
+        textureFace.dispose();
+        textureDos.dispose();
+        if (refPerso.current && refAppliquer.current) {
+          await refAppliquer.current(refPerso.current);
+        } else {
+          dessinerFace(toileFace, donnees, image, finesse);
+          dessinerDos(toileDos, teinte, policeTitre, finesse);
+          textureFace.needsUpdate = true;
+          textureDos.needsUpdate = true;
+        }
+      };
+      // Vidéo en cours : quand elle a commencé, et l'enregistreur à arrêter à la fin du tour (voir la boucle).
+      let enregistrement: { debut: number; enregistreur: MediaRecorder } | null = null;
       // Export demandé : la boucle d'animation calcule l'image suivante en grand, puis appelle cette fonction.
       let demandeCapture: ((image: Promise<Blob | null>) => void) | null = null;
       // La capture en elle-même : on agrandit le nombre de pixels du canvas (pas sa taille à l'écran), on dessine,
@@ -485,24 +533,44 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
           rotationCible += THREE.MathUtils.degToRad(degres);
         },
         capturer: async () => {
-          // 1. Les textures des faces sont dessinées à la taille de la carte À L'ÉCRAN : pour l'export, on les
-          //    redessine une fois en grand. dispose() : la carte graphique les recrée à leur nouvelle taille.
-          if (finesse < FINESSE_EXPORT) {
-            finesse = FINESSE_EXPORT;
-            textureFace.dispose();
-            textureDos.dispose();
-            if (refPerso.current && refAppliquer.current) {
-              await refAppliquer.current(refPerso.current);
-            } else {
-              dessinerFace(toileFace, donnees, image, finesse);
-              dessinerDos(toileDos, teinte, policeTitre, finesse);
-              textureFace.needsUpdate = true;
-              textureDos.needsUpdate = true;
-            }
-          }
+          // 1. Textures des faces en grand (voir monterFinesse).
+          await monterFinesse();
           // 2. La prochaine image de la boucle sera calculée en grand (voir capturerImage).
           return new Promise<Blob | null>((resoudre) => {
             demandeCapture = resoudre;
+          });
+        },
+        filmer: async () => {
+          // Le navigateur doit savoir filmer un canvas (captureStream) et encoder une vidéo (MediaRecorder).
+          const format = typeof MediaRecorder === "undefined" ? undefined : FORMATS_VIDEO.find((f) => MediaRecorder.isTypeSupported(f.type));
+          if (!format || !rendu.domElement.captureStream || enregistrement) return null;
+          await monterFinesse();
+          // Plus de pixels pendant le tournage (image nette), et un fond opaque : une vidéo n'a pas de transparence
+          // (le fond serait noir), on prend donc celui du site.
+          const ratio = rendu.getPixelRatio();
+          rendu.setPixelRatio(Math.min(3, HAUTEUR_VIDEO / Math.max(1, rendu.domElement.clientHeight)));
+          rendu.setClearColor(styles.getPropertyValue("--color-fond").trim() || "#0f1115", 1);
+          controles.reset(); // vue de face
+          camera.position.set(0, 0, 5.8); // un peu plus loin qu'à l'écran : la carte ne frôle pas les bords en tournant
+          // Le flux d'images du canvas (60 par seconde au plus) est encodé en vidéo au fur et à mesure.
+          const flux = rendu.domElement.captureStream(60);
+          const enregistreur = new MediaRecorder(flux, { mimeType: format.type, videoBitsPerSecond: 12_000_000 });
+          const morceaux: Blob[] = [];
+          enregistreur.ondataavailable = (evenement) => {
+            if (evenement.data.size > 0) morceaux.push(evenement.data);
+          };
+          return new Promise((resoudre) => {
+            enregistreur.onstop = () => {
+              // Retour à l'affichage normal.
+              flux.getTracks().forEach((piste) => piste.stop());
+              rendu.setPixelRatio(ratio);
+              rendu.setClearColor(0x000000, 0);
+              controles.reset();
+              enregistrement = null;
+              resoudre({ video: new Blob(morceaux, { type: format.type }), extension: format.extension });
+            };
+            enregistrement = { debut: performance.now(), enregistreur };
+            enregistreur.start();
           });
         },
       };
@@ -569,7 +637,15 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         rotation = reduit ? rotationCible : rotation + (rotationCible - rotation) * Math.min(1, dt * 7);
         temps += dt;
         // Au repos, la carte se balance : elle pivote de gauche à droite, s'incline et flotte.
-        carte.rotation.y = rotation + (reduit ? 0 : Math.sin(temps * 0.9) * 0.34);
+        // Vidéo en cours : la carte fait un tour complet, qui démarre et s'arrête en douceur (cosinus). Un tour
+        // entier (2π) la ramène exactement à sa position : pas de saut au début ni à la fin de la vidéo.
+        let tour = 0;
+        if (enregistrement) {
+          const avancement = Math.min(1, (performance.now() - enregistrement.debut) / DUREE_VIDEO);
+          tour = ((1 - Math.cos(Math.PI * avancement)) / 2) * Math.PI * 2;
+          if (avancement >= 1 && enregistrement.enregistreur.state === "recording") enregistrement.enregistreur.stop();
+        }
+        carte.rotation.y = rotation + tour + (reduit ? 0 : Math.sin(temps * 0.9) * 0.34);
         carte.rotation.x = reduit ? 0 : Math.sin(temps * 0.7) * 0.1;
         carte.rotation.z = reduit ? 0 : Math.sin(temps * 0.5) * 0.025;
         carte.position.y = reduit ? 0 : Math.sin(temps * 1.3) * 0.07;
@@ -689,15 +765,36 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         <button
           type="button"
           onClick={exporter}
-          disabled={etat !== "pret" || exportEnCours}
-          aria-busy={exportEnCours}
+          disabled={etat !== "pret" || exportEnCours !== null}
+          aria-busy={exportEnCours === "image"}
           className="bouton bouton-secondaire mx-auto gap-2 px-5 text-sm disabled:opacity-50"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
             <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
           </svg>
-          {exportEnCours ? "Préparation de l'image…" : "Exporter la carte (PNG)"}
+          {exportEnCours === "image" ? "Préparation de l'image…" : "Exporter la carte (PNG)"}
         </button>
+      )}
+      {perso && (
+        <button
+          type="button"
+          onClick={filmer}
+          disabled={etat !== "pret" || exportEnCours !== null}
+          aria-busy={exportEnCours === "video"}
+          className="bouton bouton-secondaire mx-auto gap-2 px-5 text-sm disabled:opacity-50"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
+            <rect x="3" y="6" width="13" height="12" rx="2" />
+            <path d="M16 10l5-3v10l-5-3" />
+          </svg>
+          {exportEnCours === "video" ? "Tournage en cours (6 s)…" : "Exporter en vidéo (tour à 360°)"}
+        </button>
+      )}
+      {/* role="status" : le message est lu par les lecteurs d'écran quand il apparaît. */}
+      {perso && (
+        <p role="status" className="text-center text-sm text-texte-doux empty:hidden">
+          {messageExport}
+        </p>
       )}
       {/* Le conseil dépend de l'appareil : pointer-coarse = écran tactile (doigt), pointer-fine = souris. */}
       <p className="etiquette text-center pointer-coarse:hidden">Glisse pour tourner · molette ou pincement pour zoomer</p>
