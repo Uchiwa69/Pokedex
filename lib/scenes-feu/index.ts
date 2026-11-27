@@ -6,6 +6,8 @@
 // pixel transparent (tout a brûlé), on voit la page derrière.
 // three.js et le shader sont chargés à la demande (import()) : ils ne pèsent rien tant que la séquence est loin.
 
+import { RegulateurQualite, ratioPixels } from "@/lib/qualite";
+
 // Trois images superposables de Dracaufeu (repos, inspiration, souffle) : même pose, seule la tête change.
 // Générées par IA (Gemini) à la demande de l'utilisateur, détourées, rangées dans public/dracaufeu.
 const IMAGES = ["/dracaufeu/repos.webp", "/dracaufeu/inspiration.webp", "/dracaufeu/souffle.webp"];
@@ -45,9 +47,18 @@ export async function creerSceneFeu(toile: HTMLCanvasElement): Promise<SceneFeu>
   // déjà leurs couleurs multipliées par leur opacité.
   const rendu = new THREE.WebGLRenderer({ canvas: toile, alpha: true, antialias: false });
   // Téléphone : un pixel de dessin par pixel CSS (trois fois moins de pixels à calculer). Ordinateur : on suit
-  // la densité de l'écran jusqu'à 1,5, sinon les fins liserés de braise sont agrandis et paraissent en escalier.
+  // la densité de l'écran jusqu'à 1,5, sinon les fins liserés de braise sont agrandis et paraissent en escalier,
+  // mais sans dépasser un budget de pixels (lib/qualite.ts) : sur un Mac Retina, le shader calculait 4 millions
+  // de pixels à chaque image. La densité est fixée dans redimensionner, qui connaît la taille du canvas.
   const tactile = window.matchMedia("(pointer: coarse)").matches;
-  rendu.setPixelRatio(tactile ? 1 : Math.min(window.devicePixelRatio, 1.5));
+  const plafond = tactile ? 1 : 1.5;
+  const taille = { largeur: 1, hauteur: 1 };
+  // Si la machine n'arrive pas à suivre (moins de 40 images par seconde), la densité baisse d'elle-même.
+  const regulateur = new RegulateurQualite(() => appliquerTaille());
+  function appliquerTaille() {
+    rendu.setPixelRatio(ratioPixels(taille.largeur, taille.hauteur, plafond) * regulateur.facteur);
+    rendu.setSize(taille.largeur, taille.hauteur, false);
+  }
   rendu.setClearColor(0x000000, 0);
 
   const uniformes = {
@@ -87,6 +98,7 @@ export async function creerSceneFeu(toile: HTMLCanvasElement): Promise<SceneFeu>
 
   return {
     dessiner(progression, capture) {
+      regulateur.mesurer(performance.now());
       uniformes.uProgression.value = progression;
       // Fractions d'écran → unités du shader (1 = la hauteur de l'écran, d'où « × proportions » sur la largeur).
       uniformes.uPokeball.value = [capture.fx * uniformes.uProportions.value, capture.fy];
@@ -96,7 +108,9 @@ export async function creerSceneFeu(toile: HTMLCanvasElement): Promise<SceneFeu>
     },
 
     redimensionner(largeur, hauteur) {
-      rendu.setSize(largeur, hauteur, false);
+      taille.largeur = largeur;
+      taille.hauteur = hauteur;
+      appliquerTaille();
       const proportions = largeur / hauteur;
       uniformes.uProportions.value = proportions;
       // Écran large : Dracaufeu à droite (le texte est à gauche). Téléphone : au milieu, un peu plus petit.

@@ -236,6 +236,13 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   ajoutée (fond noir non détouré), fondu ouverte → fermée en bas de page (la capture). La Pokéball 3D (R3F) ne sert plus
   qu'en haut de l'accueil (poses titre / sortie). Centre de l'anneau = fondFin.fx/fy (0 / 0.08) par `setViewOffset` :
   titre en haut, bouton en bas (`justify-between`). Crédits sur la page À propos.
+- Optimisation Mac (27 novembre 2026) : `lib/qualite.ts` = `ratioPixels` (densité plafonnée par un BUDGET de pixels,
+  2,4 M par défaut), `Cadence` (60 images/s au plus : Chrome sur Mac ProMotion tourne à 120 Hz) et `RegulateurQualite`
+  (baisse la densité de 15 % si moins de 40 i/s, la remonte ensuite). Branchés sur le feu (`lib/scenes-feu`), les
+  astéroïdes, l'introduction (budget seul), la Pokéball R3F (`frameloop="demand"` + `Cadence60`, budget 3,5 M) et
+  `Carte3D` (cadence, sauf pendant une capture ou une vidéo). `FlexCarousel` (repris tel quel) a déjà son budget.
+  Vérifié dans WebKit (Playwright 1.65 = WebKit 2388) en Retina ×2 : rendu identique. Le retour à l'introduction
+  résiste déjà à l'élan du trackpad (arrêt en haut exigé).
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif

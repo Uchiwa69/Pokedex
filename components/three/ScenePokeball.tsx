@@ -4,11 +4,30 @@
 // et `useFrame` s'exécute à chaque image. Elle est MODÉLISÉE EN CODE (aucun fichier 3D) : deux demi-sphères, une
 // bande, un bouton. Elle ne décide de rien : à chaque image, elle lit la pose (lib/pokeball/pose.ts) et s'y place.
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer } from "@react-three/drei";
 import * as THREE from "three";
 import { pointeur, pose } from "@/lib/pokeball/pose";
+import { Cadence, ratioPixels } from "@/lib/qualite";
+
+// 60 images par seconde au plus. Le canvas est en mode « demand » : il ne dessine que lorsqu'on le lui demande
+// (invalidate). Ce petit composant le lui demande à chaque rafraîchissement de l'écran, une fois sur deux sur un
+// écran à 120 Hz (Mac ProMotion), où la Pokéball était sinon dessinée 120 fois par seconde.
+function Cadence60() {
+  const invalidate = useThree((etat) => etat.invalidate);
+  useEffect(() => {
+    const cadence = new Cadence();
+    let image = 0;
+    const boucle = (maintenant: number) => {
+      image = requestAnimationFrame(boucle);
+      if (cadence.aDessiner(maintenant)) invalidate();
+    };
+    image = requestAnimationFrame(boucle);
+    return () => cancelAnimationFrame(image);
+  }, [invalidate]);
+  return null;
+}
 
 const JEU = 0.05; // demi-épaisseur de la bande noire entre les deux moitiés (le rayon vaut 1)
 const DEMI_TOUR = Math.PI / 2;
@@ -128,10 +147,13 @@ function Pokeball() {
 
 // `actif` vaut faux quand la Pokéball est invisible : la scène ne dessine alors plus rien (frameloop « never »).
 export default function ScenePokeball({ actif }: { actif: boolean }) {
+  // Densité de pixels : jusqu'à 1,75 pour une Pokéball nette, mais le canvas couvre TOUT l'écran : sur un grand
+  // écran Retina, on reste dans un budget de 3,5 millions de pixels (lib/qualite.ts).
+  const densite = useMemo(() => ratioPixels(window.innerWidth, window.innerHeight, 1.75, 3_500_000), []);
   return (
     <Canvas
-      frameloop={actif ? "always" : "never"}
-      dpr={[1, 1.75]}
+      frameloop={actif ? "demand" : "never"}
+      dpr={densite}
       camera={{ position: [0, 0, 6], fov: 35 }}
       gl={{ antialias: true, alpha: true }}
       // pointerEvents: none — React Three Fiber rend son canvas cliquable par défaut : il interceptait alors les
@@ -150,6 +172,7 @@ export default function ScenePokeball({ actif }: { actif: boolean }) {
         <Lightformer form="ring" intensity={1.8} position={[2, 2, 6]} scale={2} />
       </Environment>
       <Pokeball />
+      {actif && <Cadence60 />}
     </Canvas>
   );
 }

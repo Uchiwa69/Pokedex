@@ -14,6 +14,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { fondFin } from "@/lib/pokeball/pose";
+import { Cadence } from "@/lib/qualite";
 import { preparerTexte } from "@/lib/scenes-feu/texte";
 
 const TITRE = "Dracaufeu";
@@ -90,7 +91,14 @@ export default function SequenceFeu({ children }: Props) {
         // nouvelle valeur, la progression AFFICHÉE la rattrape en douceur, un peu plus à chaque image.
         let affichee = -1; // -1 = pas encore de valeur : la première image se place directement
         let precedent = 0; // heure de l'image précédente, pour connaître le temps écoulé
+        // 60 images par seconde au plus : sur un écran à 120 Hz (Mac ProMotion), le feu et les astéroïdes
+        // calculaient deux fois plus d'images, sans différence visible.
+        const cadence = new Cadence();
         function boucle(maintenant: number) {
+          if (!cadence.aDessiner(maintenant)) {
+            image = requestAnimationFrame(boucle);
+            return;
+          }
           // La course = ce que le conteneur a de plus haut que la page (les 360 % d'écran).
           // 0 quand la page vient de se coller en haut de l'écran, 1 quand elle va se décoller.
           const course = elementConteneur!.offsetHeight - elementPage!.offsetHeight;

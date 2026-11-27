@@ -24,6 +24,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { motion, transform, useMotionValue, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
 import Projecteurs from "@/components/Projecteurs";
+import { ratioPixels } from "@/lib/qualite";
 
 type Props = {
   // La vraie page (titre, recherche, grille…), rendue par le serveur et transmise ici.
@@ -444,7 +445,8 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
         return;
       }
       // Densité de pixels plafonnée à 1,5 : sur un écran très dense, dessiner 4 fois plus de pixels à chaque
-      // défilement faisait saccader la plongée, pour un gain de netteté invisible en mouvement.
+      // défilement faisait saccader la plongée, pour un gain de netteté invisible en mouvement. Elle est fixée
+      // dans adapter (plus bas), avec aussi un budget de pixels (lib/qualite.ts) pour les grands écrans Retina.
       rendu.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
       conteneur.appendChild(rendu.domElement);
       rendu.domElement.style.cssText = "display:block;width:100%;height:100%";
@@ -535,6 +537,7 @@ function ScenePokedex({ page, valeurs, surFin }: PropsScene) {
       const adapter = () => {
         taille.largeur = conteneur.clientWidth;
         taille.hauteur = conteneur.clientHeight;
+        rendu.setPixelRatio(ratioPixels(taille.largeur, taille.hauteur, 1.5));
         rendu.setSize(taille.largeur, taille.hauteur, false);
         mesurer();
         actualiser();

@@ -10,6 +10,7 @@ import { TEINTE_OR, type AttaqueCarte, type StyleCarte } from "@/lib/carte-perso
 import { dessinerDos, dessinerFace, HAUTEUR, miseEnPage, type DonneesCarte } from "@/lib/carte3d";
 import type { ZonesCarte } from "@/lib/effets-types";
 import type { Motif } from "@/lib/effets-types/feuille";
+import { Cadence } from "@/lib/qualite";
 import { estUnType } from "@/lib/types";
 
 type Props = {
@@ -630,7 +631,11 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       const horloge = new THREE.Clock();
       let rotation = 0;
       let temps = 0;
-      rendu.setAnimationLoop(() => {
+      // 60 images par seconde au plus (une image sur deux sautée sur un écran à 120 Hz, Mac ProMotion).
+      // Pendant le tournage d'une vidéo, toutes les images sont dessinées : la vidéo reste fluide.
+      const cadence = new Cadence();
+      rendu.setAnimationLoop((maintenant) => {
+        if (!enregistrement && !demandeCapture && !cadence.aDessiner(maintenant)) return;
         const dt = Math.min(horloge.getDelta(), 0.1);
         const reduit = refReduit.current;
         // Animations réduites : la carte passe directement à la position demandée, sans balancement.

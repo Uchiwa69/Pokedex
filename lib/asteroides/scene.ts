@@ -18,6 +18,7 @@ import { NebulaSky, SKY_PRESETS, applySkyPreset } from "./environments/nebula-sk
 import { CursorDust } from "./particles/cursor-dust/CursorDust.js";
 import { creerPokeballLave } from "./pokeball-lave";
 import type { EtatFondFin } from "@/lib/pokeball/pose";
+import { RegulateurQualite, ratioPixels } from "@/lib/qualite";
 
 export type FondAsteroides = {
   // etat : centre de l'anneau en fractions d'écran, apparition et ouverture de la Pokéball (lib/pokeball/pose.ts).
@@ -34,7 +35,14 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
   // Téléphone : un pixel de dessin par pixel CSS (le ciel est calculé pour chaque pixel).
   const tactile = window.matchMedia("(pointer: coarse)").matches;
   const rendu = new THREE.WebGLRenderer({ canvas: toile, antialias: true, powerPreference: "high-performance" });
-  rendu.setPixelRatio(tactile ? 1 : Math.min(window.devicePixelRatio, 1.5));
+  // Densité fixée dans redimensionner : celle de l'écran jusqu'à 1,5, dans la limite d'un budget de pixels
+  // (lib/qualite.ts), et abaissée d'elle-même si la machine n'arrive pas à suivre.
+  const plafond = tactile ? 1 : 1.5;
+  const regulateur = new RegulateurQualite(() => appliquerTaille());
+  function appliquerTaille() {
+    rendu.setPixelRatio(ratioPixels(taille.x, taille.y, plafond) * regulateur.facteur);
+    rendu.setSize(taille.x, taille.y, false);
+  }
   // ACES : la tonalité « cinéma » que faisait l'objectif de la démo.
   rendu.toneMapping = THREE.ACESFilmicToneMapping;
   rendu.toneMappingExposure = 1.1;
@@ -125,6 +133,7 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
   return {
     dessiner(etat) {
       const maintenant = performance.now();
+      regulateur.mesurer(maintenant);
       const temps = (maintenant - naissance) / 1000;
       const ecoule = Math.min(1 / 20, (maintenant - precedent) / 1000);
       precedent = maintenant;
@@ -155,8 +164,8 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
     },
 
     redimensionner(largeur, hauteur) {
-      rendu.setSize(largeur, hauteur, false);
       taille.set(largeur, hauteur);
+      appliquerTaille();
       camera.aspect = largeur / hauteur;
       camera.updateProjectionMatrix();
     },
