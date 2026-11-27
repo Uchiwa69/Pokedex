@@ -251,6 +251,10 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   quand la séquence est à moins de 1,5 écran (IntersectionObserver + requestIdleCallback), shaders compilés en
   arrière-plan (`preparer`). Restent ~2 images lentes pendant la plongée de l'intro (rendu du navigateur, pas du JS,
   déjà présentes avant).
+  Shader du feu (`erosion.ts`) : chaque partie n'est calculée que pendant sa phase (conditions sur uniforms : désintégration
+  après 0,34, jet, braises, capture ; scène seulement là où il reste de la matière) — image identique, ~2× moins cher
+  pendant le souffle. `SequenceFeu` ne réécrit textes et écran de fin que si la progression change. Le coût restant de la
+  fin est l'anneau d'astéroïdes (fichiers repris tels quels).
 - Mesurer la vitesse : toujours `npm run build` + `npm start` (le mode dev est 5 à 10 fois plus lent).
 
 ## Vérifier le rendu sans navigateur interactif

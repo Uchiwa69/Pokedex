@@ -91,6 +91,10 @@ export default function SequenceFeu({ children }: Props) {
         // nouvelle valeur, la progression AFFICHÉE la rattrape en douceur, un peu plus à chaque image.
         let affichee = -1; // -1 = pas encore de valeur : la première image se place directement
         let precedent = 0; // heure de l'image précédente, pour connaître le temps écoulé
+        // Progression pour laquelle les textes et l'écran de fin ont été écrits en dernier. Tant qu'on ne défile pas,
+        // elle ne change pas : on ne réécrit alors ni opacités ni filtres (flou, lueur), que le navigateur
+        // repeignait à chaque image pour rien. Les flammes, elles, continuent de bouger (shader).
+        let progressionEcrite = -1;
         // 60 images par seconde au plus : sur un écran à 120 Hz (Mac ProMotion), le feu et les astéroïdes
         // calculaient deux fois plus d'images, sans différence visible.
         const cadence = new Cadence();
@@ -114,6 +118,9 @@ export default function SequenceFeu({ children }: Props) {
           // 1 - exp(-temps / INERTIE) : la part de l'écart rattrapée pendant cette image (indépendante du nombre
           // d'images par seconde de l'écran).
           affichee = affichee < 0 ? cible : affichee + (cible - affichee) * (1 - Math.exp(-ecoule / INERTIE));
+          // Un écart de moins d'un dix-millième est invisible : on se pose sur la cible (sinon la valeur s'en approche
+          // pendant des secondes et les textes seraient réécrits à chaque image, voir progressionEcrite).
+          if (Math.abs(cible - affichee) < 1e-4) affichee = cible;
           const progression = affichee;
           // La Pokéball de lave : elle apparaît, ouverte, à travers la brûlure, puis se referme tout en bas de la
           // page (la capture). Les traits de lumière du shader convergent vers elle tant qu'elle est ouverte.
@@ -123,12 +130,15 @@ export default function SequenceFeu({ children }: Props) {
           // Le fond d'astéroïdes : invisible tant que Dracaufeu occupe l'écran (le haut du canvas est en fondu
           // transparent, il s'y verrait), il s'allume quand l'écran commence à se désintégrer (0,36 dans le shader).
           fondFin.visibilite = fondu(0.38, 0.46, progression);
-          // L'écran de fin (titre, bouton) apparaît en même temps : avant, il transparaissait au-dessus de Dracaufeu.
-          if (ecranFin.current) ecranFin.current.style.opacity = String(fondFin.visibilite);
           fondFin.dessiner?.(true);
-          // Les textes : on écrit directement leur opacité, sans état React (60 rendus par seconde sinon).
-          if (invite.current) invite.current.style.opacity = String(1 - fondu(0.02, 0.1, progression));
-          mettreAJourTexte?.(progression);
+          if (progression !== progressionEcrite) {
+            progressionEcrite = progression;
+            // L'écran de fin (titre, bouton) apparaît en même temps : avant, il transparaissait au-dessus de Dracaufeu.
+            if (ecranFin.current) ecranFin.current.style.opacity = String(fondFin.visibilite);
+            // Les textes : on écrit directement leur opacité, sans état React (60 rendus par seconde sinon).
+            if (invite.current) invite.current.style.opacity = String(1 - fondu(0.02, 0.1, progression));
+            mettreAJourTexte?.(progression);
+          }
           // Une image par rafraîchissement de l'écran : les flammes bougent même quand on ne défile pas.
           image = requestAnimationFrame(boucle);
         }
