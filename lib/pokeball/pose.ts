@@ -27,15 +27,15 @@ type Poses = Record<"titre" | "sortie", PosePokeball>;
 // Une pose par moment de la page. Les positions sont des fractions d'écran : elles s'adaptent à toutes les tailles.
 // Écran large : la Pokéball est à droite du titre, sans le recouvrir (du blanc derrière un texte blanc serait illisible).
 export const POSES_LARGE: Poses = {
-  titre: { fx: 0.37, fy: 0.27, taille: 0.22, rx: 0.25, ry: -0.55, rz: 0.18, ouverture: 0, fondu: 1 },
+  titre: { fx: 0.37, fy: 0.27, taille: 0.165, rx: 0.25, ry: -0.55, rz: 0.18, ouverture: 0, fondu: 1 },
   // Elle roule vers le haut et s'efface quand le carrousel prend la place.
-  sortie: { fx: 0.43, fy: 0.5, taille: 0.16, rx: 0.25, ry: -0.2, rz: -2.6, ouverture: 0, fondu: 0 },
+  sortie: { fx: 0.43, fy: 0.5, taille: 0.12, rx: 0.25, ry: -0.2, rz: -2.6, ouverture: 0, fondu: 0 },
 };
 
 // Téléphone : plus petite, à droite du titre (qui tient sur deux lignes).
 export const POSES_ETROITE: Poses = {
-  titre: { fx: 0.39, fy: 0.26, taille: 0.085, rx: 0.25, ry: -0.55, rz: 0.18, ouverture: 0, fondu: 1 },
-  sortie: { fx: 0.42, fy: 0.45, taille: 0.08, rx: 0.25, ry: -0.2, rz: -2.6, ouverture: 0, fondu: 0 },
+  titre: { fx: 0.39, fy: 0.26, taille: 0.068, rx: 0.25, ry: -0.55, rz: 0.18, ouverture: 0, fondu: 1 },
+  sortie: { fx: 0.42, fy: 0.45, taille: 0.064, rx: 0.25, ry: -0.2, rz: -2.6, ouverture: 0, fondu: 0 },
 };
 
 // La pose en cours (modifiée en place par GSAP).
