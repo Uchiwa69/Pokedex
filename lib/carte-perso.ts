@@ -9,12 +9,31 @@ import type { NomType } from "@/lib/types";
 
 export const ATTAQUES_MAX = 2; // comme sur une vraie carte : une ou deux attaques
 export const LONGUEUR_MAX_SURNOM = 12;
+// Attaques inventées dans l'atelier : nom limité (il doit tenir sur la carte) et puissance bornée.
+export const LONGUEUR_MAX_ATTAQUE = 20;
+export const PUISSANCE_MAX = 250;
 
 // Les styles de carte, inspirés des raretés des cartes à collectionner.
 export type StyleCarte = "classique" | "pleine" | "chromatique" | "or";
 
 // Ce qu'on garde d'une attaque posée sur la carte (pas besoin de sa description ni de ses PP).
-export type AttaqueCarte = Pick<Attaque, "nom" | "nomFr" | "type" | "puissance">;
+// perso : attaque inventée dans l'atelier (elle n'existe que sur cette carte, jamais en combat ni dans la sacoche).
+export type AttaqueCarte = Pick<Attaque, "nom" | "nomFr" | "type" | "puissance"> & { perso?: true };
+
+// Crée une attaque inventée. Son identifiant commence par « perso- » : il ne peut pas être celui d'une vraie
+// attaque de la PokéAPI (qui n'ont que des lettres et des tirets, comme « flamethrower »), ni d'une autre attaque
+// inventée (l'heure en millisecondes change à chaque création).
+// Les règles (nom raccourci, puissance bornée) sont appliquées par nettoyerCarte, à l'enregistrement.
+export function creerAttaquePerso(nomFr: string, type: NomType, puissance: number | null): AttaqueCarte {
+  return { nom: `perso-${Date.now()}`, nomFr: nomFr.trim(), type, puissance, perso: true };
+}
+
+// Une puissance acceptable : un entier entre 0 et PUISSANCE_MAX ; null (attaque de statut, « — » sur la carte)
+// si la valeur n'est pas un nombre.
+function bornerPuissance(puissance: number | null): number | null {
+  if (puissance === null || !Number.isFinite(puissance)) return null;
+  return Math.min(PUISSANCE_MAX, Math.max(0, Math.round(puissance)));
+}
 
 export type CartePerso = {
   style: StyleCarte;
@@ -66,12 +85,20 @@ export function adresseChromatique(artwork: string | null): string | null {
 }
 
 // Applique les règles à une carte avant de l'enregistrer : surnom nettoyé et limité, pas d'attaque en
-// double, ATTAQUES_MAX attaques au plus. Fonction pure : elle renvoie une NOUVELLE carte.
+// double, ATTAQUES_MAX attaques au plus, attaques inventées avec un nom limité (et non vide) et une puissance
+// bornée. Fonction pure : elle renvoie une NOUVELLE carte.
 export function nettoyerCarte(carte: CartePerso): CartePerso {
   const sansDoublon = carte.attaques.filter((attaque, index) => carte.attaques.findIndex((a) => a.nom === attaque.nom) === index);
+  const valides = sansDoublon
+    .map((attaque) =>
+      attaque.perso
+        ? { ...attaque, nomFr: attaque.nomFr.trim().slice(0, LONGUEUR_MAX_ATTAQUE), puissance: bornerPuissance(attaque.puissance) }
+        : attaque,
+    )
+    .filter((attaque) => attaque.nomFr !== "");
   return {
     ...carte,
     surnom: carte.surnom.slice(0, LONGUEUR_MAX_SURNOM),
-    attaques: sansDoublon.slice(0, ATTAQUES_MAX),
+    attaques: valides.slice(0, ATTAQUES_MAX),
   };
 }

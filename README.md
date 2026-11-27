@@ -29,8 +29,8 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
   effet animé propre au type du Pokémon, dos original), types, taille, poids, six statistiques, sprite animé (face / dos), cri, chaîne d'évolution
   cliquable et **attaques apprises par niveau** (type, catégorie, puissance, précision, PP, description).
 - **Atelier** : on compose sa propre carte holographique — style (classique, full art, chromatique, or), surnom,
-  motif brillant, effet de type, et jusqu'à deux attaques posées par glisser-déposer. La carte est enregistrée
-  dans le navigateur.
+  motif brillant, effet de type, et jusqu'à deux attaques posées par glisser-déposer ou inventées (nom, type,
+  puissance). La carte est enregistrée dans le navigateur et s'exporte en image PNG, telle qu'elle est affichée.
 - **Favoris** (leur nombre s'affiche dans l'en-tête) et **sacoche** conservés dans le navigateur ; la sacoche est une « arène d'équipe » : 6 socles animés,
   détail du membre sélectionné, surnoms, 4 attaques par Pokémon, ordre modifiable par glisser-déposer ou au clavier.
 - **Mode combat** : ta sacoche contre une équipe tirée au hasard, au niveau 50 — efficacité des 18 types, dégâts,

@@ -144,6 +144,12 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   repli quand `jouerEclat` renvoie false (moteur pas prêt, pas de WebGL, animations réduites = voile seul).
   Électrik a un éclat propre (éclairs verticaux en ligne brisée). Effet et éclat sont retirés quand l'accueil est mis
   en veille (nettoyage d'un useEffect dans `FiltreTypes`), sinon ils rejouaient au retour d'une fiche.
+- Atelier, ajouts du 27 novembre 2026 : ATTAQUES INVENTÉES (formulaire « Inventer une attaque » : nom ≤ 20 caractères,
+  type, puissance 0–250 ou vide = statut « — ») : `creerAttaquePerso` (identifiant `perso-<heure>`, champ `perso: true`),
+  bornées par `nettoyerCarte` ; elles n'existent QUE sur la carte de l'atelier (jamais en combat ni en sacoche).
+  EXPORT PNG (bouton « Exporter la carte », seulement si `perso`) : choix de l'utilisateur = la carte TELLE QU'ON LA VOIT
+  (reflets, feuille, effet), pas la face à plat. `capturer` de `Carte3D` : textures remontées à `FINESSE_EXPORT`, image
+  suivante rendue à `HAUTEUR_EXPORT` px (setPixelRatio), recopiée aussitôt dans un canvas 2D, recadrée sur l'opacité.
 - Atelier de carte : `/atelier?pokemon=nom` (onglet « Atelier » du menu). `ChoixPokemonAtelier` (recherche via
   `/api/recherche` + « Mes cartes ») puis `AtelierCarte` (client). Le lien « Créer sa carte » sous la carte de la
   fiche (`VitrineFiche`) y mène avec le Pokémon déjà choisi. Styles classique / full art / chromatique / or, surnom, motif, effet de type,

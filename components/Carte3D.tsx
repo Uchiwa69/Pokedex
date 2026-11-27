@@ -38,7 +38,51 @@ export type PersoCarte = {
   attaques: AttaqueCarte[];
 };
 
-type Commandes = { retourner: () => void; recentrer: () => void; tourner: (degres: number) => void };
+type Commandes = {
+  retourner: () => void;
+  recentrer: () => void;
+  tourner: (degres: number) => void;
+  // Atelier : l'image de la carte telle qu'on la voit (reflets, feuille, effet du type), en haute définition.
+  capturer: () => Promise<Blob | null>;
+};
+
+// Export (atelier) : hauteur de l'image calculée, en pixels, et finesse des textures des faces pour qu'elles
+// restent nettes à cette taille (la carte occupe environ 87 % de la hauteur).
+const HAUTEUR_EXPORT = 2400;
+const FINESSE_EXPORT = 2.4;
+
+// Recadre une capture sur la carte : on cherche les pixels non transparents (le fond de la scène l'est), puis on
+// garde ce rectangle avec une petite marge, au format PNG (qui garde la transparence).
+function recadrer(toile: HTMLCanvasElement): Promise<Blob | null> {
+  const ctx = toile.getContext("2d")!;
+  const { data, width, height } = ctx.getImageData(0, 0, toile.width, toile.height);
+  let gauche = width;
+  let droite = -1;
+  let haut = height;
+  let bas = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      // data contient 4 nombres par pixel (rouge, vert, bleu, opacité) : on lit l'opacité.
+      if (data[(y * width + x) * 4 + 3] > 8) {
+        if (x < gauche) gauche = x;
+        if (x > droite) droite = x;
+        if (y < haut) haut = y;
+        if (y > bas) bas = y;
+      }
+    }
+  }
+  if (droite < 0) return Promise.resolve(null); // rien de dessiné
+  const marge = 24;
+  gauche = Math.max(0, gauche - marge);
+  haut = Math.max(0, haut - marge);
+  const largeur = Math.min(width, droite + marge) - gauche;
+  const hauteur = Math.min(height, bas + marge) - haut;
+  const resultat = document.createElement("canvas");
+  resultat.width = largeur;
+  resultat.height = hauteur;
+  resultat.getContext("2d")!.drawImage(toile, gauche, haut, largeur, hauteur, 0, 0, largeur, hauteur);
+  return new Promise((resoudre) => resultat.toBlob(resoudre, "image/png"));
+}
 
 // Programme exécuté par la carte graphique pour chaque pixel du reflet (langage GLSL).
 // Le reflet est calculé comme un VRAI reflet : une lumière placée près de l'œil, dont l'éclat apparaît
@@ -152,6 +196,29 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
   }, [animationsReduites]);
 
   const [etat, setEtat] = useState<"chargement" | "pret" | "erreur">("chargement");
+  const [exportEnCours, setExportEnCours] = useState(false);
+
+  // Atelier : télécharge l'image de la carte. Le navigateur télécharge un lien dont l'attribut « download » donne
+  // le nom du fichier ; son adresse est une adresse temporaire (blob:) qui pointe sur l'image en mémoire.
+  async function exporter() {
+    setExportEnCours(true);
+    const image = await refCommandes.current?.capturer();
+    setExportEnCours(false);
+    if (!image) return;
+    const adresse = URL.createObjectURL(image);
+    const lien = document.createElement("a");
+    lien.href = adresse;
+    // Nom du fichier : « carte-dracaufeu.png » (sans accents ni espaces, acceptés partout).
+    const nomFichier = (perso?.nom ?? nom)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // retire les accents (séparés des lettres par normalize)
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .toLowerCase();
+    lien.download = `carte-${nomFichier || "pokemon"}.png`;
+    lien.click();
+    // L'adresse temporaire est libérée un peu plus tard (le téléchargement doit avoir commencé).
+    setTimeout(() => URL.revokeObjectURL(adresse), 10_000);
+  }
   // Les types sont réunis en une chaîne : une dépendance stable pour l'effet (un tableau serait neuf à chaque rendu).
   const typesTexte = types.join("|");
 
@@ -262,7 +329,8 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
       // Netteté du texte : la texture est dessinée à peu près à la taille où la carte apparaît à l'écran
       // (hauteur de la zone × densité de pixels de l'écran), avec une petite marge pour le zoom.
       const pixelsAffiches = conteneur.clientHeight * 0.87 * rendu.getPixelRatio();
-      const finesse = Math.min(2.4, Math.max(1, (pixelsAffiches * 1.35) / HAUTEUR));
+      // « let » : l'export la remonte (voir capturer).
+      let finesse = Math.min(2.4, Math.max(1, (pixelsAffiches * 1.35) / HAUTEUR));
       await souffler();
       dessinerFace(toileFace, donnees, image, finesse);
       await souffler();
@@ -389,6 +457,22 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
 
       // Rotation demandée par le bouton « Retourner » : la carte la rejoint en douceur.
       let rotationCible = 0;
+      // Export demandé : la boucle d'animation calcule l'image suivante en grand, puis appelle cette fonction.
+      let demandeCapture: ((image: Promise<Blob | null>) => void) | null = null;
+      // La capture en elle-même : on agrandit le nombre de pixels du canvas (pas sa taille à l'écran), on dessine,
+      // on recopie l'image dans un canvas 2D TOUT DE SUITE (le canvas WebGL est vidé ensuite), et on revient à
+      // la taille normale.
+      const capturerImage = () => {
+        const ratio = rendu.getPixelRatio();
+        rendu.setPixelRatio(Math.min(6, HAUTEUR_EXPORT / Math.max(1, rendu.domElement.clientHeight)));
+        rendu.render(scene, camera);
+        const copie = document.createElement("canvas");
+        copie.width = rendu.domElement.width;
+        copie.height = rendu.domElement.height;
+        copie.getContext("2d")!.drawImage(rendu.domElement, 0, 0);
+        rendu.setPixelRatio(ratio);
+        return recadrer(copie);
+      };
       refCommandes.current = {
         retourner: () => {
           rotationCible += Math.PI;
@@ -399,6 +483,27 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
         },
         tourner: (degres) => {
           rotationCible += THREE.MathUtils.degToRad(degres);
+        },
+        capturer: async () => {
+          // 1. Les textures des faces sont dessinées à la taille de la carte À L'ÉCRAN : pour l'export, on les
+          //    redessine une fois en grand. dispose() : la carte graphique les recrée à leur nouvelle taille.
+          if (finesse < FINESSE_EXPORT) {
+            finesse = FINESSE_EXPORT;
+            textureFace.dispose();
+            textureDos.dispose();
+            if (refPerso.current && refAppliquer.current) {
+              await refAppliquer.current(refPerso.current);
+            } else {
+              dessinerFace(toileFace, donnees, image, finesse);
+              dessinerDos(toileDos, teinte, policeTitre, finesse);
+              textureFace.needsUpdate = true;
+              textureDos.needsUpdate = true;
+            }
+          }
+          // 2. La prochaine image de la boucle sera calculée en grand (voir capturerImage).
+          return new Promise<Blob | null>((resoudre) => {
+            demandeCapture = resoudre;
+          });
         },
       };
 
@@ -494,6 +599,11 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
           .addScaledVector(versOeil, 0.9 * l);
         (feuille.uniforms.uLampe.value as number[]).splice(0, 3, versCamera.x, versCamera.y, versCamera.z);
         rendu.render(scene, camera);
+        if (demandeCapture) {
+          const terminer = demandeCapture;
+          demandeCapture = null;
+          terminer(capturerImage());
+        }
       });
       setEtat("pret");
       refRappels.current.surPret?.();
@@ -574,6 +684,21 @@ export default function Carte3D({ illustration, numero, nom, types, typePrincipa
           </svg>
         </button>
       </div>
+      {/* Atelier seulement : l'export de la carte telle qu'elle est affichée. */}
+      {perso && (
+        <button
+          type="button"
+          onClick={exporter}
+          disabled={etat !== "pret" || exportEnCours}
+          aria-busy={exportEnCours}
+          className="bouton bouton-secondaire mx-auto gap-2 px-5 text-sm disabled:opacity-50"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
+            <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+          </svg>
+          {exportEnCours ? "Préparation de l'image…" : "Exporter la carte (PNG)"}
+        </button>
+      )}
       {/* Le conseil dépend de l'appareil : pointer-coarse = écran tactile (doigt), pointer-fine = souris. */}
       <p className="etiquette text-center pointer-coarse:hidden">Glisse pour tourner · molette ou pincement pour zoomer</p>
       <p className="etiquette hidden text-center pointer-coarse:block">Glisse de côté pour tourner · pince pour zoomer</p>

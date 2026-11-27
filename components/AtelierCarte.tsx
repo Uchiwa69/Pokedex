@@ -5,25 +5,30 @@
 // store useCartes (donc dans le navigateur) : il n'y a pas de bouton « Enregistrer ».
 // Les attaques se posent sur la carte par GLISSER-DÉPOSER (API native du navigateur : draggable, onDragStart,
 // onDragOver, onDrop), et aussi avec un bouton « Ajouter », pour le clavier et les écrans tactiles.
+// On peut aussi INVENTER une attaque (nom, type, puissance), comme on choisit un surnom : elle n'existe que sur
+// cette carte de l'atelier.
 
-import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useState, type DragEvent, type FormEvent } from "react";
 import Carte3D, { type PersoCarte } from "@/components/Carte3D";
 import {
   adresseChromatique,
   ATTAQUES_MAX,
   CARTE_DE_BASE,
+  creerAttaquePerso,
   LIBELLES_MOTIFS,
+  LONGUEUR_MAX_ATTAQUE,
   LONGUEUR_MAX_SURNOM,
   motifAffiche,
   MOTIFS_PROPOSES,
   NOMS_STYLES,
+  PUISSANCE_MAX,
   STYLES,
   type AttaqueCarte,
   type CartePerso,
 } from "@/lib/carte-perso";
 import { formaterMesure, type Attaque, type Pokemon } from "@/lib/conversion";
 import { styleTeinte } from "@/lib/teinte";
-import { TYPES } from "@/lib/types";
+import { NOMS_TYPES, TYPES, type NomType } from "@/lib/types";
 import { useCartes } from "@/stores/cartes";
 
 type Props = {
@@ -86,6 +91,20 @@ export default function AtelierCarte({ pokemon, attaques }: Props) {
     }
   }
   const retirer = (nom: string) => modifier({ attaques: carte.attaques.filter((a) => a.nom !== nom) });
+
+  // Attaque inventée : le formulaire garde ses champs dans des états locaux tant qu'elle n'est pas ajoutée.
+  const [nomInvente, setNomInvente] = useState("");
+  const [typeInvente, setTypeInvente] = useState<NomType>(pokemon.types[0] ?? "normal");
+  const [puissanceInventee, setPuissanceInventee] = useState("");
+  function inventer(evenement: FormEvent) {
+    evenement.preventDefault(); // un formulaire rechargerait la page sinon
+    if (pleine || nomInvente.trim() === "") return;
+    // Champ vide = attaque de statut (« — » sur la carte, comme les vraies) ; le store borne la puissance.
+    const puissance = puissanceInventee.trim() === "" ? null : Number(puissanceInventee);
+    modifier({ attaques: [...carte.attaques, creerAttaquePerso(nomInvente, typeInvente, puissance)] });
+    setNomInvente("");
+    setPuissanceInventee("");
+  }
   const echanger = () => modifier({ attaques: [...carte.attaques].reverse() });
 
   // Glisser-déposer. Au départ, on range le nom de l'attaque dans l'événement (dataTransfer) ;
@@ -246,6 +265,7 @@ export default function AtelierCarte({ pokemon, attaques }: Props) {
                         <span className="block truncate font-titre text-sm font-semibold">{posee.nomFr}</span>
                         <span className="etiquette">
                           {TYPES[posee.type].libelle} · Puis. {posee.puissance ?? "—"}
+                          {posee.perso && " · Inventée"}
                         </span>
                       </span>
                       <button type="button" onClick={() => retirer(posee.nom)} aria-label={`Retirer ${posee.nomFr} de la carte`} className="flex size-11 shrink-0 items-center justify-center rounded-full text-texte-doux hover:bg-piste hover:text-texte">
@@ -266,6 +286,62 @@ export default function AtelierCarte({ pokemon, attaques }: Props) {
               Échanger les deux attaques
             </button>
           )}
+
+          {/* Inventer une attaque : un vrai <form>, la touche Entrée l'ajoute aussi. */}
+          <form onSubmit={inventer} className="flex flex-col gap-3 rounded-2xl border border-bordure bg-surface p-3 sm:p-4" aria-labelledby="titre-inventer">
+            <h3 id="titre-inventer" className="font-titre text-base font-semibold">
+              Inventer une attaque
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem_7rem]">
+              <label className="flex min-w-0 flex-col gap-2">
+                <span className="etiquette">Nom ({LONGUEUR_MAX_ATTAQUE} caractères au plus)</span>
+                <input
+                  type="text"
+                  value={nomInvente}
+                  maxLength={LONGUEUR_MAX_ATTAQUE}
+                  placeholder="Ex. : Super Câlin"
+                  onChange={(evenement) => setNomInvente(evenement.target.value)}
+                  className="min-h-11 rounded-full border border-bordure bg-fond px-4 text-sm text-texte placeholder:text-texte-doux"
+                />
+              </label>
+              <label className="flex flex-col gap-2">
+                <span className="etiquette">Type</span>
+                <select
+                  value={typeInvente}
+                  onChange={(evenement) => setTypeInvente(evenement.target.value as NomType)}
+                  className="min-h-11 rounded-full border border-bordure bg-fond px-4 text-sm text-texte"
+                >
+                  {NOMS_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {TYPES[type].libelle}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-2">
+                <span className="etiquette">Puissance</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={PUISSANCE_MAX}
+                  step={10}
+                  value={puissanceInventee}
+                  placeholder="—"
+                  onChange={(evenement) => setPuissanceInventee(evenement.target.value)}
+                  className="min-h-11 rounded-full border border-bordure bg-fond px-4 text-sm text-texte placeholder:text-texte-doux"
+                />
+              </label>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="submit" disabled={pleine || nomInvente.trim() === ""} className="bouton bouton-principal px-5 text-sm disabled:opacity-50">
+                Ajouter à la carte
+              </button>
+              <p className="text-sm text-texte-doux">
+                {pleine ? "La carte a déjà ses deux attaques : retires-en une d'abord." : "Puissance vide = attaque de statut (« — »)."}
+              </p>
+            </div>
+          </form>
 
           {/* Les attaques disponibles. Chaque ligne se glisse (draggable) ; le bouton fait la même chose au clic. */}
           {attaques.length === 0 ? (
