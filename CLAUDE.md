@@ -220,7 +220,8 @@ Voir `git log` pour savoir quelle phase est terminée. Les 11 phases sont faites
   `FondAsteroides` (client, calque fixe `-z-20` monté par `CompagnonPokeball`) n'a PAS de boucle : `SequenceFeu` écrit
   `fondFin` (lib/pokeball/pose.ts : visibilite, apparition, ouverture) d'après la progression de la brûlure puis appelle
   `fondFin.dessiner`. Le fond s'allume avec la désintégration (0,38→0,46), pas avant (il se voyait derrière Dracaufeu) ;
-  l'écran de fin aussi ; le fondu transparent du haut du canvas de feu se referme dès que la séquence démarre.
+  l'écran de fin aussi. Le fondu transparent du haut du canvas de feu est GARDÉ (le retirer laissait un bord orange net
+  sous l'en-tête, refusé par l'utilisateur).
   Au centre : POKÉBALL DE LAVE (`lib/asteroides/pokeball-lave.ts`), deux images GÉNÉRÉES PAR IA (Gemini) ouverte / fermée
   dans `public/pokeball-lave/`, sur un panneau face caméra DANS la scène (roches devant / derrière), boule opaque + lueur
   ajoutée (fond noir non détouré), fondu ouverte → fermée en bas de page (la capture). La Pokéball 3D (R3F) ne sert plus

@@ -114,8 +114,8 @@ export function creerFondAsteroides(toile: HTMLCanvasElement): FondAsteroides {
   });
   scene.add(poussiere.points);
 
-  // La Pokéball de lave, au centre (rayon 2,4 : le trou de l'anneau commence vers 7,5).
-  const pokeball = creerPokeballLave(2.4);
+  // La Pokéball de lave, au centre (rayon 1,8 : le trou de l'anneau commence vers 7,5).
+  const pokeball = creerPokeballLave(1.8);
   scene.add(pokeball.objet);
 
   const taille = new THREE.Vector2();

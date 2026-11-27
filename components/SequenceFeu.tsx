@@ -90,7 +90,6 @@ export default function SequenceFeu({ children }: Props) {
         // nouvelle valeur, la progression AFFICHÉE la rattrape en douceur, un peu plus à chaque image.
         let affichee = -1; // -1 = pas encore de valeur : la première image se place directement
         let precedent = 0; // heure de l'image précédente, pour connaître le temps écoulé
-        let fonduHautEcrit = -1; // dernière valeur du fondu du haut écrite dans le style du canvas
         function boucle(maintenant: number) {
           // La course = ce que le conteneur a de plus haut que la page (les 360 % d'écran).
           // 0 quand la page vient de se coller en haut de l'écran, 1 quand elle va se décoller.
@@ -119,15 +118,6 @@ export default function SequenceFeu({ children }: Props) {
           // L'écran de fin (titre, bouton) apparaît en même temps : avant, il transparaissait au-dessus de Dracaufeu.
           if (ecranFin.current) ecranFin.current.style.opacity = String(fondFin.visibilite);
           fondFin.dessiner?.(true);
-          // Le fondu transparent du haut du canvas ne sert qu'à l'arrivée depuis la liste : dès que la séquence
-          // démarre, il se referme (sinon on voyait au travers l'écran de fin, puis les astéroïdes, derrière Dracaufeu).
-          // Écrit seulement quand la valeur change (au centième près).
-          const fonduHaut = Math.round((1 - fondu(0, 0.06, progression)) * 100) / 100;
-          if (fonduHaut !== fonduHautEcrit) {
-            fonduHautEcrit = fonduHaut;
-            elementToile!.style.maskImage =
-              fonduHaut > 0 ? `linear-gradient(to bottom, transparent ${4 * fonduHaut}%, black ${22 * fonduHaut}%)` : "none";
-          }
           // Les textes : on écrit directement leur opacité, sans état React (60 rendus par seconde sinon).
           if (invite.current) invite.current.style.opacity = String(1 - fondu(0.02, 0.1, progression));
           mettreAJourTexte?.(progression);
@@ -186,8 +176,8 @@ export default function SequenceFeu({ children }: Props) {
               etat === "attente" ? "bg-fond" : ""
             }`}
           >
-            {/* Masque : le haut de la scène s'estompe, elle ne commence plus par un bord net sous la liste. Il est
-                retiré par la boucle dès que la séquence démarre. */}
+            {/* Masque : le haut de la scène s'estompe vers le fond sombre de la page (pas de bord net sous l'en-tête).
+                Derrière lui, l'écran de fin et les astéroïdes restent invisibles jusqu'à la désintégration. */}
             <canvas
               ref={toile}
               aria-hidden="true"
