@@ -19,7 +19,7 @@ import {
   choisirAttaqueIA,
   messageEfficacite,
   NIVEAU,
-  ordreDesTours,
+  ORDRE_DU_TOUR,
   resoudreAttaque,
   type TableEfficacite,
 } from "@/lib/combat";
@@ -317,25 +317,16 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
       });
     }
 
-    // L'IA choisit son attaque, puis la vitesse décide de l'ordre.
-    const attaqueAdverse = choisirAttaqueIA(
-      adversaires[iAdversaire].attaques,
-      adversaires[iAdversaire].pokemon,
-      joueurs[iJoueur].pokemon,
-      table,
-      tirerHasard(),
-    );
-    const premier = ordreDesTours(
-      joueurs[iJoueur].pokemon.stats.vitesse,
-      adversaires[iAdversaire].pokemon.stats.vitesse,
-      tirerHasard(),
-    );
-    const ordre: Cote[] = premier === "joueur" ? ["joueur", "adversaire"] : ["adversaire", "joueur"];
-
-    for (const cote of ordre) {
+    // Chacun son tour : le joueur attaque, puis l'adversaire répond (ORDRE_DU_TOUR, lib/combat.ts).
+    for (const cote of ORDRE_DU_TOUR) {
       const attaquant = cote === "joueur" ? joueurs[iJoueur] : adversaires[iAdversaire];
       const defenseur = cote === "joueur" ? adversaires[iAdversaire] : joueurs[iJoueur];
-      const attaque = cote === "joueur" ? attaqueJoueur : attaqueAdverse;
+      // L'IA choisit son attaque au moment de jouer : si le joueur vient de mettre K.O. son Pokémon, c'est le
+      // remplaçant qui choisit, face au Pokémon du joueur.
+      const attaque =
+        cote === "joueur"
+          ? attaqueJoueur
+          : choisirAttaqueIA(adversaires[iAdversaire].attaques, adversaires[iAdversaire].pokemon, joueurs[iJoueur].pokemon, table, tirerHasard());
 
       // 1. Annonce + élan de l'attaquant. Si Showdown a une mise en scène pour cette attaque, c'est elle qui
       //    déplace l'attaquant : on saute notre élan pour qu'il ne s'élance pas deux fois.
@@ -397,7 +388,8 @@ export default function ArenaCombat({ table }: { table: TableEfficacite }) {
         }
         publier();
         await attendre(durees.entree);
-        break; // le Pokémon qui vient d'entrer n'attaque pas pendant ce tour
+        // Alternance : si c'est l'adversaire qui vient d'être mis K.O., son remplaçant joue maintenant SON tour
+        // (la boucle continue). Si c'est le Pokémon du joueur, le tour est fini : le suivant jouera au prochain clic.
       }
     }
 

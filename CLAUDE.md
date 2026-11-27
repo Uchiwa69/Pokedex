@@ -53,7 +53,7 @@ lib/  types.ts (table TYPES : 18 types, clé anglaise, libellé FR, classes Tail
       pokeapi.ts (fonctions serveur avec "use cache" + cacheLife("days") : recupererPokemon(nom) → Pokemon | null,
                   recupererListe, recupererTousLesNoms, recupererEspece, recupererEvolutions, recupererAttaque, recupererTypes)
       pokeapi-client.ts (version navigateur pour la page Favoris)
-      combat.ts (fonctions pures : efficacité, dégâts, ordre des tours)
+      combat.ts (fonctions pures : efficacité, dégâts, ordre des tours = alternance stricte joueur puis adversaire)
 stores/ favoris.ts · sacoche.ts
 hooks/  usePokemons · useRappelTemporise · useRaccourci · useTypesCouverts · useCri
 ```

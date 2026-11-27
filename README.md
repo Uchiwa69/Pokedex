@@ -35,7 +35,7 @@ par tour, quiz et atelier de cartes holographiques. Projet de fin de cours.
 - **Favoris** (leur nombre s'affiche dans l'en-tête) et **sacoche** conservés dans le navigateur ; la sacoche est une « arène d'équipe » : 6 socles animés,
   détail du membre sélectionné, surnoms, 4 attaques par Pokémon, ordre modifiable par glisser-déposer ou au clavier.
 - **Mode combat** : ta sacoche contre une équipe tirée au hasard, au niveau 50 — efficacité des 18 types, dégâts,
-  précision, ordre selon la vitesse, IA adverse, journal de combat accessible, et **effets d'attaque dessinés sur
+  précision, chacun son tour (toi, puis l'adversaire), IA adverse, journal de combat accessible, et **effets d'attaque dessinés sur
   un canvas** (projectile, trajectoire, impact) choisis selon le type, la catégorie et la puissance de l'attaque.
 - **Quiz « Qui est ce Pokémon ? »** : une silhouette, quatre propositions, révélation animée.
 - **Thème sombre** (le seul) : gris anthracite, un seul accent rouge « Pokédex ». Toutes les couleurs sont des jetons sémantiques de @theme, une teinte

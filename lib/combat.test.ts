@@ -11,7 +11,7 @@ import {
   choisirMeilleuresAttaques,
   messageEfficacite,
   noterAttaque,
-  ordreDesTours,
+  ORDRE_DU_TOUR,
   resoudreAttaque,
   type Combattant,
   type TableEfficacite,
@@ -155,15 +155,9 @@ describe("resoudreAttaque", () => {
   });
 });
 
-describe("ordreDesTours", () => {
-  it("donne la main au plus rapide", () => {
-    expect(ordreDesTours(120, 80, 0.9)).toBe("joueur");
-    expect(ordreDesTours(60, 80, 0.1)).toBe("adversaire");
-  });
-
-  it("départage au hasard à vitesse égale", () => {
-    expect(ordreDesTours(80, 80, 0.2)).toBe("joueur");
-    expect(ordreDesTours(80, 80, 0.7)).toBe("adversaire");
+describe("ORDRE_DU_TOUR", () => {
+  it("fait jouer le joueur, puis l'adversaire (alternance stricte, sans regarder la vitesse)", () => {
+    expect(ORDRE_DU_TOUR).toEqual(["joueur", "adversaire"]);
   });
 });
 

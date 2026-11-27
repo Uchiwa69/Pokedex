@@ -113,13 +113,9 @@ export function resoudreAttaque(
   return { rate: false, degats, efficacite };
 }
 
-// Qui joue en premier ? Le plus rapide ; à vitesse égale, le hasard décide.
-export function ordreDesTours(vitesseJoueur: number, vitesseAdversaire: number, hasard: number): "joueur" | "adversaire" {
-  if (vitesseJoueur !== vitesseAdversaire) {
-    return vitesseJoueur > vitesseAdversaire ? "joueur" : "adversaire";
-  }
-  return hasard < 0.5 ? "joueur" : "adversaire";
-}
+// Ordre d'un tour : ALTERNANCE STRICTE (choix de l'utilisateur), le joueur attaque, puis l'adversaire répond.
+// La vitesse ne décide plus de l'ordre : le joueur n'est jamais frappé avant d'avoir joué.
+export const ORDRE_DU_TOUR = ["joueur", "adversaire"] as const;
 
 /* ------------------------------------------------------------------ */
 /* Choix des attaques                                                  */
